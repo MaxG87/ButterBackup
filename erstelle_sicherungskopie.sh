@@ -114,7 +114,7 @@ fi
 
 #Mounten
 fs_type=$(file -s /dev/mapper/$mountDir | grep -o '\(btrfs\|ext\d\)')
-if [[ $fs_type == btrfs ]]
+if [[ "$fs_type" == btrfs ]]
 then
   mount_opts="-o compress=zlib"
 fi
@@ -143,7 +143,12 @@ do
   ziel=$(echo $line | cut -d ' ' -f2)
   curBackup=/media/$mountDir/Sicherungskopien/$ziel/${ziel}_$curDate
   prevBackup=$(ls /media/"$mountDir"/Sicherungskopien/$ziel/ | tail -n1)
-  rsync -a --delete --link-dest="../$prevBackup" $orig $curBackup
+  if [[ "$fs_type" == btrfs ]]
+  then
+    rsync -a --delete --link-dest="../$prevBackup" $orig $curBackup
+  else
+    rsync -a --delete --link-dest="../$prevBackup" $orig $curBackup
+  fi
 done
 
 #Aufräumen
