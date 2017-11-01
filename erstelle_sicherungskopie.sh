@@ -113,8 +113,14 @@ then
 fi
 
 #Mounten
-fs_type=$(file -s /dev/mapper/$mountDir | grep -o '\(btrfs\|ext\d\)')
-if [[ "$fs_type" == btrfs ]]
+fs_type=$(file -Ls /dev/mapper/$mountDir | grep -ioE '(btrfs|ext)')
+if [[ "$fs_type" == "" ]]
+then
+  misserfolg "Unbekanntes Dateisystem gefunden. Unterstützt werden nur 'ext' und 'btrfs'."
+fi
+
+fs_type_lc="${fs_type,,}" # in Kleinschreibung umwandeln
+if [[ "$fs_type_lc" == btrfs ]]
 then
   mount_opts="-o compress=zlib"
 fi
@@ -139,15 +145,18 @@ fi
 
 grep -v '^\s*#' "$ordnerliste" | while read line
 do
-  orig=$(echo $line | cut -d ' ' -f1)/
+  orig=$(echo $line | cut -d ' ' -f1)/ # beachte abschließendes "/"!
   ziel=$(echo $line | cut -d ' ' -f2)
-  curBackup=/media/$mountDir/Sicherungskopien/$ziel/${ziel}_$curDate
-  prevBackup=$(ls /media/"$mountDir"/Sicherungskopien/$ziel/ | tail -n1)
-  if [[ "$fs_type" == btrfs ]]
+  prefix="/media/$mountDir/Sicherungskopien/$ziel/"
+  curBackup="$prefix/${ziel}_$curDate"
+  if [[ "$fs_type_lc" == btrfs ]]
   then
-    rsync -a --delete --link-dest="../$prevBackup" $orig $curBackup
+    prevBackup=$(find "$prefix" -maxdepth 1 | sort | tail -n1)
+    cp --recursive --reflink=always "$prevBackup" "$curBackup"
+    rsync -a --delete "$orig" "$curBackup"
   else
-    rsync -a --delete --link-dest="../$prevBackup" $orig $curBackup
+    prevBackup=$(ls "$prefix" | tail -n1)
+    rsync -a --delete --link-dest="../$prevBackup" "$orig" "$curBackup"
   fi
 done
 
