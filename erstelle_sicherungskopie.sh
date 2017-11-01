@@ -54,7 +54,7 @@ fi
 #nur einem Benutzer sollte es aber keine Probleme geben.
 #Wenn das Skript jedoch von Hand gestartet wird, kann alles automatisch
 #bestimmt werden.
-start_via_udev=true
+start_via_udev="false"
 if [[ "$start_via_udev" == true ]]
 then
   DISPLAY=:0; export DISPLAY
