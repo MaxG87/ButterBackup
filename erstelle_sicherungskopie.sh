@@ -34,13 +34,11 @@ function aufraeumen {
 #bestimmt werden, um nicht immer zwei sehr ähnliche Skripte pflegen zu müssen.
 if type kdialog > /dev/null 2> /dev/null
 then
-  dialog_type=kdialog
   yesno_question="kdialog --yesno"
   pwd_prompt="kdialog --password"
   infobox="kdialog --msgbox"
 elif type zenity > /dev/null 2> /dev/null
 then
-  dialog_type=zenity
   yesno_question="zenity --question --text"
   pwd_prompt="zenity --password --text"
   infobox="zenity --info --text"
