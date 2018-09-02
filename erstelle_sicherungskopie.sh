@@ -100,7 +100,7 @@ then
     misserfolg "Die Passworteingabe wurde abgebrochen. Die Erstellung der Sicherheitskopie kann daher nicht fortgesetzt werden."
   fi
 
-  while ! echo "$pwt" | cryptsetup luksOpen "$device" "$mountDir" 
+  while ! echo "$pwt" | cryptsetup luksOpen "$device" "$mountDir"
   do
     pwt=$(sudo -u "$curUser" $pwd_prompt "Das Passwort war falsch. Bitte nochmal eingeben!")
     if [[ $? -ne 0 ]]
