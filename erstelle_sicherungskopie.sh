@@ -151,10 +151,10 @@ do
   then
     prevBackup=$(find "$prefix" -maxdepth 1 | sort | tail -n1)
     cp -a --recursive --reflink=always "$prevBackup" "$curBackup"
-    rsync -a --delete --inplace "$orig" "$curBackup"
+    rsync -ax --delete --inplace "$orig" "$curBackup"
   else
     prevBackup=$(ls "$prefix" | tail -n1)
-    rsync -a --delete --link-dest="../$prevBackup" "$orig" "$curBackup"
+    rsync -ax --delete --link-dest="../$prevBackup" "$orig" "$curBackup"
   fi
 done
 
