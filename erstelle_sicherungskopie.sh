@@ -120,6 +120,9 @@ fi
 fs_type_lc="${fs_type,,}" # in Kleinschreibung umwandeln
 if [[ "$fs_type_lc" == btrfs ]]
 then
+  # Komprimierung mit ZLIB, da dies die kleinsten Dateien verspricht.
+  # Mit ZSTD könnten noch höhere Komprimierungen erreicht werden, wenn ein
+  # höheres Level gewählt werden könnte. Dies ist noch nicht der Fall.
   mount_opts="-o compress=zlib"
 fi
 mkdir "/media/$mountDir"
