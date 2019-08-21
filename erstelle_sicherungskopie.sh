@@ -30,26 +30,7 @@ function aufraeumen {
 }
 
 function main() {
-
-    # Wir betreten die Hölle der Platformabhängigkeit.
-    # Auf KDE-Systemen kann zenity nicht vorausgesetzt werden, auf
-    # GNOME-Systemen hingegen kdialog nicht. Daher muss der entsprechende
-    # Befehl zur Laufzeit bestimmt werden, um nicht immer zwei sehr ähnliche
-    # Skripte pflegen zu müssen.
-    if type kdialog > /dev/null 2> /dev/null
-    then
-      yesno_question="kdialog --yesno"
-      pwd_prompt="kdialog --password"
-      infobox="kdialog --msgbox"
-    elif type zenity > /dev/null 2> /dev/null
-    then
-      yesno_question="zenity --question --text"
-      pwd_prompt="zenity --password --text"
-      infobox="zenity --info --text"
-    else
-      # Stilles Fehlschlagen, da wir den Fehler ja nicht anzeigen können.
-      exit
-    fi
+    prepare_env_for_kde_or_gnome
 
     # Wenn das Skript via UDEV gestartet wird, ist der Nutzer root und das
     # Display nicht gesetzt. Daher müssen diese hier wild geraten werden. Bei
@@ -168,5 +149,29 @@ function main() {
 
     sudo -u "$curUser" "$infobox" "Eine Sicherungskopie wurde erfolgreich angelegt."
 }
+
+
+function prepare_env_for_kde_or_gnome() {
+    # Wir betreten die Hölle der Platformabhängigkeit.
+    # Auf KDE-Systemen kann zenity nicht vorausgesetzt werden, auf
+    # GNOME-Systemen hingegen kdialog nicht. Daher muss der entsprechende
+    # Befehl zur Laufzeit bestimmt werden, um nicht immer zwei sehr ähnliche
+    # Skripte pflegen zu müssen.
+    if type kdialog > /dev/null 2> /dev/null
+    then
+      yesno_question="kdialog --yesno"
+      pwd_prompt="kdialog --password"
+      infobox="kdialog --msgbox"
+    elif type zenity > /dev/null 2> /dev/null
+    then
+      yesno_question="zenity --question --text"
+      pwd_prompt="zenity --password --text"
+      infobox="zenity --info --text"
+    else
+      # Stilles Fehlschlagen, da wir den Fehler ja nicht anzeigen können.
+      exit
+    fi
+}
+
 
 main "$@"
