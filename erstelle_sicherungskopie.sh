@@ -46,8 +46,6 @@ function main() {
     decrypt_device
     mount_device
     create_backup "$@"
-
-    #Aufräumen
     aufraeumen
 
     sudo -u "$curUser" "$infobox" "Eine Sicherungskopie wurde erfolgreich angelegt."
