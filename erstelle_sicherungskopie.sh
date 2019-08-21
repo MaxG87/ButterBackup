@@ -1,6 +1,10 @@
 #!/bin/bash
 #Übernimmt als Parameter den Gerätenamen, z.B. 'sdb1'.
 
+keyFileName=/opt/Sicherungskopien/keyfile_extern
+mountDir=$(date +%s)
+start_via_udev="false"
+
 function misserfolg {
   sudo -u "$curUser" "$infobox" "$@"
   if [[ ! -z "$mountDir" ]]
@@ -39,37 +43,7 @@ function main() {
     fi
 
     parse_cli_arguments "$@"
-
-    # Öffne Gerät
-    keyFileName=/opt/Sicherungskopien/keyfile_extern
-    mountDir=$(date +%s)
-    if [[ -e $keyFileName ]]
-    then
-      cryptsetup luksOpen "$device" "$mountDir" --key-file $keyFileName
-      keyFileWorked=$?
-      if [[ $keyFileWorked -eq 2 ]]
-      then
-        sudo -u "$curUser" "$infobox" "Das Backupziel kann mit der Schlüsseldatei $keyFileName nicht entschlüsselt werden. Bitte geben Sie das korrekte Passwort manuell ein."
-      elif [[ $keyFileWorked -ne 0 ]]
-      then
-        misserfolg "Das Backupziel konnte nicht entschlüsselt werden. Der Fehlercode von cryptsetup ist $keyFileWorked."
-      fi
-    fi
-    if [[ ! -e $keyFileName || $keyFileWorked -eq 2 ]]
-    then
-      if ! pwt=$(sudo -u "$curUser" "$pwd_prompt" "Bitte Passwort eingeben.")
-      then
-        misserfolg "Die Passworteingabe wurde abgebrochen. Die Erstellung der Sicherheitskopie kann daher nicht fortgesetzt werden."
-      fi
-
-      while ! echo "$pwt" | cryptsetup luksOpen "$device" "$mountDir"
-      do
-        if ! pwt=$(sudo -u "$curUser" "$pwd_prompt" "Das Passwort war falsch. Bitte nochmal eingeben!")
-        then
-          misserfolg "Die Passworteingabe wurde abgebrochen. Die Erstellung der Sicherheitskopie kann daher nicht fortgesetzt werden."
-        fi
-      done
-    fi
+    decrypt_device
 
     # Mounten
     fs_type=$(file -Ls "/dev/mapper/$mountDir" | grep -ioE '(btrfs|ext)')
@@ -158,7 +132,6 @@ function configure_display_and_user() {
     # Systemen mit nur einem Benutzer sollte es aber keine Probleme geben. Wenn
     # das Skript jedoch von Hand gestartet wird, kann alles automatisch
     # bestimmt werden.
-    start_via_udev="false"
     if [[ "$start_via_udev" == true ]]
     then
       DISPLAY=:0; export DISPLAY
@@ -182,6 +155,45 @@ function parse_cli_arguments() {
 }
 
 
+function decrypt_device() {
+    if [[ -e $keyFileName ]]
+    then
+        decrypt_device_by_keyfile
+    fi
+    if [[ ! -e $keyFileName || $keyFileWorked -eq 2 ]]
+    then
+        decrypt_device_by_password
+    fi
+}
 
+
+function decrypt_device_by_keyfile() {
+    cryptsetup luksOpen "$device" "$mountDir" --key-file $keyFileName
+    keyFileWorked=$?
+    if [[ $keyFileWorked -eq 2 ]]
+    then
+        sudo -u "$curUser" "$infobox" "Das Backupziel kann mit der Schlüsseldatei $keyFileName nicht entschlüsselt werden. Bitte geben Sie das korrekte Passwort manuell ein."
+    elif [[ $keyFileWorked -ne 0 ]]
+    then
+        misserfolg "Das Backupziel konnte nicht entschlüsselt werden. Der Fehlercode von cryptsetup ist $keyFileWorked."
+    fi
+}
+
+
+function decrypt_device_by_password() {
+    errmsg="Die Passworteingabe wurde abgebrochen. Die Erstellung der Sicherheitskopie kann daher nicht fortgesetzt werden."
+    if ! pwt=$(sudo -u "$curUser" "$pwd_prompt" "Bitte Passwort eingeben.")
+    then
+        misserfolg "$errmsg"
+    fi
+
+    while ! echo "$pwt" | cryptsetup luksOpen "$device" "$mountDir"
+    do
+        if ! pwt=$(sudo -u "$curUser" "$pwd_prompt" "Das Passwort war falsch. Bitte nochmal eingeben!")
+        then
+          misserfolg "$errmsg"
+        fi
+    done
+}
 
 main "$@"
