@@ -2,21 +2,22 @@
 #Übernimmt als Parameter den Gerätenamen, z.B. 'sdb1'.
 
 function misserfolg {
-  sudo -u "$curUser" $infobox "$@"
+  sudo -u "$curUser" "$infobox" "$@"
   if [[ ! -z "$mountDir" ]]
   then
     aufraeumen
     if [[ -e "/media/$mountDir" ]]
     then
+      # shellcheck disable=SC2089
       del_str="\nDer Ordner \"/media/$mountDir\" muss manuell gelöscht werden."
     fi
     if [[ -e "/dev/mapper/$mountDir" ]]
     then
       del_str="$del_str\nDas Backupziel konnte nicht sauber entfernt werden. Die Entschlüsselung in \"/dev/mapper/$mountDir\" muss daher manuell gelöst werden."
     fi
-    if [[ ! -z "$delStr" ]]
+    if [[ ! -z "$del_str" ]]
     then
-      sudo -u "$curUser" $infobox $del_str
+      sudo -u "$curUser" "$infobox" "$del_str"
     fi
   fi
   exit
@@ -61,7 +62,7 @@ else
   curUser=$(who am i | awk '{print $1}') #ACHTUNG: 'who am i' kann nicht durch 'whoami' ersetzt werden!
 fi
 
-if ! sudo -u "$curUser" $yesno_question "Soll eine Sicherungskopie erstellt werden?"
+if ! sudo -u "$curUser" "$yesno_question" "Soll eine Sicherungskopie erstellt werden?"
 then
   exit
 fi
@@ -86,7 +87,7 @@ then
   keyFileWorked=$?
   if [[ $keyFileWorked -eq 2 ]]
   then
-    sudo -u "$curUser" $infobox "Das Backupziel kann mit der Schlüsseldatei $keyFileName nicht entschlüsselt werden. Bitte geben Sie das korrekte Passwort manuell ein."
+    sudo -u "$curUser" "$infobox" "Das Backupziel kann mit der Schlüsseldatei $keyFileName nicht entschlüsselt werden. Bitte geben Sie das korrekte Passwort manuell ein."
   elif [[ $keyFileWorked -ne 0 ]]
   then
     misserfolg "Das Backupziel konnte nicht entschlüsselt werden. Der Fehlercode von cryptsetup ist $keyFileWorked."
@@ -94,16 +95,14 @@ then
 fi
 if [[ ! -e $keyFileName || $keyFileWorked -eq 2 ]]
 then
-  pwt=$(sudo -u "$curUser" $pwd_prompt "Bitte Passwort eingeben.")
-  if [[ $? -ne 0 ]]
+  if ! pwt=$(sudo -u "$curUser" "$pwd_prompt" "Bitte Passwort eingeben.")
   then
     misserfolg "Die Passworteingabe wurde abgebrochen. Die Erstellung der Sicherheitskopie kann daher nicht fortgesetzt werden."
   fi
 
   while ! echo "$pwt" | cryptsetup luksOpen "$device" "$mountDir"
   do
-    pwt=$(sudo -u "$curUser" $pwd_prompt "Das Passwort war falsch. Bitte nochmal eingeben!")
-    if [[ $? -ne 0 ]]
+    if ! pwt=$(sudo -u "$curUser" "$pwd_prompt" "Das Passwort war falsch. Bitte nochmal eingeben!")
     then
       misserfolg "Die Passworteingabe wurde abgebrochen. Die Erstellung der Sicherheitskopie kann daher nicht fortgesetzt werden."
     fi
@@ -111,7 +110,7 @@ then
 fi
 
 #Mounten
-fs_type=$(file -Ls /dev/mapper/$mountDir | grep -ioE '(btrfs|ext)')
+fs_type=$(file -Ls "/dev/mapper/$mountDir" | grep -ioE '(btrfs|ext)')
 if [[ "$fs_type" == "" ]]
 then
   misserfolg "Unbekanntes Dateisystem gefunden. Unterstützt werden nur 'ext' und 'btrfs'."
@@ -126,7 +125,7 @@ then
   mount_opts="-o compress=zlib"
 fi
 mkdir "/media/$mountDir"
-if ! mount $mount_opts "/dev/mapper/$mountDir" "/media/$mountDir"
+if ! mount "$mount_opts" "/dev/mapper/$mountDir" "/media/$mountDir"
 then
   misserfolg "Das Einbinden des Backupziels ist fehlgeschlagen."
 fi
@@ -144,10 +143,10 @@ else
   misserfolg "Die Liste der zu kopierenden Ordner konnte nicht gefunden werden."
 fi
 
-grep -v '^\s*#' "$ordnerliste" | while read line
+grep -v '^\s*#' "$ordnerliste" | while read -r line
 do
-  orig=$(echo $line | cut -d ' ' -f1)/ # beachte abschließendes "/"!
-  ziel=$(echo $line | cut -d ' ' -f2)
+  orig=$(echo "$line" | cut -d ' ' -f1)/ # beachte abschließendes "/"!
+  ziel=$(echo "$line" | cut -d ' ' -f2)
   prefix="/media/$mountDir/Sicherungskopien/$ziel/"
   curBackup="$prefix/${ziel}_$curDate"
   if [[ "$fs_type_lc" == btrfs ]]
@@ -164,4 +163,4 @@ done
 #Aufräumen
 aufraeumen
 
-sudo -u "$curUser" $infobox "Eine Sicherungskopie wurde erfolgreich angelegt.";
+sudo -u "$curUser" "$infobox" "Eine Sicherungskopie wurde erfolgreich angelegt."
