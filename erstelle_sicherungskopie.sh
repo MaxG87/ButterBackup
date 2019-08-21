@@ -31,20 +31,7 @@ function aufraeumen {
 
 function main() {
     prepare_env_for_kde_or_gnome
-
-    # Wenn das Skript via UDEV gestartet wird, ist der Nutzer root und das
-    # Display nicht gesetzt. Daher müssen diese hier wild geraten werden. Bei
-    # Systemen mit nur einem Benutzer sollte es aber keine Probleme geben. Wenn
-    # das Skript jedoch von Hand gestartet wird, kann alles automatisch
-    # bestimmt werden.
-    start_via_udev="false"
-    if [[ "$start_via_udev" == true ]]
-    then
-      DISPLAY=:0; export DISPLAY
-      curUser='#1000' #Nutzername oder NutzerID eintragen
-    else
-      curUser=$(who am i | awk '{print $1}') #ACHTUNG: 'who am i' kann nicht durch 'whoami' ersetzt werden!
-    fi
+    configure_display_and_user
 
     if ! sudo -u "$curUser" "$yesno_question" "Soll eine Sicherungskopie erstellt werden?"
     then
@@ -172,6 +159,25 @@ function prepare_env_for_kde_or_gnome() {
       exit
     fi
 }
+
+
+function configure_display_and_user() {
+    # Wenn das Skript via UDEV gestartet wird, ist der Nutzer root und das
+    # Display nicht gesetzt. Daher müssen diese hier wild geraten werden. Bei
+    # Systemen mit nur einem Benutzer sollte es aber keine Probleme geben. Wenn
+    # das Skript jedoch von Hand gestartet wird, kann alles automatisch
+    # bestimmt werden.
+    start_via_udev="false"
+    if [[ "$start_via_udev" == true ]]
+    then
+      DISPLAY=:0; export DISPLAY
+      curUser='#1000' #Nutzername oder NutzerID eintragen
+    else
+      curUser=$(who am i | awk '{print $1}') #ACHTUNG: 'who am i' kann nicht durch 'whoami' ersetzt werden!
+    fi
+}
+
+
 
 
 main "$@"
