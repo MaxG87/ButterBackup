@@ -45,36 +45,7 @@ function main() {
     parse_cli_arguments "$@"
     decrypt_device
     mount_device
-
-    # Erstelle Sicherungskopien
-    curDate=$(date +%F_%H%M)
-    basedir=$(dirname "$0")
-    if [[ -f "$basedir/ordnerliste" ]]
-    then
-      ordnerliste="$basedir/ordnerliste"
-    elif [[ -f "$2" ]]
-    then
-      ordnerliste="$2"
-    else
-      misserfolg "Die Liste der zu kopierenden Ordner konnte nicht gefunden werden."
-    fi
-
-    grep -v '^\s*#' "$ordnerliste" | while read -r line
-    do
-      orig=$(echo "$line" | cut -d ' ' -f1)/ # beachte abschließendes "/"!
-      ziel=$(echo "$line" | cut -d ' ' -f2)
-      prefix="/media/$mountDir/Sicherungskopien/$ziel/"
-      curBackup="$prefix/${ziel}_$curDate"
-      if [[ "$fs_type_lc" == btrfs ]]
-      then
-        prevBackup=$(find "$prefix" -maxdepth 1 | sort | tail -n1)
-        cp -a --recursive --reflink=always "$prevBackup" "$curBackup"
-        rsync -ax --delete --inplace "$orig" "$curBackup"
-      else
-        prevBackup=$(ls "$prefix" | tail -n1)
-        rsync -ax --delete --link-dest="../$prevBackup" "$orig" "$curBackup"
-      fi
-    done
+    create_backup "$@"
 
     #Aufräumen
     aufraeumen
@@ -197,6 +168,38 @@ function mount_device() {
     then
       misserfolg "Das Einbinden des Backupziels ist fehlgeschlagen."
     fi
+}
+
+
+function create_backup() {
+    curDate=$(date +%F_%H%M)
+    basedir=$(dirname "$0")
+    if [[ -f "$basedir/ordnerliste" ]]
+    then
+      ordnerliste="$basedir/ordnerliste"
+    elif [[ -f "$2" ]]
+    then
+      ordnerliste="$2"
+    else
+      misserfolg "Die Liste der zu kopierenden Ordner konnte nicht gefunden werden."
+    fi
+
+    grep -v '^\s*#' "$ordnerliste" | while read -r line
+    do
+      orig=$(echo "$line" | cut -d ' ' -f1)/ # beachte abschließendes "/"!
+      ziel=$(echo "$line" | cut -d ' ' -f2)
+      prefix="/media/$mountDir/Sicherungskopien/$ziel/"
+      curBackup="$prefix/${ziel}_$curDate"
+      if [[ "$fs_type_lc" == btrfs ]]
+      then
+        prevBackup=$(find "$prefix" -maxdepth 1 | sort | tail -n1)
+        cp -a --recursive --reflink=always "$prevBackup" "$curBackup"
+        rsync -ax --delete --inplace "$orig" "$curBackup"
+      else
+        prevBackup=$(ls "$prefix" | tail -n1)
+        rsync -ax --delete --link-dest="../$prevBackup" "$orig" "$curBackup"
+      fi
+    done
 }
 
 main "$@"
