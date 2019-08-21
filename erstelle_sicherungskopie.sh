@@ -38,16 +38,7 @@ function main() {
       exit
     fi
 
-    # Validierung der Übergabeparameter
-    if [[ -e "$1" ]]
-    then
-      device="$1"
-    elif [[ -e "/dev/$1" ]]
-    then
-      device="/dev/$1";
-    else
-      misserfolg "Die Datei bzw. das Gerät, auf welche die Sicherungskopie gespielt werden soll, kann nicht gefunden werden."
-    fi
+    parse_cli_arguments "$@"
 
     # Öffne Gerät
     keyFileName=/opt/Sicherungskopien/keyfile_extern
@@ -174,6 +165,19 @@ function configure_display_and_user() {
       curUser='#1000' #Nutzername oder NutzerID eintragen
     else
       curUser=$(who am i | awk '{print $1}') #ACHTUNG: 'who am i' kann nicht durch 'whoami' ersetzt werden!
+    fi
+}
+
+
+function parse_cli_arguments() {
+    if [[ -e "$1" ]]
+    then
+      device="$1"
+    elif [[ -e "/dev/$1" ]]
+    then
+      device="/dev/$1";
+    else
+      misserfolg "Die Datei bzw. das Gerät, auf welche die Sicherungskopie gespielt werden soll, kann nicht gefunden werden."
     fi
 }
 
