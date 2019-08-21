@@ -44,27 +44,7 @@ function main() {
 
     parse_cli_arguments "$@"
     decrypt_device
-
-    # Mounten
-    fs_type=$(file -Ls "/dev/mapper/$mountDir" | grep -ioE '(btrfs|ext)')
-    if [[ "$fs_type" == "" ]]
-    then
-      misserfolg "Unbekanntes Dateisystem gefunden. Unterstützt werden nur 'ext' und 'btrfs'."
-    fi
-
-    fs_type_lc="${fs_type,,}" # in Kleinschreibung umwandeln
-    if [[ "$fs_type_lc" == btrfs ]]
-    then
-      # Komprimierung mit ZLIB, da dies die kleinsten Dateien verspricht. Mit
-      # ZSTD könnten noch höhere Komprimierungen erreicht werden, wenn ein
-      # höheres Level gewählt werden könnte. Dies ist noch nicht der Fall.
-      mount_opts="-o compress=zlib"
-    fi
-    mkdir "/media/$mountDir"
-    if ! mount "$mount_opts" "/dev/mapper/$mountDir" "/media/$mountDir"
-    then
-      misserfolg "Das Einbinden des Backupziels ist fehlgeschlagen."
-    fi
+    mount_device
 
     # Erstelle Sicherungskopien
     curDate=$(date +%F_%H%M)
@@ -194,6 +174,29 @@ function decrypt_device_by_password() {
           misserfolg "$errmsg"
         fi
     done
+}
+
+
+function mount_device() {
+    fs_type=$(file -Ls "/dev/mapper/$mountDir" | grep -ioE '(btrfs|ext)')
+    if [[ "$fs_type" == "" ]]
+    then
+      misserfolg "Unbekanntes Dateisystem gefunden. Unterstützt werden nur 'ext' und 'btrfs'."
+    fi
+
+    fs_type_lc="${fs_type,,}" # in Kleinschreibung umwandeln
+    if [[ "$fs_type_lc" == btrfs ]]
+    then
+      # Komprimierung mit ZLIB, da dies die kleinsten Dateien verspricht. Mit
+      # ZSTD könnten noch höhere Komprimierungen erreicht werden, wenn ein
+      # höheres Level gewählt werden könnte. Dies ist noch nicht der Fall.
+      mount_opts="-o compress=zlib"
+    fi
+    mkdir "/media/$mountDir"
+    if ! mount "$mount_opts" "/dev/mapper/$mountDir" "/media/$mountDir"
+    then
+      misserfolg "Das Einbinden des Backupziels ist fehlgeschlagen."
+    fi
 }
 
 main "$@"
