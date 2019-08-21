@@ -31,10 +31,11 @@ function aufraeumen {
 
 function main() {
 
-    #Wir betreten die Hölle der Platformabhängigkeit.
-    #Auf KDE-Systemen kann zenity nicht vorausgesetzt werden, auf GNOME-Systemen
-    #hingegen kdialog nicht. Daher muss der entsprechende Befehl zur Laufzeit
-    #bestimmt werden, um nicht immer zwei sehr ähnliche Skripte pflegen zu müssen.
+    # Wir betreten die Hölle der Platformabhängigkeit.
+    # Auf KDE-Systemen kann zenity nicht vorausgesetzt werden, auf
+    # GNOME-Systemen hingegen kdialog nicht. Daher muss der entsprechende
+    # Befehl zur Laufzeit bestimmt werden, um nicht immer zwei sehr ähnliche
+    # Skripte pflegen zu müssen.
     if type kdialog > /dev/null 2> /dev/null
     then
       yesno_question="kdialog --yesno"
@@ -46,15 +47,15 @@ function main() {
       pwd_prompt="zenity --password --text"
       infobox="zenity --info --text"
     else
-      #Stilles Fehlschlagen, da wir den Fehler ja nicht anzeigen können.
+      # Stilles Fehlschlagen, da wir den Fehler ja nicht anzeigen können.
       exit
     fi
 
-    #Wenn das Skript via UDEV gestartet wird, ist der Nutzer root und das Display
-    #nicht gesetzt. Daher müssen diese hier wild geraten werden. Bei Systemen mit
-    #nur einem Benutzer sollte es aber keine Probleme geben.
-    #Wenn das Skript jedoch von Hand gestartet wird, kann alles automatisch
-    #bestimmt werden.
+    # Wenn das Skript via UDEV gestartet wird, ist der Nutzer root und das
+    # Display nicht gesetzt. Daher müssen diese hier wild geraten werden. Bei
+    # Systemen mit nur einem Benutzer sollte es aber keine Probleme geben. Wenn
+    # das Skript jedoch von Hand gestartet wird, kann alles automatisch
+    # bestimmt werden.
     start_via_udev="false"
     if [[ "$start_via_udev" == true ]]
     then
@@ -69,7 +70,7 @@ function main() {
       exit
     fi
 
-    #Validierung der Übergabeparameter
+    # Validierung der Übergabeparameter
     if [[ -e "$1" ]]
     then
       device="$1"
@@ -80,7 +81,7 @@ function main() {
       misserfolg "Die Datei bzw. das Gerät, auf welche die Sicherungskopie gespielt werden soll, kann nicht gefunden werden."
     fi
 
-    #Öffne Gerät
+    # Öffne Gerät
     keyFileName=/opt/Sicherungskopien/keyfile_extern
     mountDir=$(date +%s)
     if [[ -e $keyFileName ]]
@@ -111,7 +112,7 @@ function main() {
       done
     fi
 
-    #Mounten
+    # Mounten
     fs_type=$(file -Ls "/dev/mapper/$mountDir" | grep -ioE '(btrfs|ext)')
     if [[ "$fs_type" == "" ]]
     then
@@ -121,8 +122,8 @@ function main() {
     fs_type_lc="${fs_type,,}" # in Kleinschreibung umwandeln
     if [[ "$fs_type_lc" == btrfs ]]
     then
-      # Komprimierung mit ZLIB, da dies die kleinsten Dateien verspricht.
-      # Mit ZSTD könnten noch höhere Komprimierungen erreicht werden, wenn ein
+      # Komprimierung mit ZLIB, da dies die kleinsten Dateien verspricht. Mit
+      # ZSTD könnten noch höhere Komprimierungen erreicht werden, wenn ein
       # höheres Level gewählt werden könnte. Dies ist noch nicht der Fall.
       mount_opts="-o compress=zlib"
     fi
@@ -132,7 +133,7 @@ function main() {
       misserfolg "Das Einbinden des Backupziels ist fehlgeschlagen."
     fi
 
-    #Erstelle Sicherungskopien
+    # Erstelle Sicherungskopien
     curDate=$(date +%F_%H%M)
     basedir=$(dirname "$0")
     if [[ -f "$basedir/ordnerliste" ]]
