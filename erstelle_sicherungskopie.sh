@@ -11,7 +11,9 @@ function initialise_defaults() {
 }
 
 function misserfolg {
-  sudo -u "$curUser" "$infobox" "$@"
+  # shellcheck disable=SC2086
+  # $infobox must be splitted
+  sudo -u "$curUser" $infobox "$@"
   if [[ ! -z "$mountDir" ]]
   then
     aufraeumen
@@ -29,7 +31,7 @@ function misserfolg {
       sudo -u "$curUser" "$infobox" "$del_str"
     fi
   fi
-  exit
+  exit 1
 }
 
 function aufraeumen {
