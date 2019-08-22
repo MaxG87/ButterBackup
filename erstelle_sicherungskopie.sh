@@ -40,6 +40,7 @@ function aufraeumen {
 
 function main() {
     initialise_defaults "$@"
+    parse_cli_arguments "$@"
     prepare_env_for_kde_or_gnome
     configure_display_and_user
 
@@ -48,7 +49,6 @@ function main() {
       exit
     fi
 
-    parse_cli_arguments "$@"
     decrypt_device
     mount_device
     create_backup "$@"
