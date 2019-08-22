@@ -46,9 +46,12 @@ function main() {
     configure_display_and_user
     parse_cli_arguments "$@"
 
-    if ! sudo -u "$curUser" "$yesno_question" "Soll eine Sicherungskopie erstellt werden?"
+    if [[ "$interactive" == "true" ]]
     then
-      exit
+        if ! sudo -u "$curUser" "$yesno_question" "Soll eine Sicherungskopie erstellt werden?"
+        then
+          exit
+        fi
     fi
 
     decrypt_device
@@ -56,7 +59,10 @@ function main() {
     create_backup "$@"
     aufraeumen
 
-    sudo -u "$curUser" "$infobox" "Eine Sicherungskopie wurde erfolgreich angelegt."
+    if [[ "$interactive" == "true" ]]
+    then
+        sudo -u "$curUser" "$infobox" "Eine Sicherungskopie wurde erfolgreich angelegt."
+    fi
 }
 
 
