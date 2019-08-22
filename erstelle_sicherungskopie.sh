@@ -1,9 +1,14 @@
 #!/bin/bash
 #Übernimmt als Parameter den Gerätenamen, z.B. 'sdb1'.
 
-keyFileName=/opt/Sicherungskopien/keyfile_extern
-mountDir=$(date +%s)
-start_via_udev="false"
+function initialise_defaults() {
+    basedir=$(dirname "$0")
+    curDate=$(date +%F_%H%M)
+    keyFileName=/opt/Sicherungskopien/keyfile_extern
+    mountDir=$(date +%s)
+    ordnerliste="$basedir/ordnerliste"
+    start_via_udev="false"
+}
 
 function misserfolg {
   sudo -u "$curUser" "$infobox" "$@"
@@ -34,6 +39,7 @@ function aufraeumen {
 }
 
 function main() {
+    initialise_defaults "$@"
     prepare_env_for_kde_or_gnome
     configure_display_and_user
 
@@ -170,8 +176,6 @@ function mount_device() {
 
 
 function create_backup() {
-    curDate=$(date +%F_%H%M)
-    basedir=$(dirname "$0")
     if [[ -f "$basedir/ordnerliste" ]]
     then
       ordnerliste="$basedir/ordnerliste"
