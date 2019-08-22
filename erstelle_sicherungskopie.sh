@@ -4,9 +4,9 @@
 function initialise_defaults() {
     basedir=$(dirname "$0")
     curDate=$(date +%F_%H%M)
+    interactive="true"
     keyFileName=/opt/Sicherungskopien/keyfile_extern
     mountDir=$(date +%s)
-    ordnerliste="$basedir/ordnerliste"
     start_via_udev="false"
 }
 
@@ -42,9 +42,9 @@ function aufraeumen {
 
 function main() {
     initialise_defaults "$@"
-    parse_cli_arguments "$@"
     prepare_env_for_kde_or_gnome
     configure_display_and_user
+    parse_cli_arguments "$@"
 
     if ! sudo -u "$curUser" "$yesno_question" "Soll eine Sicherungskopie erstellt werden?"
     then
@@ -100,14 +100,71 @@ function configure_display_and_user() {
 
 
 function parse_cli_arguments() {
-    if [[ -e "$1" ]]
+    if [[ $# -gt 3 ]]
     then
-      device="$1"
-    elif [[ -e "/dev/$1" ]]
+        echo "Skript mit zu vielen Argumente aufgerufen." >&2
+        exit 1
+    fi
+
+    device=""
+    ordnerliste=""
+    while [[ $# -gt 0 ]]
+    do
+        local curArg
+        curArg="$1"; shift
+        case "$curArg" in
+            -h|--help)
+                echo "Hilfetext noch nicht geschrieben" >&2
+                exit 1
+                ;;
+            -i|--interactive)
+                interactive="true"
+                ;;
+            --no-interactive)
+                interactive="false"
+                ;;
+            -*)
+                echo "Unbekanntes Argument '$curArg'." >&2
+                exit 1
+                ;;
+            *)
+                if [[ -z "$device" ]]
+                then
+                    parse_device_arg "$curArg"
+                elif [[ -z "$ordnerliste" ]]
+                then
+                    parse_ordnerliste_arg "$curArg"
+                else
+                    echo "Unerwartetes Argument '$curArg'." >&2
+                    exit 1
+                fi
+        esac
+    done
+    if [[ -z "$ordnerliste" ]]
     then
-      device="/dev/$1";
+        ordnerliste="$basedir/ordnerliste"
+    fi
+}
+
+function parse_device_arg() {
+    deviceArg="$0"; shift
+    if [[ -e "$deviceArg" ]]
+    then
+        device="$deviceArg"
+    elif [[ -e "/dev/$deviceArg" ]]
+    then
+        device="/dev/deviceArg";
     else
-      misserfolg "Die Datei bzw. das Gerät, auf welche die Sicherungskopie gespielt werden soll, kann nicht gefunden werden."
+        misserfolg "Die Datei bzw. das Gerät, auf welche die Sicherungskopie gespielt werden soll, kann nicht gefunden werden."
+    fi
+}
+
+
+function parse_ordnerliste_arg() {
+    ordnerliste="$1"; shift
+    if [[ ! -r "$ordnerliste" ]]
+    then
+        misserfolg "Die Liste der zu kopierenden Ordner ist nicht lesbar."
     fi
 }
 
@@ -178,16 +235,6 @@ function mount_device() {
 
 
 function create_backup() {
-    if [[ -f "$basedir/ordnerliste" ]]
-    then
-      ordnerliste="$basedir/ordnerliste"
-    elif [[ -f "$2" ]]
-    then
-      ordnerliste="$2"
-    else
-      misserfolg "Die Liste der zu kopierenden Ordner konnte nicht gefunden werden."
-    fi
-
     grep -v '^\s*#' "$ordnerliste" | while read -r line
     do
       orig=$(echo "$line" | cut -d ' ' -f1)/ # beachte abschließendes "/"!
