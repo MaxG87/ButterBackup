@@ -160,13 +160,13 @@ function parse_cli_arguments() {
 }
 
 function parse_device_arg() {
-    deviceArg="$0"; shift
+    deviceArg="$1"; shift
     if [[ -e "$deviceArg" ]]
     then
         device="$deviceArg"
     elif [[ -e "/dev/$deviceArg" ]]
     then
-        device="/dev/deviceArg";
+        device="/dev/$deviceArg";
     else
         misserfolg "Die Datei bzw. das Gerät, auf welche die Sicherungskopie gespielt werden soll, kann nicht gefunden werden."
     fi
