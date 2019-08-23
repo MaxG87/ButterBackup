@@ -247,13 +247,12 @@ function create_backup() {
       ziel=$(echo "$line" | cut -d ' ' -f2)
       prefix="/media/$mountDir/Sicherungskopien/$ziel/"
       curBackup="$prefix/${ziel}_$curDate"
+      prevBackup=$(find "$prefix" -maxdepth 1 | sort | tail -n1 | xargs basename)
       if [[ "$fs_type_lc" == btrfs ]]
       then
-        prevBackup=$(find "$prefix" -maxdepth 1 | sort | tail -n1)
-        cp -a --recursive --reflink=always "$prevBackup" "$curBackup"
+        cp -a --recursive --reflink=always "../$prevBackup" "$curBackup"
         rsync -ax --delete --inplace "$orig" "$curBackup"
       else
-        prevBackup=$(ls "$prefix" | tail -n1)
         rsync -ax --delete --link-dest="../$prevBackup" "$orig" "$curBackup"
       fi
     done
