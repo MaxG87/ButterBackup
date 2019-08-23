@@ -148,6 +148,11 @@ function parse_cli_arguments() {
                 fi
         esac
     done
+    if [[ -z "$device" ]]
+    then
+        echo "Kein Zielgerät für Backup angegeben!" >&2
+        exit 1
+    fi
     if [[ -z "$ordnerliste" ]]
     then
         ordnerliste="$basedir/ordnerliste"
