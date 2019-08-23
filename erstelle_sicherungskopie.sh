@@ -230,7 +230,7 @@ function decrypt_device_by_password() {
 
 function mount_device() {
     fs_type=$(file -Ls "/dev/mapper/$mountDir" | grep -ioE '(btrfs|ext)')
-    if [[ "$fs_type" == "" ]]
+    if [[ -z "$fs_type" ]]
     then
       misserfolg "Unbekanntes Dateisystem gefunden. Unterstützt werden nur 'ext' und 'btrfs'."
     fi
