@@ -48,7 +48,9 @@ function main() {
 
     if [[ "$interactive" == "true" ]]
     then
-        if ! sudo -u "$curUser" "$yesno_question" "Soll eine Sicherungskopie erstellt werden?"
+        # shellcheck disable=SC2086
+        # $yesno_question must be splitted
+        if ! sudo -u "$curUser" $yesno_question "Soll eine Sicherungskopie erstellt werden?"
         then
           exit
         fi
@@ -202,14 +204,18 @@ function decrypt_device_by_keyfile() {
 
 function decrypt_device_by_password() {
     errmsg="Die Passworteingabe wurde abgebrochen. Die Erstellung der Sicherheitskopie kann daher nicht fortgesetzt werden."
-    if ! pwt=$(sudo -u "$curUser" "$pwd_prompt" "Bitte Passwort eingeben.")
+    # shellcheck disable=SC2086
+    # $pwd_prompt must be splitted
+    if ! pwt=$(sudo -u "$curUser" $pwd_prompt "Bitte Passwort eingeben.")
     then
         misserfolg "$errmsg"
     fi
 
     while ! echo "$pwt" | cryptsetup luksOpen "$device" "$mountDir"
     do
-        if ! pwt=$(sudo -u "$curUser" "$pwd_prompt" "Das Passwort war falsch. Bitte nochmal eingeben!")
+        # shellcheck disable=SC2086
+        # $pwd_prompt must be splitted
+        if ! pwt=$(sudo -u "$curUser" $pwd_prompt "Das Passwort war falsch. Bitte nochmal eingeben!")
         then
           misserfolg "$errmsg"
         fi
@@ -233,7 +239,9 @@ function mount_device() {
       mount_opts="-o compress=zlib"
     fi
     mkdir "/media/$mountDir"
-    if ! mount "$mount_opts" "/dev/mapper/$mountDir" "/media/$mountDir"
+    # shellcheck disable=SC2086
+    # $mount_opts must be splitted
+    if ! mount $mount_opts "/dev/mapper/$mountDir" "/media/$mountDir"
     then
       misserfolg "Das Einbinden des Backupziels ist fehlgeschlagen."
     fi
