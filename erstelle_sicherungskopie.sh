@@ -45,9 +45,9 @@ function echo_or_infobox() {
 
 
 function aufraeumen {
-  [[ -e "/media/$mountDir" ]]      && umount "/media/$mountDir"
-  [[ -e "/dev/mapper/$mountDir" ]] && cryptsetup close "$mountDir"
-  [[ -e "/media/$mountDir" ]]      && rmdir "/media/$mountDir"
+    [[ -e "/media/$mountDir" ]]      && umount "/media/$mountDir"
+    [[ -e "/dev/mapper/$mountDir" ]] && cryptsetup close "$mountDir"
+    [[ -e "/media/$mountDir" ]]      && rmdir "/media/$mountDir"
 }
 
 function main() {
