@@ -11,9 +11,7 @@ function initialise_defaults() {
 }
 
 function misserfolg {
-    # shellcheck disable=SC2086
-    # $infobox must be splitted
-    sudo -u "$curUser" $infobox "$@"
+    echo_or_infobox "$@"
     if [[ ! -z "$mountDir" ]]
     then
         aufraeumen
@@ -28,11 +26,24 @@ function misserfolg {
         fi
         if [[ ! -z "$del_str" ]]
         then
-            sudo -u "$curUser" "$infobox" "$del_str"
+            echo_or_infobox "$del_str"
         fi
     fi
     exit 1
 }
+
+
+function echo_or_infobox() {
+    if [[ "$interactive" == "false" || -z "$infobox" ]]
+    then
+        echo "$@" >&2
+    else
+        # shellcheck disable=SC2086
+        # $infobox must be splitted
+        sudo -u "$curUser" $infobox "$@"
+    fi
+}
+
 
 function aufraeumen {
   [[ -e "/media/$mountDir" ]]      && umount "/media/$mountDir"
@@ -61,10 +72,7 @@ function main() {
     create_backup "$@"
     aufraeumen
 
-    if [[ "$interactive" == "true" ]]
-    then
-        sudo -u "$curUser" "$infobox" "Eine Sicherungskopie wurde erfolgreich angelegt."
-    fi
+    echo_or_infobox "Eine Sicherungskopie wurde erfolgreich angelegt."
 }
 
 
@@ -199,7 +207,7 @@ function decrypt_device_by_keyfile() {
     keyFileWorked=$?
     if [[ $keyFileWorked -eq 2 ]]
     then
-        sudo -u "$curUser" "$infobox" "Das Backupziel kann mit der Schlüsseldatei $keyFileName nicht entschlüsselt werden. Bitte geben Sie das korrekte Passwort manuell ein."
+        echo_or_infobox "Das Backupziel kann mit der Schlüsseldatei $keyFileName nicht entschlüsselt werden. Bitte geben Sie das korrekte Passwort manuell ein."
     elif [[ $keyFileWorked -ne 0 ]]
     then
         misserfolg "Das Backupziel konnte nicht entschlüsselt werden. Der Fehlercode von cryptsetup ist $keyFileWorked."
