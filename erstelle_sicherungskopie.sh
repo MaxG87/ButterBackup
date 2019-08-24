@@ -11,27 +11,27 @@ function initialise_defaults() {
 }
 
 function misserfolg {
-  # shellcheck disable=SC2086
-  # $infobox must be splitted
-  sudo -u "$curUser" $infobox "$@"
-  if [[ ! -z "$mountDir" ]]
-  then
-    aufraeumen
-    if [[ -e "/media/$mountDir" ]]
+    # shellcheck disable=SC2086
+    # $infobox must be splitted
+    sudo -u "$curUser" $infobox "$@"
+    if [[ ! -z "$mountDir" ]]
     then
-      # shellcheck disable=SC2089
-      del_str="\nDer Ordner \"/media/$mountDir\" muss manuell gelöscht werden."
+        aufraeumen
+        if [[ -e "/media/$mountDir" ]]
+        then
+           # shellcheck disable=SC2089
+           del_str="\nDer Ordner \"/media/$mountDir\" muss manuell gelöscht werden."
+        fi
+        if [[ -e "/dev/mapper/$mountDir" ]]
+        then
+            del_str="$del_str\nDas Backupziel konnte nicht sauber entfernt werden. Die Entschlüsselung in \"/dev/mapper/$mountDir\" muss daher manuell gelöst werden."
+        fi
+        if [[ ! -z "$del_str" ]]
+        then
+            sudo -u "$curUser" "$infobox" "$del_str"
+        fi
     fi
-    if [[ -e "/dev/mapper/$mountDir" ]]
-    then
-      del_str="$del_str\nDas Backupziel konnte nicht sauber entfernt werden. Die Entschlüsselung in \"/dev/mapper/$mountDir\" muss daher manuell gelöst werden."
-    fi
-    if [[ ! -z "$del_str" ]]
-    then
-      sudo -u "$curUser" "$infobox" "$del_str"
-    fi
-  fi
-  exit 1
+    exit 1
 }
 
 function aufraeumen {
