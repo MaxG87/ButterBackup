@@ -12,22 +12,7 @@ function initialise_defaults() {
 
 function misserfolg {
     echo_or_infobox "$@"
-    [[ -z "$mountDir" ]] && exit 1
-
-    aufraeumen
-    if [[ -e "/media/$mountDir" ]]
-    then
-       # shellcheck disable=SC2089
-       del_str="\nDer Ordner \"/media/$mountDir\" muss manuell gelöscht werden."
-    fi
-    if [[ -e "/dev/mapper/$mountDir" ]]
-    then
-        del_str="$del_str\nDas Backupziel konnte nicht sauber entfernt werden. Die Entschlüsselung in \"/dev/mapper/$mountDir\" muss daher manuell gelöst werden."
-    fi
-    if [[ ! -z "$del_str" ]]
-    then
-        echo_or_infobox "$del_str"
-    fi
+    [[ -n "$mountDir" ]] && aufraeumen
     exit 1
 }
 
@@ -45,10 +30,17 @@ function echo_or_infobox() {
 
 
 function aufraeumen {
+    [[ -z "$mountDir" ]]             && return
+
     [[ -e "/media/$mountDir" ]]      && umount "/media/$mountDir"
     [[ -e "/dev/mapper/$mountDir" ]] && cryptsetup close "$mountDir"
     [[ -e "/media/$mountDir" ]]      && rmdir "/media/$mountDir"
+
+    [[ -e "/media/$mountDir" ]]      && del_str="\nDer Ordner \"/media/$mountDir\" muss manuell gelöscht werden."
+    [[ -e "/dev/mapper/$mountDir" ]] && del_str="$del_str\nDas Backupziel konnte nicht sauber entfernt werden. Die Entschlüsselung in \"/dev/mapper/$mountDir\" muss daher manuell gelöst werden."
+    [[ -n "$del_str" ]]            && echo_or_infobox "$del_str"
 }
+
 
 function main() {
     initialise_defaults "$@"
