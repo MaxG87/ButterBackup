@@ -1,6 +1,8 @@
 #!/bin/bash
 #Übernimmt als Parameter den Gerätenamen, z.B. 'sdb1'.
 
+set -euo pipefail
+
 function initialise_defaults() {
     basedir=$(dirname "$0")
     curDate=$(date +%F_%H%M)
