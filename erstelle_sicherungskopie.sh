@@ -34,7 +34,7 @@ function echo_or_infobox() {
 function aufraeumen {
     [[ -z "$mountDir" ]]             && return
 
-    [[ -e "/media/$mountDir" ]]      && umount "/media/$mountDir"
+    mount | egrep -q "/media/$mountDir" && umount "/media/$mountDir"
     [[ -e "/dev/mapper/$mountDir" ]] && cryptsetup close "$mountDir"
     [[ -e "/media/$mountDir" ]]      && rmdir "/media/$mountDir"
 
