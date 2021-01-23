@@ -34,7 +34,7 @@ function initialise_defaults() {
     curDate=$(date +%F_%H:%M:%S)
     interactive="true"
     keyFileName=/opt/Sicherungskopien/keyfile_extern
-    mapDevice=$(butterbackup_"${curDate}")
+    mapDevice="butterbackup_${curDate}"
     mountDir=$(mktemp -d)
     start_via_udev="false"
 }
@@ -67,7 +67,7 @@ function aufraeumen {
 
     [[ -e "${mountDir}" ]]      && del_str="\nDer Ordner \"${mountDir}\" muss manuell gelöscht werden."
     [[ -e "/dev/mapper/${mapDevice}" ]] && del_str="$del_str\nDas Backupziel konnte nicht sauber entfernt werden. Die Entschlüsselung in \"/dev/mapper/${mapDevice}\" muss daher manuell gelöst werden."
-    [[ -n "$del_str" ]]            && echo_or_infobox "$del_str"
+    [[ -n "${del_str:-}" ]]            && echo_or_infobox "$del_str"
 }
 
 
@@ -249,14 +249,16 @@ function mount_device() {
 
 
 function create_backup() {
+    # Snapshot der alten Sicherungskopie duplizieren
+    src_snapshot=$(find "${mountDir}" -maxdepth 1 -iname "202?-*" | sort | tail -n1)
+    backup_root="${mountDir}/${curDate}"
+    btrfs subvolume snapshot "${src_snapshot}" "${backup_root}"
+
     grep -v '^\s*#' "$ordnerliste" | while read -r line
     do
         orig=$(echo "$line" | cut -d ' ' -f1)/ # beachte abschließendes "/"!
         ziel=$(echo "$line" | cut -d ' ' -f2)
-        prefix="${mountDir}/$ziel/"
-        curBackup="$prefix/${ziel}_$curDate"
-        prevBackup=$(find "$prefix" -maxdepth 1 | sort | tail -n1)
-        cp -a --recursive --reflink=always "$prevBackup" "$curBackup"
+        curBackup="${backup_root}/${ziel}"
         rsync -ax --delete --inplace "$orig" "$curBackup"
     done
 }
