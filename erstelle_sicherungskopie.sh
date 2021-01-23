@@ -253,7 +253,7 @@ function create_backup() {
     do
       orig=$(echo "$line" | cut -d ' ' -f1)/ # beachte abschließendes "/"!
       ziel=$(echo "$line" | cut -d ' ' -f2)
-      prefix="/media/$mountDir/Sicherungskopien/$ziel/"
+      prefix="/media/$mountDir/$ziel/"
       curBackup="$prefix/${ziel}_$curDate"
       prevBackup=$(find "$prefix" -maxdepth 1 | sort | tail -n1)
       cp -a --recursive --reflink=always "$prevBackup" "$curBackup"
