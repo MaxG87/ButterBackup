@@ -3,6 +3,32 @@
 
 set -euo pipefail
 
+
+function main() {
+    initialise_defaults "$@"
+    prepare_env_for_kde_or_gnome
+    configure_display_and_user
+    parse_cli_arguments "$@"
+
+    if [[ "$interactive" == "true" ]]
+    then
+        # shellcheck disable=SC2086
+        # $yesno_question must be splitted
+        if ! sudo -u "$curUser" $yesno_question "Soll eine Sicherungskopie erstellt werden?"
+        then
+          exit
+        fi
+    fi
+
+    decrypt_device
+    mount_device
+    create_backup "$@"
+    aufraeumen
+
+    echo_or_infobox "Eine Sicherungskopie wurde erfolgreich angelegt."
+}
+
+
 function initialise_defaults() {
     basedir=$(dirname "$0")
     curDate=$(date +%F_%H%M)
@@ -41,31 +67,6 @@ function aufraeumen {
     [[ -e "/media/$mountDir" ]]      && del_str="\nDer Ordner \"/media/$mountDir\" muss manuell gelöscht werden."
     [[ -e "/dev/mapper/$mountDir" ]] && del_str="$del_str\nDas Backupziel konnte nicht sauber entfernt werden. Die Entschlüsselung in \"/dev/mapper/$mountDir\" muss daher manuell gelöst werden."
     [[ -n "$del_str" ]]            && echo_or_infobox "$del_str"
-}
-
-
-function main() {
-    initialise_defaults "$@"
-    prepare_env_for_kde_or_gnome
-    configure_display_and_user
-    parse_cli_arguments "$@"
-
-    if [[ "$interactive" == "true" ]]
-    then
-        # shellcheck disable=SC2086
-        # $yesno_question must be splitted
-        if ! sudo -u "$curUser" $yesno_question "Soll eine Sicherungskopie erstellt werden?"
-        then
-          exit
-        fi
-    fi
-
-    decrypt_device
-    mount_device
-    create_backup "$@"
-    aufraeumen
-
-    echo_or_infobox "Eine Sicherungskopie wurde erfolgreich angelegt."
 }
 
 
