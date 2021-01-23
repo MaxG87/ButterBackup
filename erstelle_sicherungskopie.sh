@@ -16,7 +16,7 @@ function main() {
         # $yesno_question must be splitted
         if ! sudo -u "$curUser" $yesno_question "Soll eine Sicherungskopie erstellt werden?"
         then
-          exit
+            exit
         fi
     fi
 
@@ -79,17 +79,17 @@ function prepare_env_for_kde_or_gnome() {
     # Skripte pflegen zu müssen.
     if type kdialog > /dev/null 2> /dev/null
     then
-      yesno_question="kdialog --yesno"
-      pwd_prompt="kdialog --password"
-      infobox="kdialog --msgbox"
+        yesno_question="kdialog --yesno"
+        pwd_prompt="kdialog --password"
+        infobox="kdialog --msgbox"
     elif type zenity > /dev/null 2> /dev/null
     then
-      yesno_question="zenity --question --text"
-      pwd_prompt="zenity --password --text"
-      infobox="zenity --info --text"
+        yesno_question="zenity --question --text"
+        pwd_prompt="zenity --password --text"
+        infobox="zenity --info --text"
     else
-      # Stilles Fehlschlagen, da wir den Fehler ja nicht anzeigen können.
-      exit
+        # Stilles Fehlschlagen, da wir den Fehler ja nicht anzeigen können.
+        exit
     fi
 }
 
@@ -102,10 +102,10 @@ function configure_display_and_user() {
     # bestimmt werden.
     if [[ "$start_via_udev" == true ]]
     then
-      DISPLAY=:0; export DISPLAY
-      curUser='#1000' #Nutzername oder NutzerID eintragen
+        DISPLAY=:0; export DISPLAY
+        curUser='#1000' #Nutzername oder NutzerID eintragen
     else
-      curUser=$(who am i | awk '{print $1}') #ACHTUNG: 'who am i' kann nicht durch 'whoami' ersetzt werden!
+        curUser=$(who am i | awk '{print $1}') #ACHTUNG: 'who am i' kann nicht durch 'whoami' ersetzt werden!
     fi
 }
 
@@ -225,7 +225,7 @@ function decrypt_device_by_password() {
         # $pwd_prompt must be splitted
         if ! pwt=$(sudo -u "$curUser" $pwd_prompt "Das Passwort war falsch. Bitte nochmal eingeben!")
         then
-          misserfolg "$errmsg"
+            misserfolg "$errmsg"
         fi
     done
 }
@@ -235,7 +235,7 @@ function mount_device() {
     fs_type=$(file -Ls "/dev/mapper/${mapDevice}" | grep -ioE 'btrfs')
     if [[ -z "$fs_type" ]]
     then
-      misserfolg "Unbekanntes Dateisystem gefunden. Unterstützt wird nur 'btrfs'."
+        misserfolg "Unbekanntes Dateisystem gefunden. Unterstützt wird nur 'btrfs'."
     fi
 
     # Komprimierung mit ZLIB, da dies die kleinsten Dateien verspricht. Mit
@@ -243,7 +243,7 @@ function mount_device() {
     # höheres Level gewählt werden könnte. Dies ist noch nicht der Fall.
     if ! mount -o compress=zlib "/dev/mapper/${mapDevice}" "${mountDir}"
     then
-      misserfolg "Das Einbinden des Backupziels ist fehlgeschlagen."
+        misserfolg "Das Einbinden des Backupziels ist fehlgeschlagen."
     fi
 }
 
@@ -251,13 +251,13 @@ function mount_device() {
 function create_backup() {
     grep -v '^\s*#' "$ordnerliste" | while read -r line
     do
-      orig=$(echo "$line" | cut -d ' ' -f1)/ # beachte abschließendes "/"!
-      ziel=$(echo "$line" | cut -d ' ' -f2)
-      prefix="${mountDir}/$ziel/"
-      curBackup="$prefix/${ziel}_$curDate"
-      prevBackup=$(find "$prefix" -maxdepth 1 | sort | tail -n1)
-      cp -a --recursive --reflink=always "$prevBackup" "$curBackup"
-      rsync -ax --delete --inplace "$orig" "$curBackup"
+        orig=$(echo "$line" | cut -d ' ' -f1)/ # beachte abschließendes "/"!
+        ziel=$(echo "$line" | cut -d ' ' -f2)
+        prefix="${mountDir}/$ziel/"
+        curBackup="$prefix/${ziel}_$curDate"
+        prevBackup=$(find "$prefix" -maxdepth 1 | sort | tail -n1)
+        cp -a --recursive --reflink=always "$prevBackup" "$curBackup"
+        rsync -ax --delete --inplace "$orig" "$curBackup"
     done
 }
 
