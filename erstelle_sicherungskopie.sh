@@ -31,10 +31,11 @@ function main() {
 
 function initialise_defaults() {
     basedir=$(dirname "$0")
-    curDate=$(date +%F_%H%M)
+    curDate=$(date +%F_%H:%M:%S)
     interactive="true"
     keyFileName=/opt/Sicherungskopien/keyfile_extern
-    mountDir=$(date +%s)
+    mapDevice=$(butterbackup_"${curDate}")
+    mountDir=$(mktemp -d)
     start_via_udev="false"
 }
 
@@ -60,12 +61,12 @@ function echo_or_infobox() {
 function aufraeumen {
     [[ -z "$mountDir" ]]             && return
 
-    mount | egrep -q "/media/$mountDir" && umount "/media/$mountDir"
-    [[ -e "/dev/mapper/$mountDir" ]] && cryptsetup close "$mountDir"
-    [[ -e "/media/$mountDir" ]]      && rmdir "/media/$mountDir"
+    mount | grep -Fq "${mountDir}" && umount "${mountDir}"
+    [[ -e "/dev/mapper/${mapDevice}" ]] && cryptsetup close "${mapDevice}"
+    [[ -e "${mountDir}" ]]      && rmdir "${mountDir}"
 
-    [[ -e "/media/$mountDir" ]]      && del_str="\nDer Ordner \"/media/$mountDir\" muss manuell gelöscht werden."
-    [[ -e "/dev/mapper/$mountDir" ]] && del_str="$del_str\nDas Backupziel konnte nicht sauber entfernt werden. Die Entschlüsselung in \"/dev/mapper/$mountDir\" muss daher manuell gelöst werden."
+    [[ -e "${mountDir}" ]]      && del_str="\nDer Ordner \"${mountDir}\" muss manuell gelöscht werden."
+    [[ -e "/dev/mapper/${mapDevice}" ]] && del_str="$del_str\nDas Backupziel konnte nicht sauber entfernt werden. Die Entschlüsselung in \"/dev/mapper/${mapDevice}\" muss daher manuell gelöst werden."
     [[ -n "$del_str" ]]            && echo_or_infobox "$del_str"
 }
 
@@ -197,7 +198,7 @@ function decrypt_device() {
 
 
 function decrypt_device_by_keyfile() {
-    cryptsetup luksOpen "$device" "$mountDir" --key-file $keyFileName
+    cryptsetup luksOpen "$device" "${mapDevice}" --key-file $keyFileName
     keyFileWorked=$?
     if [[ $keyFileWorked -eq 2 ]]
     then
@@ -218,7 +219,7 @@ function decrypt_device_by_password() {
         misserfolg "$errmsg"
     fi
 
-    while ! echo "$pwt" | cryptsetup luksOpen "$device" "$mountDir"
+    while ! echo "$pwt" | cryptsetup luksOpen "$device" "${mapDevice}"
     do
         # shellcheck disable=SC2086
         # $pwd_prompt must be splitted
@@ -231,17 +232,16 @@ function decrypt_device_by_password() {
 
 
 function mount_device() {
-    fs_type=$(file -Ls "/dev/mapper/$mountDir" | grep -ioE 'btrfs')
+    fs_type=$(file -Ls "/dev/mapper/${mapDevice}" | grep -ioE 'btrfs')
     if [[ -z "$fs_type" ]]
     then
       misserfolg "Unbekanntes Dateisystem gefunden. Unterstützt wird nur 'btrfs'."
     fi
 
-    mkdir "/media/$mountDir"
     # Komprimierung mit ZLIB, da dies die kleinsten Dateien verspricht. Mit
     # ZSTD könnten noch höhere Komprimierungen erreicht werden, wenn ein
     # höheres Level gewählt werden könnte. Dies ist noch nicht der Fall.
-    if ! mount -o compress=zlib "/dev/mapper/$mountDir" "/media/$mountDir"
+    if ! mount -o compress=zlib "/dev/mapper/${mapDevice}" "${mountDir}"
     then
       misserfolg "Das Einbinden des Backupziels ist fehlgeschlagen."
     fi
@@ -253,7 +253,7 @@ function create_backup() {
     do
       orig=$(echo "$line" | cut -d ' ' -f1)/ # beachte abschließendes "/"!
       ziel=$(echo "$line" | cut -d ' ' -f2)
-      prefix="/media/$mountDir/$ziel/"
+      prefix="${mountDir}/$ziel/"
       curBackup="$prefix/${ziel}_$curDate"
       prevBackup=$(find "$prefix" -maxdepth 1 | sort | tail -n1)
       cp -a --recursive --reflink=always "$prevBackup" "$curBackup"
