@@ -231,24 +231,17 @@ function decrypt_device_by_password() {
 
 
 function mount_device() {
-    fs_type=$(file -Ls "/dev/mapper/$mountDir" | grep -ioE '(btrfs|ext)')
+    fs_type=$(file -Ls "/dev/mapper/$mountDir" | grep -ioE 'btrfs')
     if [[ -z "$fs_type" ]]
     then
-      misserfolg "Unbekanntes Dateisystem gefunden. Unterstützt werden nur 'ext' und 'btrfs'."
+      misserfolg "Unbekanntes Dateisystem gefunden. Unterstützt wird nur 'btrfs'."
     fi
 
-    fs_type_lc="${fs_type,,}" # in Kleinschreibung umwandeln
-    if [[ "$fs_type_lc" == btrfs ]]
-    then
-      # Komprimierung mit ZLIB, da dies die kleinsten Dateien verspricht. Mit
-      # ZSTD könnten noch höhere Komprimierungen erreicht werden, wenn ein
-      # höheres Level gewählt werden könnte. Dies ist noch nicht der Fall.
-      mount_opts="-o compress=zlib"
-    fi
     mkdir "/media/$mountDir"
-    # shellcheck disable=SC2086
-    # $mount_opts must be splitted
-    if ! mount $mount_opts "/dev/mapper/$mountDir" "/media/$mountDir"
+    # Komprimierung mit ZLIB, da dies die kleinsten Dateien verspricht. Mit
+    # ZSTD könnten noch höhere Komprimierungen erreicht werden, wenn ein
+    # höheres Level gewählt werden könnte. Dies ist noch nicht der Fall.
+    if ! mount -o compress=zlib "/dev/mapper/$mountDir" "/media/$mountDir"
     then
       misserfolg "Das Einbinden des Backupziels ist fehlgeschlagen."
     fi
@@ -263,14 +256,8 @@ function create_backup() {
       prefix="/media/$mountDir/Sicherungskopien/$ziel/"
       curBackup="$prefix/${ziel}_$curDate"
       prevBackup=$(find "$prefix" -maxdepth 1 | sort | tail -n1)
-      if [[ "$fs_type_lc" == btrfs ]]
-      then
-        cp -a --recursive --reflink=always "$prevBackup" "$curBackup"
-        rsync -ax --delete --inplace "$orig" "$curBackup"
-      else
-        backup_dir="$(basename "$prevBackup")"
-        rsync -ax --delete --link-dest="../$backup_dir" "$orig" "$curBackup"
-      fi
+      cp -a --recursive --reflink=always "$prevBackup" "$curBackup"
+      rsync -ax --delete --inplace "$orig" "$curBackup"
     done
 }
 
