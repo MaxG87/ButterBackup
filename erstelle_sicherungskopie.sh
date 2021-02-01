@@ -67,7 +67,7 @@ function aufraeumen {
 
     [[ -e "${mountDir}" ]]      && del_str="\nDer Ordner \"${mountDir}\" muss manuell gelöscht werden."
     [[ -e "/dev/mapper/${mapDevice}" ]] && del_str="$del_str\nDas Backupziel konnte nicht sauber entfernt werden. Die Entschlüsselung in \"/dev/mapper/${mapDevice}\" muss daher manuell gelöst werden."
-    [[ -n "${del_str:-}" ]]            && echo_or_infobox "$del_str"
+    [[ -n ${del_str:-} ]]            || echo_or_infobox "$del_str"
 }
 
 
