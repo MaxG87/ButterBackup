@@ -22,7 +22,7 @@ function main() {
 
     decrypt_device
     mount_device
-    create_backup "$@"
+    create_backup
     aufraeumen
 
     echo_or_infobox "Eine Sicherungskopie wurde erfolgreich angelegt."
