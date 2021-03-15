@@ -39,7 +39,9 @@ packages:
 # - git: https://github.com/commercialhaskell/stack.git
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
 #
-# extra-deps: []
+extra-deps:
+    - optparse-generic-1.4.4@sha256:e14b67cd0fbb618dc12a8d8e94128f42971083b7de4b4cd4157aa82de8726b93,1801
+    - optparse-applicative-0.16.1.0@sha256:d410cc76e288b93d4ee7e06addc0381a7eaea43bcee0c3ced03f05cadec2f2fc,4836
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
