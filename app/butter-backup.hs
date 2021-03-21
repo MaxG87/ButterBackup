@@ -1,32 +1,35 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# OPTIONS_GHC -Werror #-}
 {-# OPTIONS_GHC -O2 #-}
-{-# LANGUAGE OverloadedStrings, DeriveGeneric #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE OverloadedStrings #-}
 
-import Control.Monad
-import Data.Aeson
-import GHC.Generics
-import System.Environment
-import System.Exit
-import System.Process (readProcess)
+import           Control.Monad
+import           Data.Aeson
 import qualified Data.ByteString.Lazy as B
-import qualified Data.Text as Text
+import qualified Data.Text            as Text
+import           GHC.Generics
+import           System.Environment
+import           System.Exit
+import           System.Process       (readProcess)
 
-data ButterConfig = ButterConfig {
-    uuid :: !Text.Text ,
-    passCmd :: !Text.Text
-} deriving (Show, Generic)
+data ButterConfig =
+  ButterConfig
+    { uuid    :: !Text.Text
+    , passCmd :: !Text.Text
+    }
+  deriving (Show, Generic)
 
 instance FromJSON ButterConfig
+
 instance ToJSON ButterConfig
 
 main :: IO ()
 main = do
-    config <- fmap parseArgs getArgs
-    join $ fmap print config
-
-    results <- fmap lines runShell
-    mapM_ (putStrLn . reverse) results
+  config <- fmap parseArgs getArgs
+  join $ fmap print config
+  results <- fmap lines runShell
+  mapM_ (putStrLn . reverse) results
 
 parseArgs :: [String] -> IO B.ByteString
 parseArgs ["-h"]               = printUsage >> exit
