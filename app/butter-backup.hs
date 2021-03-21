@@ -28,13 +28,15 @@ parseArgs _                    = printUsage >> Main.die
 readConfig :: String -> IO B.ByteString
 readConfig path = B.readFile path
 
-
 printUsage :: IO ()
 printUsage = putStrLn "Usage"
+
 printVersion :: IO ()
 printVersion = putStrLn "Usage"
+
 exit :: IO a
 exit = exitWith ExitSuccess
+
 die :: IO a
 die = exitWith $ ExitFailure 1
 
