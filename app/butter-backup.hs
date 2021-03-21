@@ -1,12 +1,24 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# OPTIONS_GHC -Werror #-}
 {-# OPTIONS_GHC -O2 #-}
+{-# LANGUAGE OverloadedStrings, DeriveGeneric #-}
 
 import Control.Monad
+import Data.Aeson
+import GHC.Generics
 import System.Environment
 import System.Exit
 import System.Process (readProcess)
 import qualified Data.ByteString.Lazy as B
+import qualified Data.Text as Text
+
+data ButterConfig = ButterConfig {
+    uuid :: !Text.Text ,
+    passCmd :: !Text.Text
+} deriving (Show, Generic)
+
+instance FromJSON ButterConfig
+instance ToJSON ButterConfig
 
 main :: IO ()
 main = do
