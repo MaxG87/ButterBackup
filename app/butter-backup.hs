@@ -4,6 +4,7 @@
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 
+-- import           Control.Monad
 import           Data.Aeson
 import qualified Data.ByteString.Lazy as B
 import qualified Data.Text            as Text
@@ -29,11 +30,14 @@ main = do
   config <- fmap parseArgs getArgs
   d <- (eitherDecode <$> config) :: IO (Either String [ButterConfig])
   case d of
-    Left msg    -> print msg >> Main.die
-    Right (x:_) -> print x
-    Right []    -> putStrLn "Empty Config" >> Main.die
+    Left msg  -> print msg >> Main.die
+    Right []  -> putStrLn "Empty Config" >> Main.die
+    Right lst -> print $ foldr Text.append "" $ map doButterBackup lst
   results <- fmap lines runShell
   mapM_ (putStrLn . reverse) results
+
+doButterBackup :: ButterConfig -> Text.Text
+doButterBackup cfg = uuid cfg
 
 parseArgs :: [String] -> IO B.ByteString
 parseArgs ["-h"]               = printUsage >> exit
