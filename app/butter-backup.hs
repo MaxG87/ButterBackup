@@ -16,6 +16,7 @@ data ButterConfig =
   ButterConfig
     { uuid    :: !Text.Text
     , passCmd :: !Text.Text
+    , routes  :: ![(Text.Text, Text.Text)]
     }
   deriving (Show, Generic)
 
