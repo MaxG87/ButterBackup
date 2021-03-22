@@ -4,7 +4,6 @@
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-import           Control.Monad
 import           Data.Aeson
 import qualified Data.ByteString.Lazy as B
 import qualified Data.Text            as Text
@@ -27,7 +26,11 @@ instance ToJSON ButterConfig
 main :: IO ()
 main = do
   config <- fmap parseArgs getArgs
-  join $ fmap print config
+  d <- (eitherDecode <$> config) :: IO (Either String [ButterConfig])
+  case d of
+    Left msg    -> print msg >> Main.die
+    Right (x:_) -> print x
+    Right []    -> putStrLn "Empty Config" >> Main.die
   results <- fmap lines runShell
   mapM_ (putStrLn . reverse) results
 
