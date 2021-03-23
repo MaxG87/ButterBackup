@@ -10,7 +10,7 @@ from argparse import ArgumentParser
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any
+from typing import Any, Optional
 
 
 @dataclass(frozen=True)
@@ -35,20 +35,27 @@ class RawButterConfig:
 
 @dataclass(frozen=True)
 class ButterConfig:
+    date: dt.date
     device: Path
-    map_name: str
     password: str
-    routes: list[tuple[str, str]]
+    routes: list[tuple[Path, str]]
+    map_base: str = "butterbackup_"
+
+    def map_name(self) -> str:
+        return self.map_base + self.date.isoformat()
+
+    def map_dir(self) -> Path:
+        return Path("/dev/mapper/") / self.map_name()
 
     @classmethod
     def from_raw_config(cls, raw_cfg: RawButterConfig) -> ButterConfig:
         device = Path("/dev/disk/by-uuid") / raw_cfg.uuid
-        pwd_process = run_cmd(cmd=raw_cfg.pass_cmd, env={}, capture_output=True)
+        pwd_process = run_cmd(cmd=raw_cfg.pass_cmd, capture_output=True)
         password = pwd_process.stdout.decode("utf-8").strip()
-        routes = raw_cfg.routes
+        routes = [(Path(src), dest) for (src, dest) in raw_cfg.routes]
         return cls(
+            date = dt.date.today(),
             device=device,
-            map_name=f"butterbackup_{dt.date.today().isoformat()}",
             password=password,
             routes=routes,
         )
@@ -76,21 +83,23 @@ def parse_args() -> Path:
     return cfg
 
 
-def do_butter_backup(cfg: ButterConfig) -> None:
+def do_butter_backup(cfg: ButterConfig) -> None:  # noqa: C901
     def decrypt(cfg: ButterConfig) -> None:
-        run_cmd(cmd=f"echo cryptsetup luksOpen '{cfg.device}' '{cfg.map_name}'", env={})
+        run_cmd(cmd=f"echo cryptsetup luksOpen '{cfg.device}' '{cfg.map_name()}'")
         subprocess.run("cat", check=True, input=cfg.password.encode(), shell=True)
 
     def mount(cfg: ButterConfig, mount_dir: Path) -> None:
-        map_device = Path("/dev/mapper/") / cfg.map_name
-        run_cmd(cmd=f"echo mount -o compress=zlib '{map_device}' '{mount_dir}'", env={})
+        run_cmd(cmd=f"echo mount -o compress=zlib '{cfg.map_dir()}' '{mount_dir}'")
+
+    def get_source_snapshot(root: Path) -> Path:
+        return max(root.glob("202?-*"))
+
+    def snapshot(*, src: Path, dest: Path) -> None:
+        run_cmd(cmd=f"btrfs subvolume snapshot '{src}' '{dest}'")
+
 
     def rsync(src, dest) -> None:
-        """
-        src_snapshot=$(find "${mountDir}" -maxdepth 1 -iname "202?-*" | sort | tail -n1)
-        backup_root="${mountDir}/${curDate}"
-        btrfs subvolume snapshot "${src_snapshot}" "${backup_root}"
-
+        r"""
         grep -v '^\s*#' "$ordnerliste" | while read -r line
         do
             orig=$(echo "$line" | cut -d ' ' -f1)/ # beachte abschließendes "/"!
@@ -102,15 +111,21 @@ def do_butter_backup(cfg: ButterConfig) -> None:
         print(src, dest)
 
     decrypt(cfg)
-    with TemporaryDirectory() as mount_dir:
-        mount(cfg, Path(mount_dir))
+    with TemporaryDirectory() as mount_dir_name:
+        mount_dir = Path(mount_dir_name)
+        mount(cfg, mount_dir)
+        src_snapshot = get_source_snapshot(mount_dir)
+        backup_root=mount_dir / dt.date.today().isoformat()
+        snapshot(src=src_snapshot, dest=backup_root)
         for src, dest in cfg.routes:
             rsync(src, dest)
 
 
 def run_cmd(
-    *, cmd: str, env: dict[str, str], capture_output: bool = False
+    *, cmd: str, env: Optional[dict[str, str]] = None, capture_output: bool = False
 ) -> subprocess.CompletedProcess:
+    if env is None:
+        env = {}
     result = subprocess.run(
         cmd, capture_output=capture_output, check=True, env=env, shell=True
     )
