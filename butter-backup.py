@@ -123,7 +123,7 @@ def do_butter_backup(cfg: ButterConfig) -> None:  # noqa: C901
         return max(root.glob("202?-*"))
 
     def snapshot(*, src: Path, dest: Path) -> None:
-        run_cmd(cmd=f"echo btrfs subvolume snapshot '{src}' '{dest}'")
+        run_cmd(cmd=f"sudo btrfs subvolume snapshot '{src}' '{dest}'")
 
     def rsync(src: Path, dest: Path) -> None:
         run_cmd(cmd=f"sudo rsync -ax --delete --inplace '{src}/' '{dest}'")
