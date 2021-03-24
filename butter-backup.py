@@ -17,13 +17,11 @@ from typing import Any, Optional
 class DecryptedDevice:
     device: Path
     map_name: str
-    password: str
+    pass_cmd: str
 
     def __enter__(self) -> Path:
         decrypt_cmd = f"sudo cryptsetup open '{self.device}' '{self.map_name}'"
-        subprocess.run(
-            decrypt_cmd, check=True, input=self.password.encode(), shell=True
-        )
+        subprocess.run(f"{self.pass_cmd} | {decrypt_cmd}", check=True, shell=True)
         return Path(f"/dev/mapper/{self.map_name}")
 
     def __exit__(self, exc, value, tb) -> None:
@@ -74,7 +72,7 @@ class ParsedButterConfig:
 class ButterConfig:
     date: dt.date
     device: Path
-    password: str
+    pass_cmd: str
     routes: list[tuple[Path, str]]
     map_base: str = "butterbackup_"
 
@@ -128,7 +126,7 @@ def do_butter_backup(cfg: ButterConfig) -> None:
     def rsync(src: Path, dest: Path) -> None:
         run_cmd(cmd=f"sudo rsync -ax --delete --inplace '{src}/' '{dest}'")
 
-    with DecryptedDevice(cfg.device, cfg.map_name(), cfg.password) as decrypted:
+    with DecryptedDevice(cfg.device, cfg.map_name(), cfg.pass_cmd) as decrypted:
         with MountedDevice(decrypted) as mount_dir:
             backup_root = mount_dir / dt.datetime.now().strftime("%F_%H:%M:%S")
             src_snapshot = get_source_snapshot(mount_dir)
