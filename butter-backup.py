@@ -14,6 +14,22 @@ from typing import Any, Optional
 
 
 @dataclass
+class DecryptedDevice:
+    device: Path
+    map_name: str
+    password: str
+
+    def __enter__(self) -> Path:
+        decrypt_cmd = f"sudo cryptsetup open '{self.device}' '{self.map_name}'"
+        subprocess.run(decrypt_cmd, check=True, input=self.password.encode(), shell=True)
+        return Path(f"/dev/mapper/{self.map_name}")
+
+    def __exit__(self, exc, value, tb):
+        decrypt_cmd = f"sudo cryptsetup close '{self.map_name}'"
+        run_cmd(cmd=decrypt_cmd)
+
+
+@dataclass
 class TemporaryMountDir:
     device: Path
     mount_dir: Optional[TemporaryDirectory] = None
@@ -103,10 +119,6 @@ def parse_args() -> Path:
 
 
 def do_butter_backup(cfg: ButterConfig) -> None:  # noqa: C901
-    def decrypt(cfg: ButterConfig) -> None:
-        run_cmd(cmd=f"echo cryptsetup luksOpen '{cfg.device}' '{cfg.map_name()}'")
-        subprocess.run("cat", check=True, input=cfg.password.encode(), shell=True)
-
     def get_source_snapshot(root: Path) -> Path:
         return max(root.glob("202?-*"))
 
@@ -116,15 +128,15 @@ def do_butter_backup(cfg: ButterConfig) -> None:  # noqa: C901
     def rsync(src, dest) -> None:
         run_cmd(cmd=f"echo rsync -ax --delete --inplace '{src}/' '{dest}'")
 
-    decrypt(cfg)
-    with TemporaryMountDir(cfg.map_dir()) as mount_dir:
-        backup_root=mount_dir / dt.date.today().isoformat()
-        src_snapshot = get_source_snapshot(mount_dir)
+    with DecryptedDevice(cfg.device, cfg.map_name(), cfg.password) as decrypted:
+        with TemporaryMountDir(decrypted) as mount_dir:
+            backup_root = mount_dir / dt.date.today().isoformat()
+            src_snapshot = get_source_snapshot(mount_dir)
 
-        snapshot(src=src_snapshot, dest=backup_root)
-        for src, dest_name in cfg.routes:
-            dest = backup_root / dest_name
-            rsync(src, dest)
+            snapshot(src=src_snapshot, dest=backup_root)
+            for src, dest_name in cfg.routes:
+                dest = backup_root / dest_name
+                rsync(src, dest)
 
 
 def run_cmd(
