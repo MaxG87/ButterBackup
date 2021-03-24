@@ -103,7 +103,8 @@ def main() -> None:
     for raw_cfg in config_lst:
         parsed_cfg = ParsedButterConfig.from_dict(raw_cfg)
         cfg = ButterConfig.from_raw_config(parsed_cfg)
-        do_butter_backup(cfg)
+        if cfg.device.exists():
+            do_butter_backup(cfg)
 
 
 def parse_args() -> Path:
