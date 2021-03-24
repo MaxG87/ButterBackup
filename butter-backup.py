@@ -130,7 +130,7 @@ def do_butter_backup(cfg: ButterConfig) -> None:  # noqa: C901
 
     with DecryptedDevice(cfg.device, cfg.map_name(), cfg.password) as decrypted:
         with TemporaryMountDir(decrypted) as mount_dir:
-            backup_root = mount_dir / dt.date.today().isoformat()
+            backup_root = mount_dir / dt.datetime.now().strftime("%F_%H:%M:%S")
             src_snapshot = get_source_snapshot(mount_dir)
 
             snapshot(src=src_snapshot, dest=backup_root)
