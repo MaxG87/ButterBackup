@@ -21,7 +21,9 @@ class DecryptedDevice:
 
     def __enter__(self) -> Path:
         decrypt_cmd = f"sudo cryptsetup open '{self.device}' '{self.map_name}'"
-        subprocess.run(decrypt_cmd, check=True, input=self.password.encode(), shell=True)
+        subprocess.run(
+            decrypt_cmd, check=True, input=self.password.encode(), shell=True
+        )
         return Path(f"/dev/mapper/{self.map_name}")
 
     def __exit__(self, exc, value, tb):
@@ -118,7 +120,7 @@ def parse_args() -> Path:
     return cfg
 
 
-def do_butter_backup(cfg: ButterConfig) -> None:  # noqa: C901
+def do_butter_backup(cfg: ButterConfig) -> None:
     def get_source_snapshot(root: Path) -> Path:
         return max(root.glob("202?-*"))
 
