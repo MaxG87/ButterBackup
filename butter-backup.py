@@ -99,25 +99,18 @@ def do_butter_backup(cfg: ButterConfig) -> None:  # noqa: C901
 
 
     def rsync(src, dest) -> None:
-        r"""
-        grep -v '^\s*#' "$ordnerliste" | while read -r line
-        do
-            orig=$(echo "$line" | cut -d ' ' -f1)/ # beachte abschließendes "/"!
-            ziel=$(echo "$line" | cut -d ' ' -f2)
-            curBackup="${backup_root}/${ziel}"
-            rsync -ax --delete --inplace "$orig" "$curBackup"
-        done
-        """
-        print(src, dest)
+        run_cmd(cmd=f"echo rsync -ax --delete --inplace '{src}/' '{dest}'")
 
     decrypt(cfg)
     with TemporaryDirectory() as mount_dir_name:
         mount_dir = Path(mount_dir_name)
-        mount(cfg, mount_dir)
-        src_snapshot = get_source_snapshot(mount_dir)
         backup_root=mount_dir / dt.date.today().isoformat()
+        src_snapshot = get_source_snapshot(mount_dir)
+
+        mount(cfg, mount_dir)
         snapshot(src=src_snapshot, dest=backup_root)
-        for src, dest in cfg.routes:
+        for src, dest_name in cfg.routes:
+            dest = backup_root / dest_name
             rsync(src, dest)
 
 
