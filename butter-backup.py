@@ -32,7 +32,7 @@ class DecryptedDevice:
 
 
 @dataclass
-class TemporaryMountDir:
+class MountedDevice:
     device: Path
     mount_dir: Optional[TemporaryDirectory] = None
 
@@ -131,7 +131,7 @@ def do_butter_backup(cfg: ButterConfig) -> None:
         run_cmd(cmd=f"sudo rsync -ax --delete --inplace '{src}/' '{dest}'")
 
     with DecryptedDevice(cfg.device, cfg.map_name(), cfg.password) as decrypted:
-        with TemporaryMountDir(decrypted) as mount_dir:
+        with MountedDevice(decrypted) as mount_dir:
             backup_root = mount_dir / dt.datetime.now().strftime("%F_%H:%M:%S")
             src_snapshot = get_source_snapshot(mount_dir)
 
