@@ -26,7 +26,7 @@ class DecryptedDevice:
         )
         return Path(f"/dev/mapper/{self.map_name}")
 
-    def __exit__(self, exc, value, tb):
+    def __exit__(self, exc, value, tb) -> None:
         decrypt_cmd = f"sudo cryptsetup close '{self.map_name}'"
         run_cmd(cmd=decrypt_cmd)
 
@@ -43,7 +43,7 @@ class MountedDevice:
         )
         return Path(self.mount_dir.name)
 
-    def __exit__(self, exc, value, tb):
+    def __exit__(self, exc, value, tb) -> None:
         if self.mount_dir is None:
             return
         run_cmd(cmd=f"sudo umount '{self.mount_dir.name}'")
@@ -87,18 +87,16 @@ class ButterConfig:
     @classmethod
     def from_raw_config(cls, raw_cfg: ParsedButterConfig) -> ButterConfig:
         device = Path("/dev/disk/by-uuid") / raw_cfg.uuid
-        pwd_process = run_cmd(cmd=raw_cfg.pass_cmd, capture_output=True)
-        password = pwd_process.stdout.decode("utf-8").strip()
         routes = [(Path(src).expanduser(), dest) for (src, dest) in raw_cfg.routes]
         return cls(
             date=dt.date.today(),
             device=device,
-            password=password,
+            pass_cmd=raw_cfg.pass_cmd,
             routes=routes,
         )
 
 
-def main():
+def main() -> None:
     cfg_file = parse_args()
     with cfg_file.open() as fh:
         config_lst = json.load(fh)
