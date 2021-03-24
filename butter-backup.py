@@ -13,6 +13,25 @@ from tempfile import TemporaryDirectory
 from typing import Any, Optional
 
 
+@dataclass
+class TemporaryMountDir:
+    device: Path
+    mount_dir: Optional[TemporaryDirectory] = None
+
+    def __enter__(self) -> Path:
+        self.mount_dir = TemporaryDirectory()
+        run_cmd(
+            cmd=f"sudo mount -o compress=zlib '{self.device}' '{self.mount_dir.name}'"
+        )
+        return Path(self.mount_dir.name)
+
+    def __exit__(self, exc, value, tb):
+        if self.mount_dir is None:
+            return
+        run_cmd(cmd=f"sudo umount '{self.mount_dir.name}'")
+        self.mount_dir.__exit__(exc, value, tb)
+
+
 @dataclass(frozen=True)
 class RawButterConfig:
     uuid: str
@@ -88,26 +107,20 @@ def do_butter_backup(cfg: ButterConfig) -> None:  # noqa: C901
         run_cmd(cmd=f"echo cryptsetup luksOpen '{cfg.device}' '{cfg.map_name()}'")
         subprocess.run("cat", check=True, input=cfg.password.encode(), shell=True)
 
-    def mount(cfg: ButterConfig, mount_dir: Path) -> None:
-        run_cmd(cmd=f"echo mount -o compress=zlib '{cfg.map_dir()}' '{mount_dir}'")
-
     def get_source_snapshot(root: Path) -> Path:
         return max(root.glob("202?-*"))
 
     def snapshot(*, src: Path, dest: Path) -> None:
         run_cmd(cmd=f"echo btrfs subvolume snapshot '{src}' '{dest}'")
 
-
     def rsync(src, dest) -> None:
         run_cmd(cmd=f"echo rsync -ax --delete --inplace '{src}/' '{dest}'")
 
     decrypt(cfg)
-    with TemporaryDirectory() as mount_dir_name:
-        mount_dir = Path(mount_dir_name)
+    with TemporaryMountDir(cfg.map_dir()) as mount_dir:
         backup_root=mount_dir / dt.date.today().isoformat()
         src_snapshot = get_source_snapshot(mount_dir)
 
-        mount(cfg, mount_dir)
         snapshot(src=src_snapshot, dest=backup_root)
         for src, dest_name in cfg.routes:
             dest = backup_root / dest_name
