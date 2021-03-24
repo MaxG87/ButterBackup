@@ -73,7 +73,7 @@ class ButterConfig:
         password = pwd_process.stdout.decode("utf-8").strip()
         routes = [(Path(src), dest) for (src, dest) in raw_cfg.routes]
         return cls(
-            date = dt.date.today(),
+            date=dt.date.today(),
             device=device,
             password=password,
             routes=routes,
