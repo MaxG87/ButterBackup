@@ -87,7 +87,7 @@ class ButterConfig:
         device = Path("/dev/disk/by-uuid") / raw_cfg.uuid
         pwd_process = run_cmd(cmd=raw_cfg.pass_cmd, capture_output=True)
         password = pwd_process.stdout.decode("utf-8").strip()
-        routes = [(Path(src), dest) for (src, dest) in raw_cfg.routes]
+        routes = [(Path(src).expanduser(), dest) for (src, dest) in raw_cfg.routes]
         return cls(
             date=dt.date.today(),
             device=device,
@@ -125,8 +125,8 @@ def do_butter_backup(cfg: ButterConfig) -> None:  # noqa: C901
     def snapshot(*, src: Path, dest: Path) -> None:
         run_cmd(cmd=f"echo btrfs subvolume snapshot '{src}' '{dest}'")
 
-    def rsync(src, dest) -> None:
-        run_cmd(cmd=f"echo rsync -ax --delete --inplace '{src}/' '{dest}'")
+    def rsync(src: Path, dest: Path) -> None:
+        run_cmd(cmd=f"sudo rsync -ax --delete --inplace '{src}/' '{dest}'")
 
     with DecryptedDevice(cfg.device, cfg.map_name(), cfg.password) as decrypted:
         with TemporaryMountDir(decrypted) as mount_dir:
