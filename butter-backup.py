@@ -51,13 +51,13 @@ class TemporaryMountDir:
 
 
 @dataclass(frozen=True)
-class RawButterConfig:
+class ParsedButterConfig:
     uuid: str
     pass_cmd: str
     routes: list[tuple[str, str]]
 
     @classmethod
-    def from_dict(cls, cfg: dict[str, Any]) -> RawButterConfig:
+    def from_dict(cls, cfg: dict[str, Any]) -> ParsedButterConfig:
         expected_keys = {"UUID", "PassCmd", "Routes"}
         if expected_keys != set(cfg.keys()):
             sys.exit("Additional or missing keys in configuration.")
@@ -85,7 +85,7 @@ class ButterConfig:
         return Path("/dev/mapper/") / self.map_name()
 
     @classmethod
-    def from_raw_config(cls, raw_cfg: RawButterConfig) -> ButterConfig:
+    def from_raw_config(cls, raw_cfg: ParsedButterConfig) -> ButterConfig:
         device = Path("/dev/disk/by-uuid") / raw_cfg.uuid
         pwd_process = run_cmd(cmd=raw_cfg.pass_cmd, capture_output=True)
         password = pwd_process.stdout.decode("utf-8").strip()
@@ -104,9 +104,9 @@ def main():
         config_lst = json.load(fh)
     if len(config_lst) == 0:
         sys.exit("Empty configurations are not allowed!\n")
-    for cfg in config_lst:
-        raw_cfg = RawButterConfig.from_dict(cfg)
-        cfg = ButterConfig.from_raw_config(raw_cfg)
+    for raw_cfg in config_lst:
+        parsed_cfg = ParsedButterConfig.from_dict(raw_cfg)
+        cfg = ButterConfig.from_raw_config(parsed_cfg)
         do_butter_backup(cfg)
 
 
