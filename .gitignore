@@ -1,3 +1,2 @@
-butter-backup
-dist-newstyle
-.stack-work/
+__pycache__/
+.hypothesis/
