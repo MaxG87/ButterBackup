@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "butter-backup"
+version = "1.0.0"
+description = "Vollverschlüsselte, pseudoinkrementelle Sicherungskopien leicht gemacht"
+authors = ["Max Görner <max@familie-goerner.eu>"]
+license = "GPL-3.0-or-later"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^3.9.0"
+hypothesis = "^6.9.1"
+isort = "^5.8.0"
+pytest = "^6.2.3"
+black = "^20.8b1"
+mypy = "^0.812"
+pynvim = "^0.4.3"
+jedi = "^0.18.0"
+pdbpp = "^0.10.2"
+
+[tool.poetry.scripts]
+butter-backup = "butter_backup.__main__:main"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
