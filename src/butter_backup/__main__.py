@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import os
 import subprocess
 import sys
 from argparse import ArgumentParser
@@ -12,7 +13,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Optional
 
-DEFAULT_CONFIG = Path("~/.config/butter-backup.cfg").expanduser()
+DEFAULT_CONFIG_DIR = Path("~/.config/").expanduser()
+DEFAULT_CONFIG_NAME = Path("butter-backup.cfg")
+DEFAULT_CONFIG = DEFAULT_CONFIG_DIR / DEFAULT_CONFIG_NAME
 
 
 @dataclass
@@ -111,7 +114,11 @@ def main() -> None:
 
 def parse_args() -> Path:
     parser = ArgumentParser()
-    parser.add_argument("--config", default=DEFAULT_CONFIG, type=Path)
+    parser.add_argument(
+        "--config",
+        default=os.getenv("XDG_CONFIG_HOME", DEFAULT_CONFIG_DIR) / DEFAULT_CONFIG_NAME,
+        type=Path,
+    )
     args = parser.parse_args()
     cfg: Path = args.config
     return cfg
