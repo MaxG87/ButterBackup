@@ -12,6 +12,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Optional
 
+DEFAULT_CONFIG = Path("~/.config/butter-backup.cfg").expanduser()
+
 
 @dataclass
 class DecryptedDevice:
@@ -109,9 +111,7 @@ def main() -> None:
 
 def parse_args() -> Path:
     parser = ArgumentParser()
-    parser.add_argument(
-        "--config", default=Path("~/.config/butter-backup.cfg").expanduser(), type=Path
-    )
+    parser.add_argument("--config", default=DEFAULT_CONFIG, type=Path)
     args = parser.parse_args()
     cfg: Path = args.config
     return cfg
