@@ -16,8 +16,17 @@ def test_no_args_parsing() -> None:
     assert config == default_config
 
 
-@given(config=path_to_config_files)
-def test_parse_args_returns_passed_file(config: str) -> None:
+@given(config=path_to_config_files, xdg_config=path_to_config_files)
+def test_parse_args_returns_passed_file(config: str, xdg_config: str) -> None:
     with mock.patch("sys.argv", ["butter-backup", "--config", config]):
-        parsed_config = bb.parse_args()
+        with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config}.get):
+            parsed_config = bb.parse_args()
     assert Path(config) == parsed_config
+
+
+@given(xdg_config=path_to_config_files)
+def test_parse_args_returns_xdg_config_home(xdg_config: str) -> None:
+    with mock.patch("sys.argv", ["butter-backup"]):
+        with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config}.get):
+            parsed_config = bb.parse_args()
+    assert Path(xdg_config) / bb.DEFAULT_CONFIG_NAME == parsed_config
