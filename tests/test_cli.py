@@ -6,7 +6,7 @@ from hypothesis import strategies as st
 
 from butter_backup import __main__ as bb
 
-path_to_config_files = st.text(min_size=1)
+path_to_config_files = st.text(st.characters(whitelist_categories="LN"), min_size=1)
 
 
 def test_no_args_parsing() -> None:
