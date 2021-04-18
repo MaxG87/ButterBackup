@@ -155,6 +155,16 @@ def do_butter_backup(cfg: ButterConfig) -> None:
                 rsync(src, dest)
 
 
+def is_mounted(dest: Path) -> bool:
+    return str(dest) in get_mounted_devices()
+
+
+def get_mounted_devices() -> set[str]:
+    raw_mounts = run_cmd(cmd="mount", capture_output=True)
+    mount_lines = raw_mounts.stdout.decode().splitlines()
+    return {line.split()[0] for line in mount_lines}
+
+
 def run_cmd(
     *, cmd: str, env: Optional[dict[str, str]] = None, capture_output: bool = False
 ) -> subprocess.CompletedProcess:
