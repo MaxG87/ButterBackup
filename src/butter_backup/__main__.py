@@ -101,11 +101,8 @@ class ButterConfig:
 
 def main() -> None:
     cfg_file = parse_args()
-    with cfg_file.open() as fh:
-        config_lst = json.load(fh)
-    if len(config_lst) == 0:
-        sys.exit("Empty configurations are not allowed!\n")
-    for raw_cfg in config_lst:
+    config_list = load_configuration(cfg_file)
+    for raw_cfg in config_list:
         parsed_cfg = ParsedButterConfig.from_dict(raw_cfg)
         cfg = ButterConfig.from_raw_config(parsed_cfg)
         if cfg.device.exists():
@@ -122,6 +119,19 @@ def parse_args() -> Path:
     args = parser.parse_args()
     cfg: Path = args.config
     return cfg
+
+
+def load_configuration(cfg_file: Path) -> list[dict[str, Any]]:
+    if not cfg_file.exists():
+        err_msg = f"Konfigurationsdatei {cfg_file} existiert nicht."
+        help_hint = "Nutzen Sie `--help` um zu erfahren, wie eine Konfigurationsdatei explizit angegeben werden kann."
+        sys.exit(f"{err_msg} {help_hint}")
+
+    with cfg_file.open() as fh:
+        config_lst = json.load(fh)
+    if len(config_lst) == 0:
+        sys.exit("Empty configurations are not allowed!\n")
+    return config_lst  # type: ignore
 
 
 def do_butter_backup(cfg: ButterConfig) -> None:
