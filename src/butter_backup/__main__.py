@@ -159,10 +159,10 @@ def is_mounted(dest: Path) -> bool:
     return str(dest) in get_mounted_devices()
 
 
-def get_mounted_devices() -> set[str]:
+def get_mounted_devices() -> dict[str, Path]:
     raw_mounts = run_cmd(cmd="mount", capture_output=True)
     mount_lines = raw_mounts.stdout.decode().splitlines()
-    return {line.split()[0] for line in mount_lines}
+    return {line.split()[0]: Path(line.split()[2]) for line in mount_lines}
 
 
 def run_cmd(

@@ -6,6 +6,15 @@ import pytest
 from butter_backup import __main__ as bb
 
 
+@pytest.fixture
+def mounted_directories():
+    with TemporaryDirectory() as src:
+        with TemporaryDirectory() as mountpoint:
+            bb.run_cmd(cmd=f"sudo mount -o bind {src} {mountpoint}")
+            yield Path(src), Path(mountpoint)
+            bb.run_cmd(cmd=f"sudo umount {mountpoint}")
+
+
 def test_useful_error_on_missing_file_name() -> None:
     missing_cfg = Path("/path/to/nowhere/butter-backup.cfg")
     with pytest.raises(SystemExit) as sysexit:
@@ -22,3 +31,8 @@ def test_is_mounted_detects(dest: Path) -> None:
 def test_is_mounted_rejects() -> None:
     with TemporaryDirectory() as tempd:
         assert not bb.is_mounted(Path(tempd))
+
+
+def test_get_mounted_devices_includes_correct_mountpoints(mounted_directories) -> None:
+    src, mountpoint = mounted_directories
+    assert mountpoint in bb.get_mounted_devices().values()
