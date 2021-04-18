@@ -15,6 +15,17 @@ def mounted_directories():
             bb.run_cmd(cmd=f"sudo umount {mountpoint}")
 
 
+@pytest.fixture
+def btrfs_device():
+    btrfs_dev_size = 128 * 1024 ** 2  # ~109MiB is the minimum size for BtrFS
+    with TemporaryDirectory() as tempdir:
+        btrfs_device = Path(tempdir) / "btrfs-test-device.iso"
+        with btrfs_device.open("wb") as fh:
+            fh.write(bytes(btrfs_dev_size))
+        bb.run_cmd(cmd=f"sudo mkfs.btrfs {btrfs_device}")
+        yield btrfs_device
+
+
 def test_useful_error_on_missing_file_name() -> None:
     missing_cfg = Path("/path/to/nowhere/butter-backup.cfg")
     with pytest.raises(SystemExit) as sysexit:
@@ -36,3 +47,14 @@ def test_is_mounted_rejects() -> None:
 def test_get_mounted_devices_includes_correct_mountpoints(mounted_directories) -> None:
     src, mountpoint = mounted_directories
     assert mountpoint in bb.get_mounted_devices().values()
+
+
+def test_mounted_device(btrfs_device) -> None:
+    with bb.MountedDevice(btrfs_device) as md:
+        assert md.exists()
+        assert md.is_dir()
+        assert bb.is_mounted(btrfs_device)
+        assert md in bb.get_mounted_devices().values()
+    assert not md.exists()
+    assert not bb.is_mounted(btrfs_device)
+    assert md not in bb.get_mounted_devices().values()
