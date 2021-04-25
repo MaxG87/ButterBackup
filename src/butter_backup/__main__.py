@@ -40,6 +40,8 @@ class MountedDevice:
     mount_dir: Optional[TemporaryDirectory] = None
 
     def __enter__(self) -> Path:
+        if is_mounted(self.device):
+            unmount_device(self.device)
         self.mount_dir = TemporaryDirectory()
         mount_btrfs_device(self.device, Path(self.mount_dir.name))
         return Path(self.mount_dir.name)
