@@ -41,15 +41,13 @@ class MountedDevice:
 
     def __enter__(self) -> Path:
         self.mount_dir = TemporaryDirectory()
-        run_cmd(
-            cmd=f"sudo mount -o compress=zlib '{self.device}' '{self.mount_dir.name}'"
-        )
+        mount_btrfs_device(self.device, Path(self.mount_dir.name))
         return Path(self.mount_dir.name)
 
     def __exit__(self, exc, value, tb) -> None:
         if self.mount_dir is None:
             return
-        run_cmd(cmd=f"sudo umount '{self.mount_dir.name}'")
+        unmount_device(self.device)
         self.mount_dir.__exit__(exc, value, tb)
 
 
@@ -163,6 +161,14 @@ def get_mounted_devices() -> dict[str, Path]:
     raw_mounts = run_cmd(cmd="mount", capture_output=True)
     mount_lines = raw_mounts.stdout.decode().splitlines()
     return {line.split()[0]: Path(line.split()[2]) for line in mount_lines}
+
+
+def mount_btrfs_device(device: Path, mount_dir: Path) -> None:
+    run_cmd(cmd=f"sudo mount -o compress=zlib '{device}' '{mount_dir}'")
+
+
+def unmount_device(device: Path) -> None:
+    run_cmd(cmd=f"sudo umount '{device}'")
 
 
 def run_cmd(

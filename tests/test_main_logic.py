@@ -49,6 +49,13 @@ def test_get_mounted_devices_includes_correct_mountpoints(mounted_directories) -
     assert mountpoint in bb.get_mounted_devices().values()
 
 
+def test_unmount_device(btrfs_device) -> None:
+    with TemporaryDirectory() as mountpoint:
+        bb.mount_btrfs_device(btrfs_device, Path(mountpoint))
+        bb.unmount_device(btrfs_device)
+        assert not bb.is_mounted(btrfs_device)
+
+
 def test_mounted_device(btrfs_device) -> None:
     with bb.MountedDevice(btrfs_device) as md:
         assert md.exists()
