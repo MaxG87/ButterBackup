@@ -12,7 +12,6 @@ from butter_backup import __main__ as bb
 
 SUCCESS_CODES = {0, None}
 NOF_FOLDER_BACKUP_MAPPING_ELEMS = 2
-EXPECTED_CFG_KEYS = sorted({"UUID", "PassCmd", "Folders"})
 
 valid_uuids = st.text(
     st.characters(whitelist_categories=["Nd", "Lu", "Ll"]), min_size=1
@@ -27,7 +26,7 @@ valid_unparsed_configs = st.builds(
             min_size=NOF_FOLDER_BACKUP_MAPPING_ELEMS,
             max_size=NOF_FOLDER_BACKUP_MAPPING_ELEMS,
         )
-    ).map(tuple),
+    ),
 )
 
 
@@ -59,11 +58,13 @@ def test_load_configuration_parses(config) -> None:
 
 
 @given(
-    incomplete_cfg=st.dictionaries(
-        keys=st.sampled_from(EXPECTED_CFG_KEYS),
-        values=st.text(),
-        max_size=len(EXPECTED_CFG_KEYS) - 1,
-    )
+    incomplete_cfg=valid_unparsed_configs.flatmap(
+        lambda cfg_dict: st.lists(
+            st.sampled_from(sorted(cfg_dict.items())),
+            unique_by=lambda tup: tup[0],  # type: ignore
+            max_size=len(cfg_dict) - 1,
+        )
+    ).map(dict)
 )
 def test_parsing_config_fails_on_missing_keys(incomplete_cfg) -> None:
     with pytest.raises(SystemExit) as sysexit:
@@ -72,18 +73,15 @@ def test_parsing_config_fails_on_missing_keys(incomplete_cfg) -> None:
 
 
 @given(
-    config=st.builds(
-        dict,
-        UUID=valid_uuids,
-        PassCmd=st.text(),
-        Folders=st.lists(st.lists(st.text()))
-        .filter(
-            lambda lst: any(len(tup) != NOF_FOLDER_BACKUP_MAPPING_ELEMS for tup in lst)
-        )
-        .map(tuple),
-    )
+    config=valid_unparsed_configs,
+    invalid_folder_mapping=st.lists(st.text()).filter(
+        lambda lst: len(lst) != NOF_FOLDER_BACKUP_MAPPING_ELEMS
+    ),
 )
-def test_parsing_config_fails_on_malformed_folder_backiup_mappings(config) -> None:
+def test_parsing_config_fails_on_malformed_folder_backiup_mappings(
+    config, invalid_folder_mapping
+) -> None:
+    config["Folders"].append(invalid_folder_mapping)
     with pytest.raises(SystemExit) as sysexit:
         bb.ParsedButterConfig.from_dict(config)
     assert sysexit.value.code not in SUCCESS_CODES
