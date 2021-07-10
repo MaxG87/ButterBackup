@@ -19,7 +19,7 @@ DEFAULT_CONFIG_NAME = Path("butter-backup.cfg")
 DEFAULT_CONFIG = DEFAULT_CONFIG_DIR / DEFAULT_CONFIG_NAME
 
 
-@dataclass
+@dataclass(frozen=True)
 class DecryptedDevice:
     device: Path
     map_name: str
