@@ -241,3 +241,37 @@ def test_butter_config_rejects_duplicate_dest(base_config):
             with pytest.raises(SystemExit) as sysexit:
                 bb.ButterConfig.from_raw_config(raw_config)
             assert dest in sysexit.value.code  # type: ignore
+
+
+@given(base_config=valid_unparsed_configs)
+def test_butter_config_rejects_file_dest_collision(base_config):
+    dest_dir = "destination-directory"
+    base_config["Folders"] = [
+        ("/usr/bin", "backup_bins"),
+        ("/etc", dest_dir),
+        ("/var/log", "backup_logs"),
+    ]
+    base_config["Files"]["destination"] = dest_dir
+    with NamedTemporaryFile() as src:
+        base_config["Files"]["files"] = [src.name]
+        raw_config = bb.ParsedButterConfig.from_dict(base_config)
+        with pytest.raises(SystemExit) as sysexit:
+            bb.ButterConfig.from_raw_config(raw_config)
+        assert dest_dir in sysexit.value.code  # type: ignore
+
+
+@given(base_config=valid_unparsed_configs)
+def test_butter_config_rejects_filename_collision(base_config):
+    file_name = "my-file-name"
+    base_config["Folders"] = []
+    with TemporaryDirectory() as td1:
+        with TemporaryDirectory() as td2:
+            dirs = [td1, td2]
+            files = [Path(cur_dir) / file_name for cur_dir in dirs]
+            for f in files:
+                f.touch()
+            base_config["Files"]["files"] = [str(f) for f in files]
+            raw_config = bb.ParsedButterConfig.from_dict(base_config)
+            with pytest.raises(SystemExit) as sysexit:
+                bb.ButterConfig.from_raw_config(raw_config)
+            assert file_name in sysexit.value.code  # type: ignore

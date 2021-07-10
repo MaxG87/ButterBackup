@@ -91,21 +91,29 @@ class ButterConfig:
     def __post_init__(self) -> None:
         sources = Counter(src for (src, _) in self.folders)
         destinations = Counter(dest for (_, dest) in self.folders)
-        self.exit_with_message_upon_duplicate(sources, ("Quell", "Quellen"))
-        self.exit_with_message_upon_duplicate(destinations, ("Ziel", "Ziele"))
+        file_names = Counter(f.name for f in self.files)
+        self.exit_with_message_upon_duplicate(
+            sources, ("Quellverzeichnissen", "Quellen")
+        )
+        self.exit_with_message_upon_duplicate(
+            destinations, ("Zielverzeichnissen", "Ziele")
+        )
+        self.exit_with_message_upon_duplicate(file_names, ("Dateinamen", "Dateinamen"))
         self._ensure_all_folder_src_are_existing_dirs()
         self._ensure_all_file_src_are_existing_files()
+        if self.files_dest in destinations:
+            sys.exit(
+                f"Zielverzeichnis {self.files_dest} ist gleichzeitig Ziel für Ordner und Einzeldateien."
+            )
 
     @staticmethod
     def exit_with_message_upon_duplicate(
-        counts: Counter, errmsg_vals: tuple[str, str]
+        counts: Counter, token: tuple[str, str]
     ) -> None:
         if all(val == 1 for val in counts.values()):
             return
-        word1 = f"{errmsg_vals[0]}verzeichnissen"
-        word2 = f"{errmsg_vals[1]}"
         errmsg_begin = (
-            f"Duplikate in {word1} entdeckt. Folgende {word2} kommen doppelt vor:"
+            f"Duplikate in {token[0]} entdeckt. Folgende {token[1]} kommen doppelt vor:"
         )
         errmsg_body = " ".join(
             str(elem) for (elem, count) in counts.items() if count > 1
