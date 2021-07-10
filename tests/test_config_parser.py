@@ -102,15 +102,19 @@ def test_parsing_config_parses(config) -> None:
 
 @given(base_config=valid_unparsed_configs)
 def test_butter_config_accepts_raw_config(base_config):
-    with TemporaryDirectory() as src:
+    with TemporaryDirectory() as src_folder:
         with TemporaryDirectory() as dest:
-            folders = [(src, dest)]
-            base_config["Folders"] = folders
-            raw_config = bb.ParsedButterConfig.from_dict(base_config)
-            cfg = bb.ButterConfig.from_raw_config(raw_config)
+            with NamedTemporaryFile() as src_file:
+                folders = [(src_folder, dest)]
+                base_config["Folders"] = folders
+                base_config["Files"]["files"] = [src_file.name]
+                raw_config = bb.ParsedButterConfig.from_dict(base_config)
+                cfg = bb.ButterConfig.from_raw_config(raw_config)
     assert cfg.pass_cmd == raw_config.pass_cmd
     assert str(cfg.device).endswith(raw_config.uuid)
     assert {(str(src), str(dest)) for (src, dest) in cfg.folders} == raw_config.folders
+    assert {str(file) for file in cfg.files} == raw_config.files
+    assert cfg.files_dest == raw_config.files_dest
 
 
 @given(base_config=valid_unparsed_configs)
@@ -124,6 +128,7 @@ def test_butter_config_rejects_missing_folder_src(base_config):
         ("/var/log", "backup_logs"),
     ]
     base_config["Folders"] = folders
+    base_config["Files"]["files"] = []
     raw_config = bb.ParsedButterConfig.from_dict(base_config)
     with pytest.raises(SystemExit) as sysexit:
         bb.ButterConfig.from_raw_config(raw_config)
@@ -143,6 +148,7 @@ def test_butter_config_rejects_non_dir_src(base_config):
             ("/var/log", "backup_logs"),
         ]
         base_config["Folders"] = folders
+        base_config["Files"]["files"] = []
         raw_config = bb.ParsedButterConfig.from_dict(base_config)
         with pytest.raises(SystemExit) as sysexit:
             bb.ButterConfig.from_raw_config(raw_config)
@@ -152,18 +158,49 @@ def test_butter_config_rejects_non_dir_src(base_config):
 
 
 @given(base_config=valid_unparsed_configs)
+def test_butter_config_rejects_missing_file_src(base_config):
+    with NamedTemporaryFile() as src:
+        pass
+    base_config["Folders"] = []
+    base_config["Files"]["files"] = [src.name]
+    raw_config = bb.ParsedButterConfig.from_dict(base_config)
+    with pytest.raises(SystemExit) as sysexit:
+        bb.ButterConfig.from_raw_config(raw_config)
+    assert sysexit.value.code not in SUCCESS_CODES
+    assert raw_config.uuid in sysexit.value.code  # type: ignore
+    assert src.name in sysexit.value.code  # type: ignore
+
+
+@given(base_config=valid_unparsed_configs)
+def test_butter_config_rejects_non_file_src(base_config):
+    with TemporaryDirectory() as src:
+        base_config["Files"]["files"] = [src]
+        base_config["Folders"] = []
+        raw_config = bb.ParsedButterConfig.from_dict(base_config)
+        with pytest.raises(SystemExit) as sysexit:
+            bb.ButterConfig.from_raw_config(raw_config)
+    assert sysexit.value.code not in SUCCESS_CODES
+    assert raw_config.uuid in sysexit.value.code  # type: ignore
+    assert src in sysexit.value.code  # type: ignore
+
+
+@given(base_config=valid_unparsed_configs)
 def test_butter_config_expands_user(base_config):
     with TemporaryDirectory() as dest:
         pass
-    folders = [
-        ("/usr/bin", "backup_bins"),
-        ("~", dest),
-        ("/var/log", "backup_logs"),
-    ]
-    base_config["Folders"] = folders
-    raw_config = bb.ParsedButterConfig.from_dict(base_config)
-    cfg = bb.ButterConfig.from_raw_config(raw_config)
+    with NamedTemporaryFile(dir=Path.home()) as src_file:
+        fname = f"~/{Path(src_file.name).name}"
+        folders = [
+            ("/usr/bin", "backup_bins"),
+            ("~", dest),
+            ("/var/log", "backup_logs"),
+        ]
+        base_config["Folders"] = folders
+        base_config["Files"]["files"] = ["/bin/bash", fname]
+        raw_config = bb.ParsedButterConfig.from_dict(base_config)
+        cfg = bb.ButterConfig.from_raw_config(raw_config)
     assert Path("~").expanduser() in {src for (src, _) in cfg.folders}
+    assert Path(src_file.name).expanduser() in cfg.files
 
 
 @given(base_config=valid_unparsed_configs)
@@ -179,6 +216,7 @@ def test_butter_config_rejects_duplicate_src(base_config):
             (src, dest2),
         ]
         base_config["Folders"] = folders
+        base_config["Files"]["files"] = []
         raw_config = bb.ParsedButterConfig.from_dict(base_config)
         with pytest.raises(SystemExit) as sysexit:
             bb.ButterConfig.from_raw_config(raw_config)
@@ -198,6 +236,7 @@ def test_butter_config_rejects_duplicate_dest(base_config):
                 (src2, dest),
             ]
             base_config["Folders"] = folders
+            base_config["Files"]["files"] = []
             raw_config = bb.ParsedButterConfig.from_dict(base_config)
             with pytest.raises(SystemExit) as sysexit:
                 bb.ButterConfig.from_raw_config(raw_config)
