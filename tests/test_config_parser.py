@@ -81,3 +81,61 @@ def test_parsing_config_parses(config) -> None:
     assert cfg.pass_cmd == config["PassCmd"]
     for src, dest in cfg.routes:
         assert [src, dest] in config["Routes"]
+
+
+@given(
+    uuid=valid_uuids,
+    pass_cmd=st.text(),
+)
+def test_butter_config_accepts_raw_config(uuid: str, pass_cmd: str):
+    with TemporaryDirectory() as src:
+        with TemporaryDirectory() as dest:
+            raw_config = bb.ParsedButterConfig(
+                uuid=uuid, pass_cmd=pass_cmd, routes=[(src, dest)]
+            )
+            cfg = bb.ButterConfig.from_raw_config(raw_config)
+    assert cfg.pass_cmd == raw_config.pass_cmd
+    assert str(cfg.device).endswith(raw_config.uuid)
+    assert [(str(cfg.routes[0][0]), str(cfg.routes[0][1]))] == raw_config.routes
+
+
+@given(
+    uuid=valid_uuids,
+    pass_cmd=st.text(),
+)
+def test_butter_config_rejects_missing_src(uuid: str, pass_cmd: str):
+    with TemporaryDirectory() as src:
+        with TemporaryDirectory() as dest:
+            pass
+    routes = [
+        ("/usr/bin", "backup_bins"),
+        (src, dest),
+        ("/var/log", "backup_logs"),
+    ]
+    raw_config = bb.ParsedButterConfig(uuid=uuid, pass_cmd=pass_cmd, routes=routes)
+    with pytest.raises(SystemExit) as sysexit:
+        bb.ButterConfig.from_raw_config(raw_config)
+    assert sysexit.value.code not in SUCCESS_CODES
+    assert uuid in sysexit.value.code  # type: ignore
+    assert src in sysexit.value.code  # type: ignore
+
+
+@given(
+    uuid=valid_uuids,
+    pass_cmd=st.text(),
+)
+def test_butter_config_rejects_non_dir_src(uuid: str, pass_cmd: str):
+    with NamedTemporaryFile() as src:
+        with TemporaryDirectory() as dest:
+            pass
+        routes = [
+            ("/usr/bin", "backup_bins"),
+            (src.name, dest),
+            ("/var/log", "backup_logs"),
+        ]
+        raw_config = bb.ParsedButterConfig(uuid=uuid, pass_cmd=pass_cmd, routes=routes)
+        with pytest.raises(SystemExit) as sysexit:
+            bb.ButterConfig.from_raw_config(raw_config)
+    assert sysexit.value.code not in SUCCESS_CODES
+    assert uuid in sysexit.value.code  # type: ignore
+    assert src.name in sysexit.value.code  # type: ignore

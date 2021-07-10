@@ -81,6 +81,18 @@ class ButterConfig:
     routes: list[tuple[Path, str]]
     map_base: str = "butterbackup_"
 
+    def __post_init__(self) -> None:
+        uuid = self.device.name
+        for src, _ in self.routes:
+            if not src.exists():
+                sys.exit(
+                    f"Konfiguration für UUID {uuid} nennt nicht existierendes Quellverzeichnis {src}."
+                )
+            if not src.is_dir():
+                sys.exit(
+                    f"Konfiguration für UUID {uuid} enthält Quelle {src} die kein Verzeichnis ist."
+                )
+
     def map_name(self) -> str:
         return self.map_base + self.date.isoformat()
 
