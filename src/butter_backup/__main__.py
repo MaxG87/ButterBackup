@@ -59,10 +59,12 @@ class ParsedButterConfig:
     uuid: str
     pass_cmd: str
     folders: list[tuple[str, str]]
+    files_dest: str
+    files: set[str]
 
     @classmethod
     def from_dict(cls, cfg: dict[str, Any]) -> ParsedButterConfig:
-        expected_keys = {"UUID", "PassCmd", "Folders"}
+        expected_keys = {"UUID", "PassCmd", "Folders", "Files"}
         if expected_keys != set(cfg.keys()):
             sys.exit("Additional or missing keys in configuration.")
         if any(len(cur_route) != 2 for cur_route in cfg["Folders"]):
@@ -71,6 +73,8 @@ class ParsedButterConfig:
             uuid=cfg["UUID"],
             pass_cmd=cfg["PassCmd"],
             folders=[(src, dest) for (src, dest) in cfg["Folders"]],
+            files_dest=cfg["Files"]["destination"],
+            files=set(cfg["Files"]["files"]),
         )
 
 
