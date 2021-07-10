@@ -16,4 +16,4 @@ run-lint:
 
 .PHONY: run-tests
 run-tests:
-	poetry run pytest --cov src --cov-branch --cov-fail-under 47
+	poetry run pytest --cov src --cov-branch --cov-fail-under 75
