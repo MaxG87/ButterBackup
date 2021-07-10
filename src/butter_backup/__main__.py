@@ -125,7 +125,7 @@ def load_configuration(cfg_file: Path) -> list[dict[str, Any]]:
     if not cfg_file.exists():
         err_msg = f"Konfigurationsdatei {cfg_file} existiert nicht."
         help_hint = "Nutzen Sie `--help` um zu erfahren, wie eine Konfigurationsdatei explizit angegeben werden kann."
-        sys.exit(f"{err_msg} {help_hint}")
+        sys.exit(f"{err_msg} {help_hint}\n")
 
     with cfg_file.open() as fh:
         config_lst = json.load(fh)
