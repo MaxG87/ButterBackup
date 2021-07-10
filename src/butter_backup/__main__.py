@@ -83,20 +83,11 @@ class ButterConfig:
     map_base: str = "butterbackup_"
 
     def __post_init__(self) -> None:
-        uuid = self.device.name
         sources = Counter(src for (src, _) in self.routes)
         destinations = Counter(dest for (_, dest) in self.routes)
         self.exit_with_message_upon_duplicate(sources, ("Quell", "Quellen"))
         self.exit_with_message_upon_duplicate(destinations, ("Ziel", "Ziele"))
-        for src, _ in self.routes:
-            if not src.exists():
-                sys.exit(
-                    f"Konfiguration für UUID {uuid} nennt nicht existierendes Quellverzeichnis {src}."
-                )
-            if not src.is_dir():
-                sys.exit(
-                    f"Konfiguration für UUID {uuid} enthält Quelle {src} die kein Verzeichnis ist."
-                )
+        self._ensure_all_src_are_existing_dirs()
 
     @staticmethod
     def exit_with_message_upon_duplicate(
@@ -113,6 +104,18 @@ class ButterConfig:
             str(elem) for (elem, count) in counts.items() if count > 1
         )
         sys.exit(f"{errmsg_begin} {errmsg_body}")
+
+    def _ensure_all_src_are_existing_dirs(self) -> None:
+        uuid = self.device.name
+        for src, _ in self.routes:
+            if not src.exists():
+                sys.exit(
+                    f"Konfiguration für UUID {uuid} nennt nicht existierendes Quellverzeichnis {src}."
+                )
+            if not src.is_dir():
+                sys.exit(
+                    f"Konfiguration für UUID {uuid} enthält Quelle {src} die kein Verzeichnis ist."
+                )
 
     def map_name(self) -> str:
         return self.map_base + self.date.isoformat()
