@@ -58,7 +58,7 @@ class MountedDevice:
 class ParsedButterConfig:
     uuid: str
     pass_cmd: str
-    folders: list[tuple[str, str]]
+    folders: set[tuple[str, str]]
     files_dest: str
     files: set[str]
 
@@ -72,7 +72,7 @@ class ParsedButterConfig:
         return cls(
             uuid=cfg["UUID"],
             pass_cmd=cfg["PassCmd"],
-            folders=[(src, dest) for (src, dest) in cfg["Folders"]],
+            folders={(src, dest) for (src, dest) in cfg["Folders"]},
             files_dest=cfg["Files"]["destination"],
             files=set(cfg["Files"]["files"]),
         )
@@ -83,7 +83,7 @@ class ButterConfig:
     date: dt.date
     device: Path
     pass_cmd: str
-    folders: list[tuple[Path, str]]
+    folders: set[tuple[Path, str]]
     map_base: str = "butterbackup_"
 
     def __post_init__(self) -> None:
@@ -130,7 +130,7 @@ class ButterConfig:
     @classmethod
     def from_raw_config(cls, raw_cfg: ParsedButterConfig) -> ButterConfig:
         device = Path("/dev/disk/by-uuid") / raw_cfg.uuid
-        folders = [(Path(src).expanduser(), dest) for (src, dest) in raw_cfg.folders]
+        folders = {(Path(src).expanduser(), dest) for (src, dest) in raw_cfg.folders}
         return cls(
             date=dt.date.today(),
             device=device,

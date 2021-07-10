@@ -96,8 +96,8 @@ def test_parsing_config_parses(config) -> None:
     assert cfg.uuid == config["UUID"]
     assert cfg.pass_cmd == config["PassCmd"]
     assert cfg.files_dest == config["Files"]["destination"]
-    assert set(cfg.folders) == {tuple(elem) for elem in config["Folders"]}
-    assert set(cfg.files) == set(config["Files"]["files"])
+    assert cfg.folders == {tuple(elem) for elem in config["Folders"]}
+    assert cfg.files == set(config["Files"]["files"])
 
 
 @given(base_config=valid_unparsed_configs)
@@ -110,7 +110,7 @@ def test_butter_config_accepts_raw_config(base_config):
             cfg = bb.ButterConfig.from_raw_config(raw_config)
     assert cfg.pass_cmd == raw_config.pass_cmd
     assert str(cfg.device).endswith(raw_config.uuid)
-    assert [(str(cfg.folders[0][0]), str(cfg.folders[0][1]))] == raw_config.folders
+    assert {(str(src), str(dest)) for (src, dest) in cfg.folders} == raw_config.folders
 
 
 @given(base_config=valid_unparsed_configs)
