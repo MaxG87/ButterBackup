@@ -210,9 +210,16 @@ def do_butter_backup(cfg: ButterConfig) -> None:
             for src, dest_name in cfg.folders:
                 dest = backup_root / dest_name
                 rsync_folder(src, dest)
+
+            files_dest = backup_root / cfg.files_dest
+            all_files = set(files_dest.glob("*") if files_dest.exists() else [])
+            files_of_concern = {
+                backup_root / cfg.files_dest / file.name for file in cfg.files
+            }
+            for file in all_files - files_of_concern:
+                file.unlink()
             for src in cfg.files:
-                dest = backup_root / cfg.files_dest
-                rsync_file(src, dest)
+                rsync_file(src, files_dest)
 
 
 def get_source_snapshot(root: Path) -> Path:
