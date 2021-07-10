@@ -119,12 +119,12 @@ def test_butter_config_accepts_raw_config(base_config):
 
 @given(base_config=valid_unparsed_configs)
 def test_butter_config_rejects_missing_folder_src(base_config):
+    folder_dest = "folder-destination"
     with TemporaryDirectory() as src:
-        with TemporaryDirectory() as dest:
-            pass
+        pass
     folders = [
         ("/usr/bin", "backup_bins"),
-        (src, dest),
+        (src, folder_dest),
         ("/var/log", "backup_logs"),
     ]
     base_config["Folders"] = folders
@@ -139,12 +139,11 @@ def test_butter_config_rejects_missing_folder_src(base_config):
 
 @given(base_config=valid_unparsed_configs)
 def test_butter_config_rejects_non_dir_src(base_config):
+    folder_dest = "folder-destination"
     with NamedTemporaryFile() as src:
-        with TemporaryDirectory() as dest:
-            pass
         folders = [
             ("/usr/bin", "backup_bins"),
-            (src.name, dest),
+            (src.name, folder_dest),
             ("/var/log", "backup_logs"),
         ]
         base_config["Folders"] = folders
@@ -188,14 +187,14 @@ def test_butter_config_rejects_non_file_src(base_config):
 def test_butter_config_expands_user(base_config):
     with TemporaryDirectory() as dest:
         pass
+    folders = [
+        ("/usr/bin", "backup_bins"),
+        ("~", dest),
+        ("/var/log", "backup_logs"),
+    ]
+    base_config["Folders"] = folders
     with NamedTemporaryFile(dir=Path.home()) as src_file:
         fname = f"~/{Path(src_file.name).name}"
-        folders = [
-            ("/usr/bin", "backup_bins"),
-            ("~", dest),
-            ("/var/log", "backup_logs"),
-        ]
-        base_config["Folders"] = folders
         base_config["Files"]["files"] = ["/bin/bash", fname]
         raw_config = bb.ParsedButterConfig.from_dict(base_config)
         cfg = bb.ButterConfig.from_raw_config(raw_config)
@@ -205,15 +204,13 @@ def test_butter_config_expands_user(base_config):
 
 @given(base_config=valid_unparsed_configs)
 def test_butter_config_rejects_duplicate_src(base_config):
+    folder_dest = "folder-destination"
     with TemporaryDirectory() as src:
-        with TemporaryDirectory() as dest1:
-            with TemporaryDirectory() as dest2:
-                pass
         folders = [
             ("/usr/bin", "backup_bins"),
-            (src, dest1),
+            (src, f"{folder_dest}_1"),
             ("/var/log", "backup_logs"),
-            (src, dest2),
+            (src, f"{folder_dest}_2"),
         ]
         base_config["Folders"] = folders
         base_config["Files"]["files"] = []
@@ -225,22 +222,21 @@ def test_butter_config_rejects_duplicate_src(base_config):
 
 @given(base_config=valid_unparsed_configs)
 def test_butter_config_rejects_duplicate_dest(base_config):
+    folder_dest = "folder-destination"
     with TemporaryDirectory() as src1:
         with TemporaryDirectory() as src2:
-            with TemporaryDirectory() as dest:
-                pass
             folders = [
                 ("/usr/bin", "backup_bins"),
-                (src1, dest),
+                (src1, folder_dest),
                 ("/var/log", "backup_logs"),
-                (src2, dest),
+                (src2, folder_dest),
             ]
             base_config["Folders"] = folders
             base_config["Files"]["files"] = []
             raw_config = bb.ParsedButterConfig.from_dict(base_config)
             with pytest.raises(SystemExit) as sysexit:
                 bb.ButterConfig.from_raw_config(raw_config)
-            assert dest in sysexit.value.code  # type: ignore
+            assert folder_dest in sysexit.value.code  # type: ignore
 
 
 @given(base_config=valid_unparsed_configs)
