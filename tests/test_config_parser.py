@@ -13,6 +13,20 @@ SUCCESS_CODES = {0, None}
 NOF_ROUTES_ELEMS = 2
 EXPECTED_CFG_KEYS = sorted({"UUID", "PassCmd", "Routes"})
 
+valid_uuids = st.text(
+    st.characters(whitelist_categories=["Nd", "Lu", "Ll"]), min_size=1
+)
+valid_unparsed_configs = st.builds(
+    dict,
+    UUID=valid_uuids,
+    PassCmd=st.text(),
+    Routes=st.lists(
+        st.lists(
+            st.text(min_size=1), min_size=NOF_ROUTES_ELEMS, max_size=NOF_ROUTES_ELEMS
+        )
+    ).map(tuple),
+)
+
 
 def test_load_configuration_rejects_missing_cfg() -> None:
     with NamedTemporaryFile() as named_tmp:
@@ -47,7 +61,7 @@ def test_parsing_config_fails_on_missing_keys(incomplete_cfg) -> None:
 @given(
     config=st.builds(
         dict,
-        UUID=st.text(),
+        UUID=valid_uuids,
         PassCmd=st.text(),
         Routes=st.lists(st.lists(st.text()))
         .filter(lambda lst: not all(len(tup) == NOF_ROUTES_ELEMS for tup in lst))
@@ -60,16 +74,7 @@ def test_parsing_config_fails_on_malformed_routes(config) -> None:
     assert sysexit.value.code not in SUCCESS_CODES
 
 
-@given(
-    config=st.builds(
-        dict,
-        UUID=st.text(),
-        PassCmd=st.text(),
-        Routes=st.lists(
-            st.lists(st.text(), min_size=NOF_ROUTES_ELEMS, max_size=NOF_ROUTES_ELEMS)
-        ).map(tuple),
-    )
-)
+@given(config=valid_unparsed_configs)
 def test_parsing_config_parses(config) -> None:
     cfg = bb.ParsedButterConfig.from_dict(config)
     assert cfg.uuid == config["UUID"]
