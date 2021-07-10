@@ -201,15 +201,6 @@ def load_configuration(cfg_file: Path) -> list[dict[str, Any]]:
 
 
 def do_butter_backup(cfg: ButterConfig) -> None:
-    def get_source_snapshot(root: Path) -> Path:
-        return max(root.glob("202?-*"))
-
-    def snapshot(*, src: Path, dest: Path) -> None:
-        run_cmd(cmd=f"sudo btrfs subvolume snapshot '{src}' '{dest}'")
-
-    def rsync(src: Path, dest: Path) -> None:
-        run_cmd(cmd=f"sudo rsync -ax --delete --inplace '{src}/' '{dest}'")
-
     with DecryptedDevice(cfg.device, cfg.map_name(), cfg.pass_cmd) as decrypted:
         with MountedDevice(decrypted) as mount_dir:
             backup_root = mount_dir / dt.datetime.now().strftime("%F_%H:%M:%S")
@@ -218,7 +209,26 @@ def do_butter_backup(cfg: ButterConfig) -> None:
             snapshot(src=src_snapshot, dest=backup_root)
             for src, dest_name in cfg.folders:
                 dest = backup_root / dest_name
-                rsync(src, dest)
+                rsync_folder(src, dest)
+            for src in cfg.files:
+                dest = backup_root / cfg.files_dest
+                rsync_file(src, dest)
+
+
+def get_source_snapshot(root: Path) -> Path:
+    return max(root.glob("202?-*"))
+
+
+def snapshot(*, src: Path, dest: Path) -> None:
+    run_cmd(cmd=f"sudo btrfs subvolume snapshot '{src}' '{dest}'")
+
+
+def rsync_file(src: Path, dest: Path) -> None:
+    run_cmd(cmd=f"sudo rsync -ax --inplace '{src}' '{dest}'")
+
+
+def rsync_folder(src: Path, dest: Path) -> None:
+    run_cmd(cmd=f"sudo rsync -ax --delete --inplace '{src}/' '{dest}'")
 
 
 def is_mounted(dest: Path) -> bool:
