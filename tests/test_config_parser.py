@@ -11,8 +11,8 @@ from hypothesis import strategies as st
 from butter_backup import __main__ as bb
 
 SUCCESS_CODES = {0, None}
-NOF_ROUTES_ELEMS = 2
-EXPECTED_CFG_KEYS = sorted({"UUID", "PassCmd", "Routes"})
+NOF_FOLDER_BACKUP_MAPPING_ELEMS = 2
+EXPECTED_CFG_KEYS = sorted({"UUID", "PassCmd", "Folders"})
 
 valid_uuids = st.text(
     st.characters(whitelist_categories=["Nd", "Lu", "Ll"]), min_size=1
@@ -21,9 +21,11 @@ valid_unparsed_configs = st.builds(
     dict,
     UUID=valid_uuids,
     PassCmd=st.text(),
-    Routes=st.lists(
+    Folders=st.lists(
         st.lists(
-            st.text(min_size=1), min_size=NOF_ROUTES_ELEMS, max_size=NOF_ROUTES_ELEMS
+            st.text(min_size=1),
+            min_size=NOF_FOLDER_BACKUP_MAPPING_ELEMS,
+            max_size=NOF_FOLDER_BACKUP_MAPPING_ELEMS,
         )
     ).map(tuple),
 )
@@ -48,7 +50,7 @@ def test_load_configuration_rejects_empty_file() -> None:
 
 @given(config=valid_unparsed_configs)
 def test_load_configuration_parses(config) -> None:
-    config["Routes"] = [list(route) for route in config["Routes"]]
+    config["Folders"] = [list(route) for route in config["Folders"]]
     with TemporaryDirectory() as td:
         file_name = Path(td, "configuration")
         file_name.write_text(json.dumps(config))
@@ -74,12 +76,14 @@ def test_parsing_config_fails_on_missing_keys(incomplete_cfg) -> None:
         dict,
         UUID=valid_uuids,
         PassCmd=st.text(),
-        Routes=st.lists(st.lists(st.text()))
-        .filter(lambda lst: not all(len(tup) == NOF_ROUTES_ELEMS for tup in lst))
+        Folders=st.lists(st.lists(st.text()))
+        .filter(
+            lambda lst: any(len(tup) != NOF_FOLDER_BACKUP_MAPPING_ELEMS for tup in lst)
+        )
         .map(tuple),
     )
 )
-def test_parsing_config_fails_on_malformed_routes(config) -> None:
+def test_parsing_config_fails_on_malformed_folder_backiup_mappings(config) -> None:
     with pytest.raises(SystemExit) as sysexit:
         bb.ParsedButterConfig.from_dict(config)
     assert sysexit.value.code not in SUCCESS_CODES
@@ -90,8 +94,8 @@ def test_parsing_config_parses(config) -> None:
     cfg = bb.ParsedButterConfig.from_dict(config)
     assert cfg.uuid == config["UUID"]
     assert cfg.pass_cmd == config["PassCmd"]
-    for src, dest in cfg.routes:
-        assert [src, dest] in config["Routes"]
+    for src, dest in cfg.folders:
+        assert [src, dest] in config["Folders"]
 
 
 @given(
@@ -102,12 +106,12 @@ def test_butter_config_accepts_raw_config(uuid: str, pass_cmd: str):
     with TemporaryDirectory() as src:
         with TemporaryDirectory() as dest:
             raw_config = bb.ParsedButterConfig(
-                uuid=uuid, pass_cmd=pass_cmd, routes=[(src, dest)]
+                uuid=uuid, pass_cmd=pass_cmd, folders=[(src, dest)]
             )
             cfg = bb.ButterConfig.from_raw_config(raw_config)
     assert cfg.pass_cmd == raw_config.pass_cmd
     assert str(cfg.device).endswith(raw_config.uuid)
-    assert [(str(cfg.routes[0][0]), str(cfg.routes[0][1]))] == raw_config.routes
+    assert [(str(cfg.folders[0][0]), str(cfg.folders[0][1]))] == raw_config.folders
 
 
 @given(
@@ -118,12 +122,12 @@ def test_butter_config_rejects_missing_src(uuid: str, pass_cmd: str):
     with TemporaryDirectory() as src:
         with TemporaryDirectory() as dest:
             pass
-    routes = [
+    folders = [
         ("/usr/bin", "backup_bins"),
         (src, dest),
         ("/var/log", "backup_logs"),
     ]
-    raw_config = bb.ParsedButterConfig(uuid=uuid, pass_cmd=pass_cmd, routes=routes)
+    raw_config = bb.ParsedButterConfig(uuid=uuid, pass_cmd=pass_cmd, folders=folders)
     with pytest.raises(SystemExit) as sysexit:
         bb.ButterConfig.from_raw_config(raw_config)
     assert sysexit.value.code not in SUCCESS_CODES
@@ -139,12 +143,14 @@ def test_butter_config_rejects_non_dir_src(uuid: str, pass_cmd: str):
     with NamedTemporaryFile() as src:
         with TemporaryDirectory() as dest:
             pass
-        routes = [
+        folders = [
             ("/usr/bin", "backup_bins"),
             (src.name, dest),
             ("/var/log", "backup_logs"),
         ]
-        raw_config = bb.ParsedButterConfig(uuid=uuid, pass_cmd=pass_cmd, routes=routes)
+        raw_config = bb.ParsedButterConfig(
+            uuid=uuid, pass_cmd=pass_cmd, folders=folders
+        )
         with pytest.raises(SystemExit) as sysexit:
             bb.ButterConfig.from_raw_config(raw_config)
     assert sysexit.value.code not in SUCCESS_CODES
@@ -159,14 +165,14 @@ def test_butter_config_rejects_non_dir_src(uuid: str, pass_cmd: str):
 def test_butter_config_expands_user(uuid: str, pass_cmd: str):
     with TemporaryDirectory() as dest:
         pass
-    routes = [
+    folders = [
         ("/usr/bin", "backup_bins"),
         ("~", dest),
         ("/var/log", "backup_logs"),
     ]
-    raw_config = bb.ParsedButterConfig(uuid=uuid, pass_cmd=pass_cmd, routes=routes)
+    raw_config = bb.ParsedButterConfig(uuid=uuid, pass_cmd=pass_cmd, folders=folders)
     cfg = bb.ButterConfig.from_raw_config(raw_config)
-    assert Path("~").expanduser() in {src for (src, _) in cfg.routes}
+    assert Path("~").expanduser() in {src for (src, _) in cfg.folders}
 
 
 @given(
@@ -178,13 +184,15 @@ def test_butter_config_rejects_duplicate_src(uuid: str, pass_cmd: str):
         with TemporaryDirectory() as dest1:
             with TemporaryDirectory() as dest2:
                 pass
-        routes = [
+        folders = [
             ("/usr/bin", "backup_bins"),
             (src, dest1),
             ("/var/log", "backup_logs"),
             (src, dest2),
         ]
-        raw_config = bb.ParsedButterConfig(uuid=uuid, pass_cmd=pass_cmd, routes=routes)
+        raw_config = bb.ParsedButterConfig(
+            uuid=uuid, pass_cmd=pass_cmd, folders=folders
+        )
         with pytest.raises(SystemExit) as sysexit:
             bb.ButterConfig.from_raw_config(raw_config)
         assert src in sysexit.value.code  # type: ignore
@@ -199,14 +207,14 @@ def test_butter_config_rejects_duplicate_dest(uuid: str, pass_cmd: str):
         with TemporaryDirectory() as src2:
             with TemporaryDirectory() as dest:
                 pass
-            routes = [
+            folders = [
                 ("/usr/bin", "backup_bins"),
                 (src1, dest),
                 ("/var/log", "backup_logs"),
                 (src2, dest),
             ]
             raw_config = bb.ParsedButterConfig(
-                uuid=uuid, pass_cmd=pass_cmd, routes=routes
+                uuid=uuid, pass_cmd=pass_cmd, folders=folders
             )
             with pytest.raises(SystemExit) as sysexit:
                 bb.ButterConfig.from_raw_config(raw_config)

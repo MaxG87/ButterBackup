@@ -58,19 +58,19 @@ class MountedDevice:
 class ParsedButterConfig:
     uuid: str
     pass_cmd: str
-    routes: list[tuple[str, str]]
+    folders: list[tuple[str, str]]
 
     @classmethod
     def from_dict(cls, cfg: dict[str, Any]) -> ParsedButterConfig:
-        expected_keys = {"UUID", "PassCmd", "Routes"}
+        expected_keys = {"UUID", "PassCmd", "Folders"}
         if expected_keys != set(cfg.keys()):
             sys.exit("Additional or missing keys in configuration.")
-        if any(len(cur_route) != 2 for cur_route in cfg["Routes"]):
-            sys.exit("All routes must have exactly 2 elements.")
+        if any(len(cur_route) != 2 for cur_route in cfg["Folders"]):
+            sys.exit("All folder backup mappings must have exactly 2 elements.")
         return cls(
             uuid=cfg["UUID"],
             pass_cmd=cfg["PassCmd"],
-            routes=[(src, dest) for (src, dest) in cfg["Routes"]],
+            folders=[(src, dest) for (src, dest) in cfg["Folders"]],
         )
 
 
@@ -79,12 +79,12 @@ class ButterConfig:
     date: dt.date
     device: Path
     pass_cmd: str
-    routes: list[tuple[Path, str]]
+    folders: list[tuple[Path, str]]
     map_base: str = "butterbackup_"
 
     def __post_init__(self) -> None:
-        sources = Counter(src for (src, _) in self.routes)
-        destinations = Counter(dest for (_, dest) in self.routes)
+        sources = Counter(src for (src, _) in self.folders)
+        destinations = Counter(dest for (_, dest) in self.folders)
         self.exit_with_message_upon_duplicate(sources, ("Quell", "Quellen"))
         self.exit_with_message_upon_duplicate(destinations, ("Ziel", "Ziele"))
         self._ensure_all_src_are_existing_dirs()
@@ -107,7 +107,7 @@ class ButterConfig:
 
     def _ensure_all_src_are_existing_dirs(self) -> None:
         uuid = self.device.name
-        for src, _ in self.routes:
+        for src, _ in self.folders:
             if not src.exists():
                 sys.exit(
                     f"Konfiguration für UUID {uuid} nennt nicht existierendes Quellverzeichnis {src}."
@@ -126,12 +126,12 @@ class ButterConfig:
     @classmethod
     def from_raw_config(cls, raw_cfg: ParsedButterConfig) -> ButterConfig:
         device = Path("/dev/disk/by-uuid") / raw_cfg.uuid
-        routes = [(Path(src).expanduser(), dest) for (src, dest) in raw_cfg.routes]
+        folders = [(Path(src).expanduser(), dest) for (src, dest) in raw_cfg.folders]
         return cls(
             date=dt.date.today(),
             device=device,
             pass_cmd=raw_cfg.pass_cmd,
-            routes=routes,
+            folders=folders,
         )
 
 
@@ -186,7 +186,7 @@ def do_butter_backup(cfg: ButterConfig) -> None:
             src_snapshot = get_source_snapshot(mount_dir)
 
             snapshot(src=src_snapshot, dest=backup_root)
-            for src, dest_name in cfg.routes:
+            for src, dest_name in cfg.folders:
                 dest = backup_root / dest_name
                 rsync(src, dest)
 
