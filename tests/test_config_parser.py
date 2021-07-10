@@ -150,3 +150,64 @@ def test_butter_config_rejects_non_dir_src(uuid: str, pass_cmd: str):
     assert sysexit.value.code not in SUCCESS_CODES
     assert uuid in sysexit.value.code  # type: ignore
     assert src.name in sysexit.value.code  # type: ignore
+
+
+@given(
+    uuid=valid_uuids,
+    pass_cmd=st.text(),
+)
+def test_butter_config_expands_user(uuid: str, pass_cmd: str):
+    with TemporaryDirectory() as dest:
+        pass
+    routes = [
+        ("/usr/bin", "backup_bins"),
+        ("~", dest),
+        ("/var/log", "backup_logs"),
+    ]
+    raw_config = bb.ParsedButterConfig(uuid=uuid, pass_cmd=pass_cmd, routes=routes)
+    cfg = bb.ButterConfig.from_raw_config(raw_config)
+    assert Path("~").expanduser() in {src for (src, _) in cfg.routes}
+
+
+@given(
+    uuid=valid_uuids,
+    pass_cmd=st.text(),
+)
+def test_butter_config_rejects_duplicate_src(uuid: str, pass_cmd: str):
+    with TemporaryDirectory() as src:
+        with TemporaryDirectory() as dest1:
+            with TemporaryDirectory() as dest2:
+                pass
+        routes = [
+            ("/usr/bin", "backup_bins"),
+            (src, dest1),
+            ("/var/log", "backup_logs"),
+            (src, dest2),
+        ]
+        raw_config = bb.ParsedButterConfig(uuid=uuid, pass_cmd=pass_cmd, routes=routes)
+        with pytest.raises(SystemExit) as sysexit:
+            bb.ButterConfig.from_raw_config(raw_config)
+        assert src in sysexit.value.code  # type: ignore
+
+
+@given(
+    uuid=valid_uuids,
+    pass_cmd=st.text(),
+)
+def test_butter_config_rejects_duplicate_dest(uuid: str, pass_cmd: str):
+    with TemporaryDirectory() as src1:
+        with TemporaryDirectory() as src2:
+            with TemporaryDirectory() as dest:
+                pass
+            routes = [
+                ("/usr/bin", "backup_bins"),
+                (src1, dest),
+                ("/var/log", "backup_logs"),
+                (src2, dest),
+            ]
+            raw_config = bb.ParsedButterConfig(
+                uuid=uuid, pass_cmd=pass_cmd, routes=routes
+            )
+            with pytest.raises(SystemExit) as sysexit:
+                bb.ButterConfig.from_raw_config(raw_config)
+            assert dest in sysexit.value.code  # type: ignore

@@ -8,6 +8,7 @@ import os
 import subprocess
 import sys
 from argparse import ArgumentParser
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -82,7 +83,23 @@ class ButterConfig:
     map_base: str = "butterbackup_"
 
     def __post_init__(self) -> None:
+        def exit_with_message_upon_duplicate(
+            counts: Counter, errmsg_vals: tuple[str, str]
+        ) -> None:
+            if not all(val == 1 for val in counts.values()):
+                word1 = f"{errmsg_vals[0]}verzeichnissen"
+                word2 = f"{errmsg_vals[1]}"
+                errmsg_begin = f"Duplikate in {word1} entdeckt. Folgende {word2} kommen doppelt vor:"
+                errmsg_body = " ".join(
+                    str(elem) for (elem, count) in counts.items() if count > 1
+                )
+                sys.exit(f"{errmsg_begin} {errmsg_body}")
+
         uuid = self.device.name
+        sources = Counter(src for (src, _) in self.routes)
+        destinations = Counter(dest for (_, dest) in self.routes)
+        exit_with_message_upon_duplicate(sources, ("Quell", "Quellen"))
+        exit_with_message_upon_duplicate(destinations, ("Ziel", "Ziele"))
         for src, _ in self.routes:
             if not src.exists():
                 sys.exit(
