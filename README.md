@@ -6,6 +6,9 @@
     poetry build
     pipx install dist/butter-backup-<version>.whl
 
+## Ähnliche Projekte
+
+  * https://digint.ch/btrbk/
 
 ## Beispiele
 
