@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+import contextlib
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Optional
 
 from butter_backup import shell_interface as sh
 
@@ -25,23 +25,15 @@ class DecryptedDevice:
         sh.run_cmd(cmd=decrypt_cmd)
 
 
-@dataclass
-class MountedDevice:
-    device: Path
-    mount_dir: Optional[TemporaryDirectory] = None
-
-    def __enter__(self) -> Path:
-        if is_mounted(self.device):
-            unmount_device(self.device)
-        self.mount_dir = TemporaryDirectory()
-        mount_btrfs_device(self.device, Path(self.mount_dir.name))
-        return Path(self.mount_dir.name)
-
-    def __exit__(self, exc, value, tb) -> None:
-        if self.mount_dir is None:
-            return
-        unmount_device(self.device)
-        self.mount_dir.__exit__(exc, value, tb)
+@contextlib.contextmanager
+def mounted_device(device: Path):
+    if is_mounted(device):
+        unmount_device(device)
+    with TemporaryDirectory() as td:
+        mount_dir = Path(td)
+        mount_btrfs_device(device, Path(mount_dir))
+        yield Path(mount_dir)
+        unmount_device(device)
 
 
 def mount_btrfs_device(device: Path, mount_dir: Path) -> None:

@@ -7,7 +7,7 @@ from butter_backup import device_managers as dm
 
 
 def test_mounted_device(btrfs_device) -> None:
-    with dm.MountedDevice(btrfs_device) as md:
+    with dm.mounted_device(btrfs_device) as md:
         assert md.exists()
         assert md.is_dir()
         assert dm.is_mounted(btrfs_device)
@@ -20,7 +20,7 @@ def test_mounted_device(btrfs_device) -> None:
 def test_mounted_device_takes_over_already_mounted_device(btrfs_device) -> None:
     with TemporaryDirectory() as td:
         dm.mount_btrfs_device(btrfs_device, td)
-        with dm.MountedDevice(btrfs_device) as md:
+        with dm.mounted_device(btrfs_device) as md:
             assert dm.is_mounted(btrfs_device)
             assert md == dm.get_mounted_devices()[str(btrfs_device)]
         assert not dm.is_mounted(btrfs_device)
@@ -32,7 +32,7 @@ def test_mounted_device_fails_on_not_unmountable_device() -> None:
             root = device
             break
     with pytest.raises(UnboundLocalError):
-        with dm.MountedDevice(root):
+        with dm.mounted_device(root):
             pass
 
 
