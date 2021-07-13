@@ -3,34 +3,56 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-from butter_backup import __main__ as bb
+from butter_backup import device_managers as dm
 
 
 def test_mounted_device(btrfs_device) -> None:
-    with bb.MountedDevice(btrfs_device) as md:
+    with dm.MountedDevice(btrfs_device) as md:
         assert md.exists()
         assert md.is_dir()
-        assert bb.is_mounted(btrfs_device)
-        assert md in bb.get_mounted_devices().values()
+        assert dm.is_mounted(btrfs_device)
+        assert md in dm.get_mounted_devices().values()
     assert not md.exists()
-    assert not bb.is_mounted(btrfs_device)
-    assert md not in bb.get_mounted_devices().values()
+    assert not dm.is_mounted(btrfs_device)
+    assert md not in dm.get_mounted_devices().values()
 
 
 def test_mounted_device_takes_over_already_mounted_device(btrfs_device) -> None:
     with TemporaryDirectory() as td:
-        bb.mount_btrfs_device(btrfs_device, td)
-        with bb.MountedDevice(btrfs_device) as md:
-            assert bb.is_mounted(btrfs_device)
-            assert md == bb.get_mounted_devices()[str(btrfs_device)]
-        assert not bb.is_mounted(btrfs_device)
+        dm.mount_btrfs_device(btrfs_device, td)
+        with dm.MountedDevice(btrfs_device) as md:
+            assert dm.is_mounted(btrfs_device)
+            assert md == dm.get_mounted_devices()[str(btrfs_device)]
+        assert not dm.is_mounted(btrfs_device)
 
 
 def test_mounted_device_fails_on_not_unmountable_device() -> None:
-    for device, mount_point in bb.get_mounted_devices().items():
+    for device, mount_point in dm.get_mounted_devices().items():
         if mount_point == Path("/"):
             root = device
             break
     with pytest.raises(UnboundLocalError):
-        with bb.MountedDevice(root):
+        with dm.MountedDevice(root):
             pass
+
+
+@pytest.mark.parametrize("dest", dm.get_mounted_devices())
+def test_is_mounted_detects(dest: Path) -> None:
+    assert dm.is_mounted(dest)
+
+
+def test_is_mounted_rejects() -> None:
+    with TemporaryDirectory() as tempd:
+        assert not dm.is_mounted(Path(tempd))
+
+
+def test_get_mounted_devices_includes_correct_mountpoints(mounted_directories) -> None:
+    src, mountpoint = mounted_directories
+    assert mountpoint in dm.get_mounted_devices().values()
+
+
+def test_unmount_device(btrfs_device) -> None:
+    with TemporaryDirectory() as mountpoint:
+        dm.mount_btrfs_device(btrfs_device, Path(mountpoint))
+        dm.unmount_device(btrfs_device)
+        assert not dm.is_mounted(btrfs_device)

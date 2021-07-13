@@ -3,7 +3,16 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-from butter_backup import __main__ as bb
+from butter_backup import shell_interface as sh
+
+
+@pytest.fixture
+def mounted_directories():
+    with TemporaryDirectory() as src:
+        with TemporaryDirectory() as mountpoint:
+            sh.run_cmd(cmd=f"sudo mount -o bind {src} {mountpoint}")
+            yield Path(src), Path(mountpoint)
+            sh.run_cmd(cmd=f"sudo umount {mountpoint}")
 
 
 @pytest.fixture
@@ -13,5 +22,5 @@ def btrfs_device():
         btrfs_device = Path(tempdir) / "btrfs-test-device.iso"
         with btrfs_device.open("wb") as fh:
             fh.write(bytes(btrfs_dev_size))
-        bb.run_cmd(cmd=f"sudo mkfs.btrfs {btrfs_device}")
+        sh.run_cmd(cmd=f"sudo mkfs.btrfs {btrfs_device}")
         yield btrfs_device
