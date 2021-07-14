@@ -1,5 +1,5 @@
 from pathlib import Path
-from tempfile import TemporaryDirectory
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
 
@@ -16,11 +16,22 @@ def mounted_directories():
 
 
 @pytest.fixture
-def btrfs_device():
-    btrfs_dev_size = 128 * 1024 ** 2  # ~109MiB is the minimum size for BtrFS
+def big_file():
+    def get_random_filename(dir_: str) -> str:
+        with NamedTemporaryFile(dir=dir_) as ntf:
+            pass
+        return ntf.name
+
+    min_size = 128 * 1024 ** 2  # ~109MiB is the minimum size for BtrFS
     with TemporaryDirectory() as tempdir:
-        btrfs_device = Path(tempdir) / "btrfs-test-device.iso"
-        with btrfs_device.open("wb") as fh:
-            fh.write(bytes(btrfs_dev_size))
-        sh.run_cmd(cmd=f"sudo mkfs.btrfs {btrfs_device}")
-        yield btrfs_device
+        filename = get_random_filename(dir_=tempdir)
+        file = Path(filename)
+        with file.open("wb") as fh:
+            fh.write(bytes(min_size))
+        yield file
+
+
+@pytest.fixture
+def btrfs_device(big_file: Path):
+    sh.run_cmd(cmd=f"sudo mkfs.btrfs {big_file}")
+    yield big_file
