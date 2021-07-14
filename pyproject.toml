@@ -9,16 +9,16 @@ license = "GPL-3.0-or-later"
 python = "^3.9"
 
 [tool.poetry.dev-dependencies]
-hypothesis = "^6.9.1"
-pytest = "^6.2.3"
+hypothesis = "^6.14.2"
+pytest = "^6.2.4"
 pynvim = "^0.4.3"
 jedi = "^0.18.0"
 pdbpp = "^0.10.2"
 pytest-cov = "^2.11.1"
-flake8 = "^3.9.1"
-mypy = "^0.812"
-isort = "^5.8.0"
-black = "^21.4b2"
+flake8 = "^3.9.2"
+mypy = "^0.910"
+isort = "^5.9.2"
+black = "^21.6b0"
 
 [tool.poetry.scripts]
 butter-backup = "butter_backup.__main__:main"
