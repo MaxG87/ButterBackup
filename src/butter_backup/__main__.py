@@ -65,15 +65,26 @@ def get_source_snapshot(root: Path) -> Path:
 
 
 def snapshot(*, src: Path, dest: Path) -> None:
-    sh.run_cmd(cmd=f"sudo btrfs subvolume snapshot '{src}' '{dest}'")
+    cmd: sh.StrPathList = ["sudo", "btrfs", "subvolume", "snapshot", src, dest]
+    sh.run_cmd(cmd=cmd)
 
 
 def rsync_file(src: Path, dest: Path) -> None:
-    sh.run_cmd(cmd=f"sudo rsync -ax --inplace '{src}' '{dest}'")
+    cmd: sh.StrPathList = ["sudo", "rsync", "-ax", "--inplace", src, dest]
+    sh.run_cmd(cmd=cmd)
 
 
 def rsync_folder(src: Path, dest: Path) -> None:
-    sh.run_cmd(cmd=f"sudo rsync -ax --delete --inplace '{src}/' '{dest}'")
+    cmd: sh.StrPathList = [
+        "sudo",
+        "rsync",
+        "-ax",
+        "--delete",
+        "--inplace",
+        f"{src}/",
+        dest,
+    ]
+    sh.run_cmd(cmd=cmd)
 
 
 if __name__ == "__main__":

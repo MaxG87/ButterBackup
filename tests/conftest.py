@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
@@ -10,9 +12,9 @@ from butter_backup import shell_interface as sh
 def mounted_directories():
     with TemporaryDirectory() as src:
         with TemporaryDirectory() as mountpoint:
-            sh.run_cmd(cmd=f"sudo mount -o bind {src} {mountpoint}")
+            sh.run_cmd(cmd=["sudo", "mount", "-o", "bind", src, mountpoint])
             yield Path(src), Path(mountpoint)
-            sh.run_cmd(cmd=f"sudo umount {mountpoint}")
+            sh.run_cmd(cmd=["sudo", "umount", mountpoint])
 
 
 @pytest.fixture
@@ -33,5 +35,6 @@ def big_file():
 
 @pytest.fixture
 def btrfs_device(big_file: Path):
-    sh.run_cmd(cmd=f"sudo mkfs.btrfs {big_file}")
+    cmd: sh.StrPathList = ["sudo", "mkfs.btrfs", big_file]
+    sh.run_cmd(cmd=cmd)
     yield big_file
