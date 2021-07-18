@@ -7,6 +7,8 @@ import pytest
 
 from butter_backup import shell_interface as sh
 
+_PassPhrase = "supersecure"
+
 
 @pytest.fixture
 def mounted_directories():
@@ -38,3 +40,11 @@ def btrfs_device(big_file: Path):
     cmd: sh.StrPathList = ["sudo", "mkfs.btrfs", big_file]
     sh.run_cmd(cmd=cmd)
     yield big_file
+
+
+@pytest.fixture
+def decrypted_device(big_file: Path):
+    password_cmd: sh.StrPathList = ["echo", _PassPhrase]
+    format_cmd: sh.StrPathList = ["sudo", "cryptsetup", "luksFormat", big_file]
+    sh.run_piped_commands(cmds=[password_cmd, format_cmd])
+    yield _PassPhrase, big_file
