@@ -19,7 +19,7 @@ def test_mounted_device(btrfs_device) -> None:
 
 def test_mounted_device_takes_over_already_mounted_device(btrfs_device) -> None:
     with TemporaryDirectory() as td:
-        dm.mount_btrfs_device(btrfs_device, td)
+        dm.mount_btrfs_device(btrfs_device, Path(td))
         with dm.mounted_device(btrfs_device) as md:
             assert dm.is_mounted(btrfs_device)
             assert md == dm.get_mounted_devices()[str(btrfs_device)]
@@ -29,7 +29,7 @@ def test_mounted_device_takes_over_already_mounted_device(btrfs_device) -> None:
 def test_mounted_device_fails_on_not_unmountable_device() -> None:
     for device, mount_point in dm.get_mounted_devices().items():
         if mount_point == Path("/"):
-            root = device
+            root = Path(device)
             break
     with pytest.raises(UnboundLocalError):
         with dm.mounted_device(root):
