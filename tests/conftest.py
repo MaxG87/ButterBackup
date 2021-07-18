@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from tempfile import TemporaryDirectory
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
 
@@ -10,17 +12,29 @@ from butter_backup import shell_interface as sh
 def mounted_directories():
     with TemporaryDirectory() as src:
         with TemporaryDirectory() as mountpoint:
-            sh.run_cmd(cmd=f"sudo mount -o bind {src} {mountpoint}")
+            sh.run_cmd(cmd=["sudo", "mount", "-o", "bind", src, mountpoint])
             yield Path(src), Path(mountpoint)
-            sh.run_cmd(cmd=f"sudo umount {mountpoint}")
+            sh.run_cmd(cmd=["sudo", "umount", mountpoint])
 
 
 @pytest.fixture
-def btrfs_device():
-    btrfs_dev_size = 128 * 1024 ** 2  # ~109MiB is the minimum size for BtrFS
+def big_file():
+    def get_random_filename(dir_: str) -> str:
+        with NamedTemporaryFile(dir=dir_) as ntf:
+            pass
+        return ntf.name
+
+    min_size = 128 * 1024 ** 2  # ~109MiB is the minimum size for BtrFS
     with TemporaryDirectory() as tempdir:
-        btrfs_device = Path(tempdir) / "btrfs-test-device.iso"
-        with btrfs_device.open("wb") as fh:
-            fh.write(bytes(btrfs_dev_size))
-        sh.run_cmd(cmd=f"sudo mkfs.btrfs {btrfs_device}")
-        yield btrfs_device
+        filename = get_random_filename(dir_=tempdir)
+        file = Path(filename)
+        with file.open("wb") as fh:
+            fh.write(bytes(min_size))
+        yield file
+
+
+@pytest.fixture
+def btrfs_device(big_file: Path):
+    cmd: sh.StrPathList = ["sudo", "mkfs.btrfs", big_file]
+    sh.run_cmd(cmd=cmd)
+    yield big_file

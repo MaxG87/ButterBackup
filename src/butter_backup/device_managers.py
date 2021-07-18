@@ -21,7 +21,7 @@ class DecryptedDevice:
         return Path(f"/dev/mapper/{self.map_name}")
 
     def __exit__(self, exc, value, tb) -> None:
-        decrypt_cmd = f"sudo cryptsetup close '{self.map_name}'"
+        decrypt_cmd = ["sudo", "cryptsetup", "close", self.map_name]
         sh.run_cmd(cmd=decrypt_cmd)
 
 
@@ -37,7 +37,15 @@ def mounted_device(device: Path):
 
 
 def mount_btrfs_device(device: Path, mount_dir: Path) -> None:
-    sh.run_cmd(cmd=f"sudo mount -o compress=zlib '{device}' '{mount_dir}'")
+    cmd: sh.StrPathList = [
+        "sudo",
+        "mount",
+        "-o",
+        "compress=zlib",
+        device,
+        mount_dir,
+    ]
+    sh.run_cmd(cmd=cmd)
 
 
 def is_mounted(dest: Path) -> bool:
@@ -45,10 +53,11 @@ def is_mounted(dest: Path) -> bool:
 
 
 def get_mounted_devices() -> dict[str, Path]:
-    raw_mounts = sh.run_cmd(cmd="mount", capture_output=True)
+    raw_mounts = sh.run_cmd(cmd=["mount"], capture_output=True)
     mount_lines = raw_mounts.stdout.decode().splitlines()
     return {line.split()[0]: Path(line.split()[2]) for line in mount_lines}
 
 
 def unmount_device(device: Path) -> None:
-    sh.run_cmd(cmd=f"sudo umount '{device}'")
+    cmd: sh.StrPathList = ["sudo", "umount", device]
+    sh.run_cmd(cmd=cmd)
