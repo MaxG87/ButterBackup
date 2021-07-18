@@ -61,7 +61,7 @@ def test_unmount_device(btrfs_device) -> None:
 def test_decrypted_device(decrypted_device) -> None:
     map_name = "decrypted_device_test"
     passphrase, device = decrypted_device
-    with dm.DecryptedDevice(
+    with dm.decrypted_device(
         device=device, map_name=map_name, pass_cmd=f"echo {passphrase}"
     ) as dd:
         assert dd.exists()

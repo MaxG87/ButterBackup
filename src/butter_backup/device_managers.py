@@ -2,27 +2,19 @@ from __future__ import annotations
 
 import contextlib
 import subprocess
-from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from butter_backup import shell_interface as sh
 
 
-@dataclass(frozen=True)
-class DecryptedDevice:
-    device: Path
-    map_name: str
-    pass_cmd: str
-
-    def __enter__(self) -> Path:
-        decrypt_cmd = f"sudo cryptsetup open '{self.device}' '{self.map_name}'"
-        subprocess.run(f"{self.pass_cmd} | {decrypt_cmd}", check=True, shell=True)
-        return Path(f"/dev/mapper/{self.map_name}")
-
-    def __exit__(self, exc, value, tb) -> None:
-        decrypt_cmd = ["sudo", "cryptsetup", "close", self.map_name]
-        sh.run_cmd(cmd=decrypt_cmd)
+@contextlib.contextmanager
+def decrypted_device(device: Path, map_name: str, pass_cmd: str):
+    decrypt_cmd = f"sudo cryptsetup open '{device}' '{map_name}'"
+    close_cmd = ["sudo", "cryptsetup", "close", map_name]
+    subprocess.run(f"{pass_cmd} | {decrypt_cmd}", check=True, shell=True)
+    yield Path(f"/dev/mapper/{map_name}")
+    sh.run_cmd(cmd=close_cmd)
 
 
 @contextlib.contextmanager

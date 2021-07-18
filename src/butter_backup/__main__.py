@@ -37,7 +37,7 @@ def parse_args() -> Path:
 
 
 def do_butter_backup(cfg: cp.ButterConfig) -> None:
-    with dm.DecryptedDevice(cfg.device, cfg.map_name(), cfg.pass_cmd) as decrypted:
+    with dm.decrypted_device(cfg.device, cfg.map_name(), cfg.pass_cmd) as decrypted:
         with dm.mounted_device(decrypted) as mount_dir:
             backup_root = mount_dir / dt.datetime.now().strftime("%F_%H:%M:%S")
             src_snapshot = get_source_snapshot(mount_dir)
