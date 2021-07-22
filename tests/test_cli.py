@@ -3,8 +3,10 @@ from unittest import mock
 
 from hypothesis import given
 from hypothesis import strategies as st
+from typer.testing import CliRunner
 
 from butter_backup import __main__ as bb
+from butter_backup.cli import app
 
 path_to_config_files = st.text(st.characters(whitelist_categories="LN"), min_size=1)
 
@@ -30,3 +32,10 @@ def test_parse_args_returns_xdg_config_home(xdg_config: str) -> None:
         with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config}.get):
             parsed_config = bb.parse_args()
     assert Path(xdg_config) / bb.DEFAULT_CONFIG_NAME == parsed_config
+
+
+def test_start_click_cli() -> None:
+    runner = CliRunner()
+    result = runner.invoke(app)
+    assert "Hilfe!" in result.stdout
+    assert result.exit_code == 0
