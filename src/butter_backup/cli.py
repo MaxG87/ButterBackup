@@ -10,5 +10,10 @@ def hilfe():
     typer.echo("Hilfe!")
 
 
+@app.command()
+def open():
+    typer.echo("Open!")
+
+
 if __name__ == "__main__":
     app()

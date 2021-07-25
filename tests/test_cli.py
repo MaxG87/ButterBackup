@@ -36,6 +36,13 @@ def test_parse_args_returns_xdg_config_home(xdg_config: str) -> None:
 
 def test_start_click_cli() -> None:
     runner = CliRunner()
-    result = runner.invoke(app)
+    result = runner.invoke(app, ["hilfe"])
     assert "Hilfe!" in result.stdout
+    assert result.exit_code == 0
+
+
+def test_open_refuses_missing_config() -> None:
+    runner = CliRunner()
+    result = runner.invoke(app, ["open"])
+    assert "Open!" in result.stdout
     assert result.exit_code == 0
