@@ -1,6 +1,8 @@
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from unittest import mock
 
+import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 from typer.testing import CliRunner
@@ -9,6 +11,11 @@ from butter_backup import __main__ as bb
 from butter_backup.cli import app
 
 path_to_config_files = st.text(st.characters(whitelist_categories="LN"), min_size=1)
+
+
+@pytest.fixture
+def runner():
+    return CliRunner(mix_stderr=False)
 
 
 def test_no_args_parsing() -> None:
@@ -41,8 +48,9 @@ def test_start_click_cli() -> None:
     assert result.exit_code == 0
 
 
-def test_open_refuses_missing_config() -> None:
-    runner = CliRunner()
-    result = runner.invoke(app, ["open"])
-    assert "Open!" in result.stdout
-    assert result.exit_code == 0
+def test_open_refuses_missing_config(runner) -> None:
+    with NamedTemporaryFile() as file:
+        config_file = Path(file.name)
+    result = runner.invoke(app, ["open", "--config", str(config_file)])
+    assert f"{config_file}" in result.stderr
+    assert result.exit_code != 0

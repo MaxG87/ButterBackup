@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from pathlib import Path
+
 import typer
 
 app = typer.Typer()
@@ -11,7 +13,7 @@ def hilfe():
 
 
 @app.command()
-def open():
+def open(config: Path = typer.Option(None, exists=True)):
     typer.echo("Open!")
 
 
