@@ -42,12 +42,12 @@ def test_parse_args_returns_xdg_config_home(xdg_config: str) -> None:
     assert Path(xdg_config) / bb.DEFAULT_CONFIG_NAME == parsed_config
 
 
-def test_get_default_config() -> None:
+def test_get_default_config_path_refuses_missing_xdg_config() -> None:
     with TemporaryDirectory() as tempdir:
         xdg_config_dir = Path(tempdir)
     with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config_dir}.get):
         with pytest.raises(SystemExit) as exc:
-            cli.get_default_config()
+            cli.get_default_config_path()
     expected_cfg_file_name = xdg_config_dir / cli.DEFAULT_CONFIG_NAME
     assert f"{expected_cfg_file_name}" in exc.value.args[0]
 
@@ -65,3 +65,8 @@ def test_open_refuses_missing_config(runner) -> None:
     result = runner.invoke(app, ["open", "--config", str(config_file)])
     assert f"{config_file}" in result.stderr
     assert result.exit_code != 0
+
+
+def test_open_opens_device(runner, encrypted_btrfs_device) -> None:
+    password, device = encrypted_btrfs_device
+    assert password != ""
