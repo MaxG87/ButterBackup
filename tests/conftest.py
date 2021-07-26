@@ -43,7 +43,7 @@ def btrfs_device(big_file: Path):
 
 
 @pytest.fixture
-def decrypted_device(big_file: Path):
+def encrypted_device(big_file: Path):
     password_cmd: sh.StrPathList = ["echo", _PassPhrase]
     format_cmd: sh.StrPathList = ["sudo", "cryptsetup", "luksFormat", big_file]
     sh.run_piped_commands(cmds=[password_cmd, format_cmd])
