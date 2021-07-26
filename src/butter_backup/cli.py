@@ -1,10 +1,22 @@
 #!/usr/bin/env python3
-
+import os
+import sys
 from pathlib import Path
+from typing import Optional
 
 import typer
 
 app = typer.Typer()
+DEFAULT_CONFIG_DIR = Path("~/.config/").expanduser()
+DEFAULT_CONFIG_NAME = Path("butter-backup.cfg")
+
+
+def get_default_config_path() -> Path:
+    config_dir = Path(os.getenv("XDG_CONFIG_HOME", DEFAULT_CONFIG_DIR))
+    config_file = config_dir / DEFAULT_CONFIG_NAME
+    if not config_file.exists():
+        sys.exit(f"Konfigurationsdatei {config_file} existiert nicht.")
+    return config_file
 
 
 @app.command()
@@ -13,7 +25,7 @@ def hilfe():
 
 
 @app.command()
-def open(config: Path = typer.Option(None, exists=True)):
+def open(config: Optional[Path] = typer.Option(get_default_config_path(), exists=True)):
     typer.echo("Open!")
 
 

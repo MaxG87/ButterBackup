@@ -1,5 +1,5 @@
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from unittest import mock
 
 import pytest
@@ -8,6 +8,7 @@ from hypothesis import strategies as st
 from typer.testing import CliRunner
 
 from butter_backup import __main__ as bb
+from butter_backup import cli
 from butter_backup.cli import app
 
 path_to_config_files = st.text(st.characters(whitelist_categories="LN"), min_size=1)
@@ -39,6 +40,16 @@ def test_parse_args_returns_xdg_config_home(xdg_config: str) -> None:
         with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config}.get):
             parsed_config = bb.parse_args()
     assert Path(xdg_config) / bb.DEFAULT_CONFIG_NAME == parsed_config
+
+
+def test_get_default_config() -> None:
+    with TemporaryDirectory() as tempdir:
+        xdg_config_dir = Path(tempdir)
+    with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config_dir}.get):
+        with pytest.raises(SystemExit) as exc:
+            cli.get_default_config()
+    expected_cfg_file_name = xdg_config_dir / cli.DEFAULT_CONFIG_NAME
+    assert f"{expected_cfg_file_name}" in exc.value.args[0]
 
 
 def test_start_click_cli() -> None:
