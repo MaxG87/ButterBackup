@@ -5,6 +5,7 @@ import os
 from argparse import ArgumentParser
 from pathlib import Path
 
+from butter_backup import cli
 from butter_backup import config_parser as cp
 from butter_backup import device_managers as dm
 from butter_backup import shell_interface as sh
@@ -86,4 +87,4 @@ def rsync_folder(src: Path, dest: Path) -> None:
 
 
 if __name__ == "__main__":
-    main()
+    cli.cli()

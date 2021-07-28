@@ -37,5 +37,9 @@ def backup(config: Optional[Path] = CONFIG_OPTION):
     typer.echo("Backup!")
 
 
-if __name__ == "__main__":
+def cli() -> None:
     app()
+
+
+if __name__ == "__main__":
+    cli()
