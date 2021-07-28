@@ -19,14 +19,24 @@ def get_default_config_path() -> Path:
     return config_file
 
 
+CONFIG_OPTION = typer.Option(get_default_config_path(), exists=True)
+
+
 @app.command()
 def hilfe():
     typer.echo("Hilfe!")
 
 
 @app.command()
-def open(config: Optional[Path] = typer.Option(get_default_config_path(), exists=True)):
+def open(config: Optional[Path] = CONFIG_OPTION):
     typer.echo("Open!")
+
+
+@app.command()
+def backup(
+    config: Optional[Path] = CONFIG_OPTION
+):
+    typer.echo("Backup!")
 
 
 if __name__ == "__main__":

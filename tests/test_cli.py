@@ -52,6 +52,14 @@ def test_get_default_config_path_refuses_missing_xdg_config() -> None:
     assert f"{expected_cfg_file_name}" in exc.value.args[0]
 
 
+def test_backup_refuses_missing_config(runner) -> None:
+    with NamedTemporaryFile() as file:
+        config_file = Path(file.name)
+    result = runner.invoke(app, ["backup", "--config", str(config_file)])
+    assert f"{config_file}" in result.stderr
+    assert result.exit_code != 0
+
+
 def test_start_click_cli() -> None:
     runner = CliRunner()
     result = runner.invoke(app, ["hilfe"])
