@@ -58,9 +58,9 @@ def test_unmount_device(btrfs_device) -> None:
         assert not dm.is_mounted(btrfs_device)
 
 
-def test_decrypted_device(decrypted_device) -> None:
+def test_decrypted_device(encrypted_device) -> None:
     map_name = "decrypted_device_test"
-    passphrase, device = decrypted_device
+    passphrase, device = encrypted_device
     with dm.decrypted_device(
         device=device, map_name=map_name, pass_cmd=f"echo {passphrase}"
     ) as dd:
