@@ -33,9 +33,7 @@ def open(config: Optional[Path] = CONFIG_OPTION):
 
 
 @app.command()
-def backup(
-    config: Optional[Path] = CONFIG_OPTION
-):
+def backup(config: Optional[Path] = CONFIG_OPTION):
     typer.echo("Backup!")
 
 
