@@ -13,12 +13,9 @@ from butter_backup import config_parser as cp
 SUCCESS_CODES = {0, None}
 NOF_FOLDER_BACKUP_MAPPING_ELEMS = 2
 
-valid_uuids = st.text(
-    st.characters(whitelist_categories=["Nd", "Lu", "Ll"]), min_size=1
-)
 valid_unparsed_configs = st.builds(
     dict,
-    UUID=valid_uuids,
+    UUID=st.uuids().map(str),
     PassCmd=st.text(),
     Folders=st.lists(
         st.lists(
