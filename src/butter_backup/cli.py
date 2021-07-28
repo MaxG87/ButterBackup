@@ -2,9 +2,10 @@
 import os
 import sys
 from pathlib import Path
-from typing import Optional
 
 import typer
+
+from butter_backup import backup_logic as bl
 
 app = typer.Typer()
 DEFAULT_CONFIG_DIR = Path("~/.config/").expanduser()
@@ -28,13 +29,13 @@ def hilfe():
 
 
 @app.command()
-def open(config: Optional[Path] = CONFIG_OPTION):
+def open(config: Path = CONFIG_OPTION):
     typer.echo("Open!")
 
 
 @app.command()
-def backup(config: Optional[Path] = CONFIG_OPTION):
-    typer.echo("Backup!")
+def backup(config: Path = CONFIG_OPTION):
+    bl.do_backup(config)
 
 
 def cli() -> None:

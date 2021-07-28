@@ -5,7 +5,6 @@ import os
 from argparse import ArgumentParser
 from pathlib import Path
 
-from butter_backup import cli
 from butter_backup import config_parser as cp
 from butter_backup import device_managers as dm
 from butter_backup import shell_interface as sh
@@ -15,9 +14,8 @@ DEFAULT_CONFIG_NAME = Path("butter-backup.cfg")
 DEFAULT_CONFIG = DEFAULT_CONFIG_DIR / DEFAULT_CONFIG_NAME
 
 
-def main() -> None:
-    cfg_file = parse_args()
-    config_list = cp.load_configuration(cfg_file)
+def do_backup(config: Path) -> None:
+    config_list = cp.load_configuration(config)
     for raw_cfg in config_list:
         parsed_cfg = cp.ParsedButterConfig.from_dict(raw_cfg)
         cfg = cp.ButterConfig.from_raw_config(parsed_cfg)
@@ -84,7 +82,3 @@ def rsync_folder(src: Path, dest: Path) -> None:
         dest,
     ]
     sh.run_cmd(cmd=cmd)
-
-
-if __name__ == "__main__":
-    cli.cli()

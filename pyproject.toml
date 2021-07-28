@@ -22,7 +22,7 @@ isort = "^5.9.2"
 black = "^21.6b0"
 
 [tool.poetry.scripts]
-butter-backup = "butter_backup.__main__:main"
+butter-backup = "butter_backup.cli:cli"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
