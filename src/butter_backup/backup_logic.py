@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import datetime as dt
-import os
-from argparse import ArgumentParser
 from pathlib import Path
 
 from butter_backup import config_parser as cp
@@ -21,18 +19,6 @@ def do_backup(config: Path) -> None:
         cfg = cp.ButterConfig.from_raw_config(parsed_cfg)
         if cfg.device.exists():
             do_butter_backup(cfg)
-
-
-def parse_args() -> Path:
-    parser = ArgumentParser()
-    parser.add_argument(
-        "--config",
-        default=os.getenv("XDG_CONFIG_HOME", DEFAULT_CONFIG_DIR) / DEFAULT_CONFIG_NAME,
-        type=Path,
-    )
-    args = parser.parse_args()
-    cfg: Path = args.config
-    return cfg
 
 
 def do_butter_backup(cfg: cp.ButterConfig) -> None:
