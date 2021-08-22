@@ -30,6 +30,38 @@ def mounted_device(device: Path):
         unmount_device(device)
 
 
+@contextlib.contextmanager
+def symbolic_link(src: Path, dest: Path):
+    """Create an symbolic link from `src` to `dest`
+
+    This context manager will create a symbolic link from src to dest. It
+    differentiates itself from `Path.link_to()` by …:
+
+        * … creating the link with root privileges. This allows to limit root
+          permissions to only the necessary parts of the program.
+
+        * ensuring that the link gets removed after usage.
+
+    Parameters:
+    -----------
+    src: Path to source; can be anything that has a filesystem path
+    dest: Path to destination file
+
+    Returns:
+    --------
+    The value of `dest.absolute()` will be returned.
+    """
+
+    if not src.exists():
+        raise FileNotFoundError
+    if dest.exists():
+        raise FileExistsError
+    absolute_dest = dest.absolute()
+    sh.run_cmd(cmd=["sudo", "ln", "-s", f"{src.absolute()}", f"{absolute_dest}"])
+    yield absolute_dest
+    sh.run_cmd(cmd=["sudo", "rm", f"{absolute_dest}"])
+
+
 def mount_btrfs_device(device: Path, mount_dir: Path) -> None:
     cmd: sh.StrPathList = [
         "sudo",

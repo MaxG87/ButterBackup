@@ -1,5 +1,5 @@
 from pathlib import Path
-from tempfile import TemporaryDirectory
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
 
@@ -87,3 +87,35 @@ def test_decrypted_device_can_use_home_for_passcmd(encrypted_device) -> None:
             assert dd.exists()
             assert dd.is_symlink()
         assert not dd.exists()
+
+
+def test_symbolic_link_rejects_existing_dest(tmp_path: Path) -> None:
+    with NamedTemporaryFile() as named_file:
+        source = Path(named_file.name)
+        with pytest.raises(FileExistsError):
+            with dm.symbolic_link(source, dest=tmp_path):
+                pass
+
+
+def test_symbolic_link_rejects_missing_src() -> None:
+    with NamedTemporaryFile() as named_file:
+        src = Path(named_file.name)
+    with NamedTemporaryFile() as named_file:
+        dest = Path(named_file.name)
+    with pytest.raises(FileNotFoundError):
+        with dm.symbolic_link(src=src, dest=dest):
+            pass
+
+
+def test_symbolic_link() -> None:
+    content = "some arbitrary content"
+    with NamedTemporaryFile() as named_file:
+        source = Path(named_file.name)
+        source.write_text(content)
+        with NamedTemporaryFile() as named_file:
+            in_dest = Path(named_file.name)
+        with dm.symbolic_link(src=source, dest=in_dest) as out_dest:
+            assert in_dest == out_dest
+            assert out_dest.is_symlink()
+            assert out_dest.read_bytes() == source.read_bytes()
+        assert not out_dest.exists()
