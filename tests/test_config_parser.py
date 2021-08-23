@@ -22,7 +22,7 @@ valid_unparsed_configs = st.builds(
             st.text(min_size=1),
             min_size=NOF_FOLDER_BACKUP_MAPPING_ELEMS,
             max_size=NOF_FOLDER_BACKUP_MAPPING_ELEMS,
-        )
+        ),
     ),
     Files=st.fixed_dictionaries(
         {"destination": st.text(), "files": st.lists(st.text(min_size=1))}
@@ -276,3 +276,10 @@ def test_butter_config_rejects_filename_collision(base_config):
             with pytest.raises(SystemExit) as sysexit:
                 cp.ButterConfig.from_raw_config(raw_config)
             assert file_name in sysexit.value.code  # type: ignore
+
+
+@given(base_config=valid_unparsed_configs)
+def test_butter_config_as_dict_roundtrip(base_config):
+    parsed_1 = cp.ParsedButterConfig.from_dict(base_config)
+    parsed_2 = cp.ParsedButterConfig.from_dict(parsed_1.as_dict())
+    assert parsed_1 == parsed_2

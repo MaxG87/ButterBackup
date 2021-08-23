@@ -6,7 +6,9 @@ import sys
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
+
+RAW_CONFIG_T = Dict[str, Any]
 
 
 @dataclass(frozen=True)
@@ -18,19 +20,27 @@ class ParsedButterConfig:
     uuid: str
 
     @classmethod
-    def from_dict(cls, cfg: dict[str, Any]) -> ParsedButterConfig:
+    def from_dict(cls, cfg: RAW_CONFIG_T) -> ParsedButterConfig:
         expected_keys = {"UUID", "PassCmd", "Folders", "Files"}
         if expected_keys != set(cfg.keys()):
             sys.exit("Additional or missing keys in configuration.")
         if any(len(cur_route) != 2 for cur_route in cfg["Folders"]):
             sys.exit("All folder backup mappings must have exactly 2 elements.")
         return cls(
-            uuid=cfg["UUID"],
-            pass_cmd=cfg["PassCmd"],
-            folders={(src, dest) for (src, dest) in cfg["Folders"]},
-            files_dest=cfg["Files"]["destination"],
             files=set(cfg["Files"]["files"]),
+            files_dest=cfg["Files"]["destination"],
+            folders={(src, dest) for (src, dest) in cfg["Folders"]},
+            pass_cmd=cfg["PassCmd"],
+            uuid=cfg["UUID"],
         )
+
+    def as_dict(self) -> RAW_CONFIG_T:
+        return {
+            "Files": {"destination": self.files_dest, "files": list(self.files)},
+            "Folders": [[src, dest] for (src, dest) in self.folders],
+            "PassCmd": self.pass_cmd,
+            "UUID": self.uuid,
+        }
 
 
 @dataclass(frozen=True)
