@@ -1,3 +1,5 @@
+import json
+import uuid
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from unittest import mock
@@ -6,6 +8,8 @@ import pytest
 from typer.testing import CliRunner
 
 from butter_backup import cli
+from butter_backup import config_parser as cp
+from butter_backup import device_managers as dm
 from butter_backup.cli import app
 
 
@@ -49,4 +53,18 @@ def test_open_refuses_missing_config(runner) -> None:
 
 def test_open_opens_device(runner, encrypted_btrfs_device) -> None:
     password, device = encrypted_btrfs_device
+    device_id = str(uuid.uuid4())
+    config = cp.ParsedButterConfig(
+        files=set(),
+        files_dest="files-destination",
+        folders=set(),
+        pass_cmd=f"echo {password}",
+        uuid=device_id,
+    )
+    with NamedTemporaryFile() as tempf:
+        config_file = Path(tempf.name)
+        config_file.write_text(json.dumps(config.as_dict()))
+        dest = Path("/dev/disk/by-uuid/") / device_id
+        with dm.symbolic_link(src=device, dest=dest):
+            pass
     assert password != ""
