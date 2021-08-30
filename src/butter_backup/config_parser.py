@@ -126,8 +126,7 @@ def load_configuration(cfg_file: Path) -> list[dict[str, Any]]:
         help_hint = "Nutzen Sie `--help` um zu erfahren, wie eine Konfigurationsdatei explizit angegeben werden kann."
         sys.exit(f"{err_msg} {help_hint}\n")
 
-    with cfg_file.open() as fh:
-        config_lst = json.load(fh)
+    config_lst = json.loads(cfg_file.read_text())
     if len(config_lst) == 0:
         sys.exit("Empty configurations are not allowed!\n")
     return config_lst  # type: ignore
