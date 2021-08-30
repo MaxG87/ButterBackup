@@ -6,7 +6,7 @@ import sys
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 
 @dataclass(frozen=True)
@@ -120,13 +120,13 @@ class ButterConfig:
         )
 
 
-def load_configuration(cfg_file: Path) -> list[dict[str, Any]]:
+def load_configuration(cfg_file: Path) -> Mapping[str, Mapping[str, Any]]:
     if not cfg_file.exists():
         err_msg = f"Konfigurationsdatei {cfg_file} existiert nicht."
         help_hint = "Nutzen Sie `--help` um zu erfahren, wie eine Konfigurationsdatei explizit angegeben werden kann."
         sys.exit(f"{err_msg} {help_hint}\n")
 
-    config_lst = json.loads(cfg_file.read_text())
-    if len(config_lst) == 0:
+    uuid_to_cfg = json.loads(cfg_file.read_text())
+    if len(uuid_to_cfg) == 0:
         sys.exit("Empty configurations are not allowed!\n")
-    return config_lst  # type: ignore
+    return uuid_to_cfg  # type: ignore
