@@ -7,6 +7,7 @@ from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict
+from uuid import UUID
 
 RAW_CONFIG_T = Dict[str, Any]
 
@@ -17,7 +18,7 @@ class ParsedButterConfig:
     files_dest: str
     folders: set[tuple[str, str]]
     pass_cmd: str
-    uuid: str
+    uuid: UUID
 
     @classmethod
     def from_dict(cls, cfg: RAW_CONFIG_T) -> ParsedButterConfig:
@@ -31,7 +32,7 @@ class ParsedButterConfig:
             files_dest=cfg["Files"]["destination"],
             folders={(src, dest) for (src, dest) in cfg["Folders"]},
             pass_cmd=cfg["PassCmd"],
-            uuid=cfg["UUID"],
+            uuid=UUID(cfg["UUID"]),
         )
 
     def as_dict(self) -> RAW_CONFIG_T:
@@ -39,7 +40,7 @@ class ParsedButterConfig:
             "Files": {"destination": self.files_dest, "files": list(self.files)},
             "Folders": [[src, dest] for (src, dest) in self.folders],
             "PassCmd": self.pass_cmd,
-            "UUID": self.uuid,
+            "UUID": str(self.uuid),
         }
 
 
@@ -117,7 +118,7 @@ class ButterConfig:
 
     @classmethod
     def from_raw_config(cls, raw_cfg: ParsedButterConfig) -> ButterConfig:
-        device = Path("/dev/disk/by-uuid") / raw_cfg.uuid
+        device = Path("/dev/disk/by-uuid") / str(raw_cfg.uuid)
         folders = {(Path(src).expanduser(), dest) for (src, dest) in raw_cfg.folders}
         files = {Path(src).expanduser() for src in raw_cfg.files}
         return cls(

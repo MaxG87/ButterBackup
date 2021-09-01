@@ -98,7 +98,7 @@ def test_parsing_config_fails_on_malformed_folder_backiup_mappings(
 @given(config=valid_unparsed_configs)
 def test_parsing_config_parses(config) -> None:
     cfg = cp.ParsedButterConfig.from_dict(config)
-    assert cfg.uuid == config["UUID"]
+    assert str(cfg.uuid) == config["UUID"]
     assert cfg.pass_cmd == config["PassCmd"]
     assert cfg.files_dest == config["Files"]["destination"]
     assert cfg.folders == {tuple(elem) for elem in config["Folders"]}
@@ -116,7 +116,7 @@ def test_butter_config_accepts_raw_config(base_config):
                 raw_config = cp.ParsedButterConfig.from_dict(base_config)
                 cfg = cp.ButterConfig.from_raw_config(raw_config)
     assert cfg.pass_cmd == raw_config.pass_cmd
-    assert str(cfg.device).endswith(raw_config.uuid)
+    assert str(cfg.device).endswith(str(raw_config.uuid))
     assert {(str(src), str(dest)) for (src, dest) in cfg.folders} == raw_config.folders
     assert {str(file) for file in cfg.files} == raw_config.files
     assert cfg.files_dest == raw_config.files_dest
@@ -138,7 +138,7 @@ def test_butter_config_rejects_missing_folder_src(base_config):
     with pytest.raises(SystemExit) as sysexit:
         cp.ButterConfig.from_raw_config(raw_config)
     assert sysexit.value.code not in SUCCESS_CODES
-    assert raw_config.uuid in sysexit.value.code  # type: ignore
+    assert str(raw_config.uuid) in sysexit.value.code  # type: ignore
     assert src in sysexit.value.code  # type: ignore
 
 
@@ -157,7 +157,7 @@ def test_butter_config_rejects_non_dir_src(base_config):
         with pytest.raises(SystemExit) as sysexit:
             cp.ButterConfig.from_raw_config(raw_config)
     assert sysexit.value.code not in SUCCESS_CODES
-    assert raw_config.uuid in sysexit.value.code  # type: ignore
+    assert str(raw_config.uuid) in sysexit.value.code  # type: ignore
     assert src.name in sysexit.value.code  # type: ignore
 
 
@@ -171,7 +171,7 @@ def test_butter_config_rejects_missing_file_src(base_config):
     with pytest.raises(SystemExit) as sysexit:
         cp.ButterConfig.from_raw_config(raw_config)
     assert sysexit.value.code not in SUCCESS_CODES
-    assert raw_config.uuid in sysexit.value.code  # type: ignore
+    assert str(raw_config.uuid) in sysexit.value.code  # type: ignore
     assert src.name in sysexit.value.code  # type: ignore
 
 
@@ -184,7 +184,7 @@ def test_butter_config_rejects_non_file_src(base_config):
         with pytest.raises(SystemExit) as sysexit:
             cp.ButterConfig.from_raw_config(raw_config)
     assert sysexit.value.code not in SUCCESS_CODES
-    assert raw_config.uuid in sysexit.value.code  # type: ignore
+    assert str(raw_config.uuid) in sysexit.value.code  # type: ignore
     assert src in sysexit.value.code  # type: ignore
 
 
