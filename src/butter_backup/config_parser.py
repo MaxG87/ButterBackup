@@ -47,13 +47,11 @@ class ParsedButterConfig:
 @dataclass(frozen=True)
 class ButterConfig:
     date: dt.date
-    device: Path
     files: set[Path]
     files_dest: str
     folders: set[tuple[Path, str]]
     pass_cmd: str
     uuid: UUID
-    map_base: str = "butterbackup_"
 
     def __post_init__(self) -> None:
         sources = Counter(src for (src, _) in self.folders)
@@ -109,26 +107,24 @@ class ButterConfig:
                     f"Konfiguration für UUID {self.uuid} enthält Quelle {src} die keine Datei ist."
                 )
 
-    def map_name(self) -> str:
-        return self.map_base + self.date.isoformat()
-
-    def map_dir(self) -> Path:
-        return Path("/dev/mapper/") / self.map_name()
-
     @classmethod
     def from_raw_config(cls, raw_cfg: ParsedButterConfig) -> ButterConfig:
-        device = Path("/dev/disk/by-uuid") / str(raw_cfg.uuid)
         folders = {(Path(src).expanduser(), dest) for (src, dest) in raw_cfg.folders}
         files = {Path(src).expanduser() for src in raw_cfg.files}
         return cls(
             date=dt.date.today(),
-            device=device,
             files=files,
             files_dest=raw_cfg.files_dest,
             folders=folders,
             pass_cmd=raw_cfg.pass_cmd,
             uuid=raw_cfg.uuid,
         )
+
+    def device(self) -> Path:
+        return Path(f"/dev/disk/by-uuid/{self.uuid}")
+
+    def map_name(self) -> str:
+        return str(self.uuid)
 
 
 def load_configuration(cfg_file: Path) -> list[dict[str, Any]]:

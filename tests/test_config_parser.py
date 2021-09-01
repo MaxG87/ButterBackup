@@ -115,11 +115,24 @@ def test_butter_config_accepts_raw_config(base_config):
                 raw_config = cp.ParsedButterConfig.from_dict(base_config)
                 cfg = cp.ButterConfig.from_raw_config(raw_config)
     assert cfg.pass_cmd == raw_config.pass_cmd
-    assert str(cfg.device).endswith(str(raw_config.uuid))
+    assert str(cfg.device()).endswith(str(raw_config.uuid))
     assert {(str(src), str(dest)) for (src, dest) in cfg.folders} == raw_config.folders
     assert {str(file) for file in cfg.files} == raw_config.files
     assert cfg.files_dest == raw_config.files_dest
     assert cfg.uuid == raw_config.uuid
+
+
+@given(date=st.dates(), uuid=st.uuids())
+def test_butter_config_uuid_is_mapname(date, uuid) -> None:
+    cfg = cp.ButterConfig(
+        date=date,
+        files=set(),
+        files_dest="Einzeldateien",
+        folders=set(),
+        pass_cmd="echo supersecure",
+        uuid=uuid,
+    )
+    assert str(cfg.uuid) == cfg.map_name()
 
 
 @given(base_config=valid_unparsed_configs)

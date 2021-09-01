@@ -17,12 +17,12 @@ def do_backup(config: Path) -> None:
     for raw_cfg in config_list:
         parsed_cfg = cp.ParsedButterConfig.from_dict(raw_cfg)
         cfg = cp.ButterConfig.from_raw_config(parsed_cfg)
-        if cfg.device.exists():
+        if cfg.device().exists():
             do_butter_backup(cfg)
 
 
 def do_butter_backup(cfg: cp.ButterConfig) -> None:
-    with dm.decrypted_device(cfg.device, cfg.map_name(), cfg.pass_cmd) as decrypted:
+    with dm.decrypted_device(cfg.device(), cfg.map_name(), cfg.pass_cmd) as decrypted:
         with dm.mounted_device(decrypted) as mount_dir:
             backup_root = mount_dir / dt.datetime.now().strftime("%F_%H:%M:%S")
             src_snapshot = get_source_snapshot(mount_dir)
