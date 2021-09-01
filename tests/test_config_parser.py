@@ -57,7 +57,6 @@ def test_load_configuration_rejects_empty_file() -> None:
 
 @given(config=valid_unparsed_configs)
 def test_load_configuration_parses(config) -> None:
-    config["Folders"] = [list(route) for route in config["Folders"]]
     with TemporaryDirectory() as td:
         file_name = Path(td, "configuration")
         file_name.write_text(json.dumps(config))
