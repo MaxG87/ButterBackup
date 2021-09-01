@@ -88,27 +88,25 @@ class ButterConfig:
         sys.exit(f"{errmsg_begin} {errmsg_body}")
 
     def _ensure_all_folder_src_are_existing_dirs(self) -> None:
-        uuid = self.device.name
         for src, _ in self.folders:
             if not src.exists():
                 sys.exit(
-                    f"Konfiguration für UUID {uuid} nennt nicht existierendes Quellverzeichnis {src}."
+                    f"Konfiguration für UUID {self.uuid} nennt nicht existierendes Quellverzeichnis {src}."
                 )
             if not src.is_dir():
                 sys.exit(
-                    f"Konfiguration für UUID {uuid} enthält Quelle {src} die kein Verzeichnis ist."
+                    f"Konfiguration für UUID {self.uuid} enthält Quelle {src} die kein Verzeichnis ist."
                 )
 
     def _ensure_all_file_src_are_existing_files(self) -> None:
-        uuid = self.device.name
         for src in self.files:
             if not src.exists():
                 sys.exit(
-                    f"Konfiguration für UUID {uuid} nennt nicht existierende Quelldatei {src}."
+                    f"Konfiguration für UUID {self.uuid} nennt nicht existierende Quelldatei {src}."
                 )
             if not src.is_file():
                 sys.exit(
-                    f"Konfiguration für UUID {uuid} enthält Quelle {src} die keine Datei ist."
+                    f"Konfiguration für UUID {self.uuid} enthält Quelle {src} die keine Datei ist."
                 )
 
     def map_name(self) -> str:
