@@ -1,6 +1,3 @@
-import json
-import re
-import uuid
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from unittest import mock
@@ -9,9 +6,6 @@ import pytest
 from typer.testing import CliRunner
 
 from butter_backup import cli
-from butter_backup import config_parser as cp
-from butter_backup import device_managers as dm
-from butter_backup import shell_interface as sh
 from butter_backup.cli import app
 
 
@@ -53,30 +47,10 @@ def test_open_refuses_missing_config(runner) -> None:
     assert result.exit_code != 0
 
 
-def test_open_opens_device(runner, encrypted_btrfs_device) -> None:
-    password, device = encrypted_btrfs_device
-    device_id = uuid.uuid4()
-    config = cp.ParsedButterConfig(
-        files=set(),
-        files_dest="files-destination",
-        folders=set(),
-        pass_cmd=f"echo {password}",
-        uuid=device_id,
-    )
+def test_open_warns_about_not_being_implemented(runner) -> None:
     with NamedTemporaryFile() as tempf:
         config_file = Path(tempf.name)
-        config_file.write_text(json.dumps([config.as_dict()]))
-        device_by_uuid = Path("/dev/disk/by-uuid/") / str(device_id)
-        with dm.symbolic_link(src=device, dest=device_by_uuid):
-            result = runner.invoke(app, ["open", "--config", str(config_file)])
-            expected_msg = (
-                f"Gerät {device_id} wurde in (?P<mount_dest>/[^ ]+) geöffnet."
-            )
-            match = re.fullmatch(expected_msg, result.stdout.strip())
-            assert match is not None  # make mypy happy
-            mount_dest = match.group("mount_dest")
-            # assert dm.is_mounted(mount_dest)
-            mount_src = dm.get_mounted_devices()[mount_dest]
-            dm.unmount_device(mount_dest)
-            sh.run_cmd(cmd=["sudo", "rmdir", mount_dest])
-            sh.run_cmd(cmd=["sudo", "cryptsetup", "close", str(mount_src)])
+        config_file.write_text("[]")
+        result = runner.invoke(app, ["open", "--config", str(config_file)])
+        assert "noch nicht implementiert" in result.stderr
+        assert result.exit_code == 1

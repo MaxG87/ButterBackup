@@ -6,7 +6,6 @@ from pathlib import Path
 import typer
 
 from butter_backup import backup_logic as bl
-from butter_backup import config_parser as cp
 
 app = typer.Typer()
 DEFAULT_CONFIG_DIR = Path("~/.config/").expanduser()
@@ -31,11 +30,8 @@ def hilfe():
 
 @app.command()
 def open(config: Path = CONFIG_OPTION):
-    config_list = cp.load_configuration(config)
-    for raw_cfg in config_list:
-        parsed_cfg = cp.ParsedButterConfig.from_dict(raw_cfg)
-        # cfg = cp.ButterConfig.from_raw_config(parsed_cfg)
-        typer.echo(f"Gerät {parsed_cfg.uuid} wurde in /tmp/does-not-exist geöffnet.")
+    typer.echo("Unterbefehl `open` ist noch nicht implementiert.", err=True)
+    raise typer.Exit(1)
 
 
 @app.command()
