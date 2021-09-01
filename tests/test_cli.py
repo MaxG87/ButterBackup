@@ -47,6 +47,10 @@ def test_open_refuses_missing_config(runner) -> None:
     assert result.exit_code != 0
 
 
-def test_open_opens_device(runner, encrypted_btrfs_device) -> None:
-    password, device = encrypted_btrfs_device
-    assert password != ""
+def test_open_warns_about_not_being_implemented(runner) -> None:
+    with NamedTemporaryFile() as tempf:
+        config_file = Path(tempf.name)
+        config_file.write_text("[]")
+        result = runner.invoke(app, ["open", "--config", str(config_file)])
+        assert "noch nicht implementiert" in result.stderr
+        assert result.exit_code == 1

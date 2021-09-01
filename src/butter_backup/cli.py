@@ -30,7 +30,8 @@ def hilfe():
 
 @app.command()
 def open(config: Path = CONFIG_OPTION):
-    typer.echo("Open!")
+    typer.echo("Unterbefehl `open` ist noch nicht implementiert.", err=True)
+    raise typer.Exit(1)
 
 
 @app.command()

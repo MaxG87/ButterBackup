@@ -6,7 +6,10 @@ import sys
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
+from uuid import UUID
+
+RAW_CONFIG_T = Dict[str, Any]
 
 
 @dataclass(frozen=True)
@@ -15,33 +18,40 @@ class ParsedButterConfig:
     files_dest: str
     folders: set[tuple[str, str]]
     pass_cmd: str
-    uuid: str
+    uuid: UUID
 
     @classmethod
-    def from_dict(cls, cfg: dict[str, Any]) -> ParsedButterConfig:
+    def from_dict(cls, cfg: RAW_CONFIG_T) -> ParsedButterConfig:
         expected_keys = {"UUID", "PassCmd", "Folders", "Files"}
         if expected_keys != set(cfg.keys()):
             sys.exit("Additional or missing keys in configuration.")
         if any(len(cur_route) != 2 for cur_route in cfg["Folders"]):
             sys.exit("All folder backup mappings must have exactly 2 elements.")
         return cls(
-            uuid=cfg["UUID"],
-            pass_cmd=cfg["PassCmd"],
-            folders={(src, dest) for (src, dest) in cfg["Folders"]},
-            files_dest=cfg["Files"]["destination"],
             files=set(cfg["Files"]["files"]),
+            files_dest=cfg["Files"]["destination"],
+            folders={(src, dest) for (src, dest) in cfg["Folders"]},
+            pass_cmd=cfg["PassCmd"],
+            uuid=UUID(cfg["UUID"]),
         )
+
+    def as_dict(self) -> RAW_CONFIG_T:
+        return {
+            "Files": {"destination": self.files_dest, "files": list(self.files)},
+            "Folders": [[src, dest] for (src, dest) in self.folders],
+            "PassCmd": self.pass_cmd,
+            "UUID": str(self.uuid),
+        }
 
 
 @dataclass(frozen=True)
 class ButterConfig:
     date: dt.date
-    device: Path
     files: set[Path]
     files_dest: str
     folders: set[tuple[Path, str]]
     pass_cmd: str
-    map_base: str = "butterbackup_"
+    uuid: UUID
 
     def __post_init__(self) -> None:
         sources = Counter(src for (src, _) in self.folders)
@@ -76,48 +86,45 @@ class ButterConfig:
         sys.exit(f"{errmsg_begin} {errmsg_body}")
 
     def _ensure_all_folder_src_are_existing_dirs(self) -> None:
-        uuid = self.device.name
         for src, _ in self.folders:
             if not src.exists():
                 sys.exit(
-                    f"Konfiguration für UUID {uuid} nennt nicht existierendes Quellverzeichnis {src}."
+                    f"Konfiguration für UUID {self.uuid} nennt nicht existierendes Quellverzeichnis {src}."
                 )
             if not src.is_dir():
                 sys.exit(
-                    f"Konfiguration für UUID {uuid} enthält Quelle {src} die kein Verzeichnis ist."
+                    f"Konfiguration für UUID {self.uuid} enthält Quelle {src} die kein Verzeichnis ist."
                 )
 
     def _ensure_all_file_src_are_existing_files(self) -> None:
-        uuid = self.device.name
         for src in self.files:
             if not src.exists():
                 sys.exit(
-                    f"Konfiguration für UUID {uuid} nennt nicht existierende Quelldatei {src}."
+                    f"Konfiguration für UUID {self.uuid} nennt nicht existierende Quelldatei {src}."
                 )
             if not src.is_file():
                 sys.exit(
-                    f"Konfiguration für UUID {uuid} enthält Quelle {src} die keine Datei ist."
+                    f"Konfiguration für UUID {self.uuid} enthält Quelle {src} die keine Datei ist."
                 )
-
-    def map_name(self) -> str:
-        return self.map_base + self.date.isoformat()
-
-    def map_dir(self) -> Path:
-        return Path("/dev/mapper/") / self.map_name()
 
     @classmethod
     def from_raw_config(cls, raw_cfg: ParsedButterConfig) -> ButterConfig:
-        device = Path("/dev/disk/by-uuid") / raw_cfg.uuid
         folders = {(Path(src).expanduser(), dest) for (src, dest) in raw_cfg.folders}
         files = {Path(src).expanduser() for src in raw_cfg.files}
         return cls(
             date=dt.date.today(),
-            device=device,
             files=files,
             files_dest=raw_cfg.files_dest,
             folders=folders,
             pass_cmd=raw_cfg.pass_cmd,
+            uuid=raw_cfg.uuid,
         )
+
+    def device(self) -> Path:
+        return Path(f"/dev/disk/by-uuid/{self.uuid}")
+
+    def map_name(self) -> str:
+        return str(self.uuid)
 
 
 def load_configuration(cfg_file: Path) -> list[dict[str, Any]]:
