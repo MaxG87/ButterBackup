@@ -119,6 +119,7 @@ def test_butter_config_accepts_raw_config(base_config):
     assert {(str(src), str(dest)) for (src, dest) in cfg.folders} == raw_config.folders
     assert {str(file) for file in cfg.files} == raw_config.files
     assert cfg.files_dest == raw_config.files_dest
+    assert cfg.uuid == raw_config.uuid
 
 
 @given(base_config=valid_unparsed_configs)

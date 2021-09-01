@@ -52,6 +52,7 @@ class ButterConfig:
     files_dest: str
     folders: set[tuple[Path, str]]
     pass_cmd: str
+    uuid: UUID
     map_base: str = "butterbackup_"
 
     def __post_init__(self) -> None:
@@ -128,6 +129,7 @@ class ButterConfig:
             files_dest=raw_cfg.files_dest,
             folders=folders,
             pass_cmd=raw_cfg.pass_cmd,
+            uuid=raw_cfg.uuid,
         )
 
 
