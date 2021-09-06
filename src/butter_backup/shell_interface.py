@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 from typing import List, Optional, Union
@@ -18,11 +19,11 @@ class ShellInterfaceError(ValueError):
 def run_cmd(
     *,
     cmd: _CMD_LIST,
-    env: Optional[dict[str, str]] = None,
+    env: Optional[Union[dict[str, str], os._Environ[str]]] = None,
     capture_output: bool = False
 ) -> subprocess.CompletedProcess:
     if env is None:
-        env = {}
+        env = os.environ
     result = subprocess.run(cmd, capture_output=capture_output, check=True, env=env)
     return result
 
@@ -30,11 +31,11 @@ def run_cmd(
 def run_piped_commands(
     *,
     cmds: _LISTS_OF_CMD_LIST,
-    env: Optional[dict[str, str]] = None,
+    env: Optional[Union[dict[str, str], os._Environ[str]]] = None,
     capture_output: bool = False
 ) -> subprocess.CompletedProcess:
     if env is None:
-        env = {}
+        env = os.environ
     if len(cmds) < 2:
         raise ShellInterfaceError("Mindestens zwei Shell-Kommandos erwartet!")
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import os
 import subprocess
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -12,7 +13,7 @@ from butter_backup import shell_interface as sh
 def decrypted_device(device: Path, map_name: str, pass_cmd: str):
     decrypt_cmd: sh.StrPathList = ["sudo", "cryptsetup", "open", device, map_name]
     close_cmd = ["sudo", "cryptsetup", "close", map_name]
-    empty_env: dict[str, str] = {}  # make mypy happy
+    empty_env = os.environ
     pwd_proc = subprocess.run(pass_cmd, stdout=subprocess.PIPE, shell=True, check=True)
     subprocess.run(decrypt_cmd, input=pwd_proc.stdout, check=True, env=empty_env)
     yield Path(f"/dev/mapper/{map_name}")
