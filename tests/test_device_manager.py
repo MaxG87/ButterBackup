@@ -1,4 +1,5 @@
 from pathlib import Path
+from subprocess import CalledProcessError
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
@@ -31,7 +32,7 @@ def test_mounted_device_fails_on_not_unmountable_device() -> None:
         if mount_point == Path("/"):
             root = Path(device)
             break
-    with pytest.raises(UnboundLocalError):
+    with pytest.raises(CalledProcessError):
         with dm.mounted_device(root):
             pass
 
