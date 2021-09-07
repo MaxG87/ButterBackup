@@ -1,0 +1,34 @@
+# Debian stable-slim 7. Sep. 2021
+FROM debian@sha256:a7cb457754b303da3e1633601c77636a0e05e6c26831d1f58c0e6b280f3f7c88
+
+# Provide excecutables
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt update && \
+    apt install -y btrfs-progs cryptsetup curl make python3 python3-pip sudo && \
+    apt autoclean
+
+# Setup Poetry
+ENV POETRY_VERSION=1.1.7
+RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/$POETRY_VERSION/get-poetry.py | python3 -
+ENV PATH=$PATH:/root/.poetry/bin
+
+
+# Setup production dependencies
+WORKDIR /project
+COPY pyproject.toml poetry.lock ./
+RUN --mount=type=cache,target=/root/.cache/pip \
+    poetry export --dev > requirements.txt \
+    && python3 -m pip install -r requirements.txt \
+    && rm requirements.txt
+
+# Install project
+COPY src/ src/
+RUN poetry build \
+    && python3 -m pip install dist/*.tar.gz \
+    && rm -rf dist/
+
+# Include test files
+COPY setup.cfg .
+COPY tests/ tests/
+
+CMD pytest .
