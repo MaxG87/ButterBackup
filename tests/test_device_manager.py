@@ -65,7 +65,6 @@ def test_decrypted_device(encrypted_device) -> None:
         device=device, map_name=map_name, pass_cmd=f"echo {passphrase}"
     ) as dd:
         assert dd.exists()
-        assert dd.is_symlink()
     assert not dd.exists()
 
 
@@ -85,7 +84,6 @@ def test_decrypted_device_can_use_home_for_passcmd(encrypted_device) -> None:
             device=device, map_name=map_name, pass_cmd=f"cat {relative_pwd_f}"
         ) as dd:
             assert dd.exists()
-            assert dd.is_symlink()
         assert not dd.exists()
 
 
