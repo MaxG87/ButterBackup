@@ -1,0 +1,30 @@
+FROM archlinux@sha256:bdb0a4f11f40fc5859026257c3ca5a03515e26eebe781009abc0e3fad210837f
+
+# Provide relevant binaries
+RUN pacman -Syy --noconfirm btrfs-progs cryptsetup curl make python python-pip sudo
+
+# Setup Poetry
+ENV POETRY_VERSION=1.1.7
+RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/$POETRY_VERSION/get-poetry.py | python -
+ENV PATH=$PATH:/root/.poetry/bin
+
+
+# Setup production dependencies
+WORKDIR /project
+COPY pyproject.toml poetry.lock ./
+RUN --mount=type=cache,target=/root/.cache/pip \
+    poetry export --dev > requirements.txt \
+    && python3 -m pip install -r requirements.txt \
+    && rm requirements.txt
+
+# Install project
+COPY src/ src/
+RUN poetry build \
+    && python3 -m pip install dist/*.tar.gz \
+    && rm -rf dist/
+
+# Include test files
+COPY setup.cfg .
+COPY tests/ tests/
+
+CMD pytest .
