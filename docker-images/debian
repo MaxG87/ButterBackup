@@ -29,6 +29,5 @@ RUN poetry build \
 
 # Include test files
 COPY setup.cfg .
-COPY tests/ tests/
 
 CMD pytest .
