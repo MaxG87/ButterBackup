@@ -12,6 +12,8 @@ DOCKER_TEST_TAG = $(SERVICE_LC)-$(SERVICE_ID_SHORT).test
 CACHEBASE ?= ~/.cache/$(SERVICE).make-cache/
 CACHEDIR = $(CACHEBASE)/$(SERVICE_ID_FULL)
 
+.SECONDARY:  # Do not remove intermediate files. We need them for caching!
+
 .PHONY: all
 all: check-format check-linters run-tests
 .PHONY: apply-format
@@ -21,28 +23,26 @@ check-format: | $(CACHEDIR)/check-format
 .PHONY: check-linters
 check-linters: | $(CACHEDIR)/check-linters
 .PHONY: run-tests
-run-tests: run-docker-tests | $(CACHEDIR)/run-tests
+run-tests: run-docker-tests | $(CACHEDIR)/run-undockered-tests
 .PHONY: run-docker-tests
-run-docker-tests: | $(CACHEDIR)/run-debian-tests
+run-docker-tests: | $(CACHEDIR)/run-arch-tests $(CACHEDIR)/run-debian-tests
 
 $(CACHEDIR):
 	mkdir -p $@
 
 
-# EXECUTION OF TEST SUITE
-$(CACHEDIR)/run-tests: | $(CACHEDIR)/run-undockered-tests $(CACHEDIR)/run-debian-tests
-	touch $@
-
 $(CACHEDIR)/run-undockered-tests: | $(CACHEDIR)
 	poetry run pytest --cov src --cov-branch --cov-fail-under 70
 	touch $@
 
-$(CACHEDIR)/run-debian-tests: | $(CACHEDIR)/debian-test-image
-	docker run --privileged -t $(DOCKER_TEST_TAG).debian
+$(CACHEDIR)/run-%-tests: | $(CACHEDIR)/%-test-image
+	platform=$(subst -test-image,,$(notdir $|)) ; \
+	docker run --privileged -t $(DOCKER_TEST_TAG).$$platform
 	touch $@
 
-$(CACHEDIR)/debian-test-image: | $(CACHEDIR)
-	DOCKER_BUILDKIT=1 docker build . -t $(DOCKER_TEST_TAG).debian -f docker-images/debian
+$(CACHEDIR)/%-test-image: | $(CACHEDIR)
+	platform=$(subst -test-image,,$(notdir $@)) ; \
+	DOCKER_BUILDKIT=1 docker build . -t $(DOCKER_TEST_TAG).$$platform -f docker-images/$$platform
 	touch $@
 
 
