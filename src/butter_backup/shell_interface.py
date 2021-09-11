@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 from typing import List, Optional, Union
@@ -22,7 +23,7 @@ def run_cmd(
     capture_output: bool = False
 ) -> subprocess.CompletedProcess:
     if env is None:
-        env = {}
+        env = dict(os.environ)
     result = subprocess.run(cmd, capture_output=capture_output, check=True, env=env)
     return result
 
@@ -34,7 +35,7 @@ def run_piped_commands(
     capture_output: bool = False
 ) -> subprocess.CompletedProcess:
     if env is None:
-        env = {}
+        env = dict(os.environ)
     if len(cmds) < 2:
         raise ShellInterfaceError("Mindestens zwei Shell-Kommandos erwartet!")
 
