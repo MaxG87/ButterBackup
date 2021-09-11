@@ -1,3 +1,4 @@
+import subprocess
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
@@ -11,10 +12,10 @@ def test_mounted_device(btrfs_device) -> None:
         assert md.exists()
         assert md.is_dir()
         assert dm.is_mounted(btrfs_device)
-        assert md in dm.get_mounted_devices().values()
+        assert md in dm.get_mounted_devices()[str(btrfs_device)]
     assert not md.exists()
     assert not dm.is_mounted(btrfs_device)
-    assert md not in dm.get_mounted_devices().values()
+    assert str(btrfs_device) not in dm.get_mounted_devices()
 
 
 def test_mounted_device_takes_over_already_mounted_device(btrfs_device) -> None:
@@ -22,23 +23,25 @@ def test_mounted_device_takes_over_already_mounted_device(btrfs_device) -> None:
         dm.mount_btrfs_device(btrfs_device, Path(td))
         with dm.mounted_device(btrfs_device) as md:
             assert dm.is_mounted(btrfs_device)
-            assert md == dm.get_mounted_devices()[str(btrfs_device)]
+            assert md in dm.get_mounted_devices()[str(btrfs_device)]
         assert not dm.is_mounted(btrfs_device)
 
 
 def test_mounted_device_fails_on_not_unmountable_device() -> None:
-    for device, mount_point in dm.get_mounted_devices().items():
-        if mount_point == Path("/"):
+    for device, mount_points in dm.get_mounted_devices().items():
+        if Path("/") in mount_points:
             root = Path(device)
             break
-    with pytest.raises(UnboundLocalError):
+    else:
+        assert False, "Device of / not found!"
+    with pytest.raises(subprocess.CalledProcessError):
         with dm.mounted_device(root):
             pass
 
 
-@pytest.mark.parametrize("dest", dm.get_mounted_devices())
-def test_is_mounted_detects(dest: Path) -> None:
-    assert dm.is_mounted(dest)
+@pytest.mark.parametrize("device", dm.get_mounted_devices())
+def test_is_mounted_detects(device: Path) -> None:
+    assert dm.is_mounted(device)
 
 
 def test_is_mounted_rejects() -> None:
@@ -46,9 +49,20 @@ def test_is_mounted_rejects() -> None:
         assert not dm.is_mounted(Path(tempd))
 
 
+def test_get_mounted_devices_raises_on_unknown_device() -> None:
+    with pytest.raises(KeyError):
+        dm.get_mounted_devices()["unknown-device"]
+
+
 def test_get_mounted_devices_includes_correct_mountpoints(mounted_directories) -> None:
-    src, mountpoint = mounted_directories
-    assert mountpoint in dm.get_mounted_devices().values()
+    src, dest = mounted_directories
+    assert any(
+        dest in mount_points for mount_points in dm.get_mounted_devices().values()
+    )
+
+
+def test_get_mounted_devices_includes_root() -> None:
+    assert any(Path("/") in dest_set for dest_set in dm.get_mounted_devices().values())
 
 
 def test_unmount_device(btrfs_device) -> None:

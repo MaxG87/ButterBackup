@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import subprocess
+from collections import defaultdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -77,10 +78,15 @@ def is_mounted(dest: Path) -> bool:
     return str(dest) in get_mounted_devices()
 
 
-def get_mounted_devices() -> dict[str, Path]:
+def get_mounted_devices() -> dict[str, set[Path]]:
     raw_mounts = sh.run_cmd(cmd=["mount"], capture_output=True)
     mount_lines = raw_mounts.stdout.decode().splitlines()
-    return {line.split()[0]: Path(line.split()[2]) for line in mount_lines}
+    mount_points = defaultdict(set)
+    for line in mount_lines:
+        device = line.split()[0]
+        dest = Path(line.split()[2])
+        mount_points[device].add(dest)
+    return dict(mount_points)
 
 
 def unmount_device(device: Path) -> None:
