@@ -72,6 +72,16 @@ def test_unmount_device(btrfs_device) -> None:
         assert not dm.is_mounted(btrfs_device)
 
 
+def test_decrypt_device_roundtrip(encrypted_device) -> None:
+    passphrase, device = encrypted_device
+    pass_cmd = f"echo {passphrase}"
+    decrypted = dm.open_encrypted_device(device=Path(device), pass_cmd=pass_cmd)
+    assert decrypted.exists()
+    assert decrypted.name == device.name
+    dm.close_decrypted_device(device=decrypted)
+    assert not decrypted.exists()
+
+
 def test_decrypted_device(encrypted_device) -> None:
     map_name = "decrypted_device_test"
     passphrase, device = encrypted_device
