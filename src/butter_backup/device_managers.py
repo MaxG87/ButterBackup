@@ -92,3 +92,11 @@ def get_mounted_devices() -> dict[str, set[Path]]:
 def unmount_device(device: Path) -> None:
     cmd: sh.StrPathList = ["sudo", "umount", device]
     sh.run_cmd(cmd=cmd)
+
+
+def open_encrypted_device(device: Path, pass_cmd: str) -> Path:
+    pass
+
+
+def close_encrypted_device(device: Path) -> Path:
+    pass
