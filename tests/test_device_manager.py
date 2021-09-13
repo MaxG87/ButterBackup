@@ -3,6 +3,8 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 from butter_backup import device_managers as dm
 
@@ -80,6 +82,14 @@ def test_decrypt_device_roundtrip(encrypted_device) -> None:
     assert decrypted.name == device.name
     dm.close_decrypted_device(device=decrypted)
     assert not decrypted.exists()
+
+
+@given(uuid=st.uuids())
+def test_close_decrypted_device_rejects_invalid_device_name(uuid) -> None:
+    with TemporaryDirectory() as td:
+        device = Path(td) / str(uuid)
+        with pytest.raises(dm.InvalidDecryptedDevice):
+            dm.close_decrypted_device(device)
 
 
 def test_decrypted_device(encrypted_device) -> None:

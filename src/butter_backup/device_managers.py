@@ -9,6 +9,10 @@ from tempfile import TemporaryDirectory
 from butter_backup import shell_interface as sh
 
 
+class InvalidDecryptedDevice(ValueError):
+    pass
+
+
 @contextlib.contextmanager
 def decrypted_device(device: Path, map_name: str, pass_cmd: str):
     decrypt_cmd: sh.StrPathList = ["sudo", "cryptsetup", "open", device, map_name]
@@ -103,6 +107,8 @@ def open_encrypted_device(device: Path, pass_cmd: str) -> Path:
 
 
 def close_decrypted_device(device: Path) -> None:
+    if device.parent != Path("/dev/mapper"):
+        raise InvalidDecryptedDevice
     map_name = device.name
     close_cmd = ["sudo", "cryptsetup", "close", map_name]
     sh.run_cmd(cmd=close_cmd)
