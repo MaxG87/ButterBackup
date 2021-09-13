@@ -95,8 +95,14 @@ def unmount_device(device: Path) -> None:
 
 
 def open_encrypted_device(device: Path, pass_cmd: str) -> Path:
-    pass
+    map_name = device.name
+    decrypt_cmd: sh.StrPathList = ["sudo", "cryptsetup", "open", device, map_name]
+    pwd_proc = subprocess.run(pass_cmd, stdout=subprocess.PIPE, shell=True, check=True)
+    subprocess.run(decrypt_cmd, input=pwd_proc.stdout, check=True)
+    return Path("/dev/mapper/") / map_name
 
 
-def close_encrypted_device(device: Path) -> Path:
-    pass
+def close_decrypted_device(device: Path) -> None:
+    map_name = device.name
+    close_cmd = ["sudo", "cryptsetup", "close", map_name]
+    sh.run_cmd(cmd=close_cmd)
