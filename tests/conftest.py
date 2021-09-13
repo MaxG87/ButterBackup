@@ -58,8 +58,6 @@ def encrypted_device(big_file: Path):
 @pytest.fixture
 def encrypted_btrfs_device(encrypted_device):
     password, device = encrypted_device
-    with dm.decrypted_device(
-        device=device, map_name="butter-backup-test-suite", pass_cmd=f"echo {password}"
-    ) as dd:
+    with dm.decrypted_device(device=device, pass_cmd=f"echo {password}") as dd:
         _mkfs_btrfs(dd)
     return encrypted_device
