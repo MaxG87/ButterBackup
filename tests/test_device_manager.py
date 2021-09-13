@@ -93,11 +93,8 @@ def test_close_decrypted_device_rejects_invalid_device_name(uuid) -> None:
 
 
 def test_decrypted_device(encrypted_device) -> None:
-    map_name = "decrypted_device_test"
     passphrase, device = encrypted_device
-    with dm.decrypted_device(
-        device=device, map_name=map_name, pass_cmd=f"echo {passphrase}"
-    ) as dd:
+    with dm.decrypted_device(device=device, pass_cmd=f"echo {passphrase}") as dd:
         assert dd.exists()
     assert not dd.exists()
 
@@ -107,16 +104,13 @@ def test_decrypted_device_can_use_home_for_passcmd(encrypted_device) -> None:
     # Test if `decrypted_device` can use a program that is located in PATH. For
     # some reason, when passing `{}` as environment, `echo` works, but `pass`
     # did not. This test ensures that the necessary fix is not reverted again.
-    map_name = "decrypted_device_test"
     passphrase, device = encrypted_device
     relative_home = Path("~")  # must be relative to trigger regression
     with NamedTemporaryFile(dir=relative_home.expanduser()) as pwd_f:
         absolute_pwd_f = Path(pwd_f.name)
         relative_pwd_f = relative_home / absolute_pwd_f.name
         absolute_pwd_f.write_text(passphrase)
-        with dm.decrypted_device(
-            device=device, map_name=map_name, pass_cmd=f"cat {relative_pwd_f}"
-        ) as dd:
+        with dm.decrypted_device(device=device, pass_cmd=f"cat {relative_pwd_f}") as dd:
             assert dd.exists()
         assert not dd.exists()
 

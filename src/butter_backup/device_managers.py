@@ -14,13 +14,10 @@ class InvalidDecryptedDevice(ValueError):
 
 
 @contextlib.contextmanager
-def decrypted_device(device: Path, map_name: str, pass_cmd: str):
-    decrypt_cmd: sh.StrPathList = ["sudo", "cryptsetup", "open", device, map_name]
-    close_cmd = ["sudo", "cryptsetup", "close", map_name]
-    pwd_proc = subprocess.run(pass_cmd, stdout=subprocess.PIPE, shell=True, check=True)
-    subprocess.run(decrypt_cmd, input=pwd_proc.stdout, check=True)
-    yield Path(f"/dev/mapper/{map_name}")
-    sh.run_cmd(cmd=close_cmd)
+def decrypted_device(device: Path, pass_cmd: str):
+    decrypted = open_encrypted_device(device, pass_cmd)
+    yield decrypted
+    close_decrypted_device(decrypted)
 
 
 @contextlib.contextmanager
