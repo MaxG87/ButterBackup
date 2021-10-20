@@ -1,3 +1,4 @@
+import os
 import subprocess
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -5,6 +6,10 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 import pytest
 
 from butter_backup import device_managers as dm
+
+
+class MyCustomTestException(Exception):
+    pass
 
 
 def test_mounted_device(btrfs_device) -> None:
@@ -131,3 +136,16 @@ def test_symbolic_link() -> None:
             assert out_dest.is_symlink()
             assert out_dest.read_bytes() == source.read_bytes()
         assert not out_dest.exists()
+
+
+def test_symbolic_link_removes_link_in_case_of_exception() -> None:
+    with pytest.raises(MyCustomTestException):
+        with NamedTemporaryFile() as src_f:
+            source = Path(src_f.name)
+            with NamedTemporaryFile() as dest_f:
+                dest_p = Path(dest_f.name)
+            assert not os.path.lexists(dest_p)
+            with dm.symbolic_link(src=source, dest=dest_p):
+                assert os.path.lexists(dest_p)
+                raise MyCustomTestException
+    assert not os.path.lexists(dest_p)

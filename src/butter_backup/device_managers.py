@@ -58,8 +58,10 @@ def symbolic_link(src: Path, dest: Path):
         raise FileExistsError
     absolute_dest = dest.absolute()
     sh.run_cmd(cmd=["sudo", "ln", "-s", f"{src.absolute()}", f"{absolute_dest}"])
-    yield absolute_dest
-    sh.run_cmd(cmd=["sudo", "rm", f"{absolute_dest}"])
+    try:
+        yield absolute_dest
+    finally:
+        sh.run_cmd(cmd=["sudo", "rm", f"{absolute_dest}"])
 
 
 def mount_btrfs_device(device: Path, mount_dir: Path) -> None:
