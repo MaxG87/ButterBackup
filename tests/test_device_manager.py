@@ -98,6 +98,17 @@ def test_decrypted_device(encrypted_device) -> None:
     assert not dd.exists()
 
 
+def test_decrypted_device_closes_in_case_of_exception(encrypted_device) -> None:
+    map_name = "decrypted_device_test"
+    passphrase, device = encrypted_device
+    with pytest.raises(MyCustomTestException):
+        with dm.decrypted_device(
+            device=device, map_name=map_name, pass_cmd=f"echo {passphrase}"
+        ) as dd:
+            raise MyCustomTestException
+    assert not dd.exists()
+
+
 def test_decrypted_device_can_use_home_for_passcmd(encrypted_device) -> None:
     # Regression Test
     # Test if `decrypted_device` can use a program that is located in PATH. For

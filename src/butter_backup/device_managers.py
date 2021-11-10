@@ -15,8 +15,10 @@ def decrypted_device(device: Path, map_name: str, pass_cmd: str):
     close_cmd = ["sudo", "cryptsetup", "close", map_name]
     pwd_proc = subprocess.run(pass_cmd, stdout=subprocess.PIPE, shell=True, check=True)
     subprocess.run(decrypt_cmd, input=pwd_proc.stdout, check=True)
-    yield Path(f"/dev/mapper/{map_name}")
-    sh.run_cmd(cmd=close_cmd)
+    try:
+        yield Path(f"/dev/mapper/{map_name}")
+    finally:
+        sh.run_cmd(cmd=close_cmd)
 
 
 @contextlib.contextmanager
