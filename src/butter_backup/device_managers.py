@@ -26,8 +26,10 @@ def mounted_device(device: Path):
     with TemporaryDirectory() as td:
         mount_dir = Path(td)
         mount_btrfs_device(device, Path(mount_dir))
-        yield Path(mount_dir)
-        unmount_device(device)
+        try:
+            yield Path(mount_dir)
+        finally:
+            unmount_device(device)
 
 
 @contextlib.contextmanager

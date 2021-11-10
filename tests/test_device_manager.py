@@ -44,6 +44,17 @@ def test_mounted_device_fails_on_not_unmountable_device() -> None:
             pass
 
 
+def test_mounted_device_unmounts_in_case_of_exception(btrfs_device) -> None:
+    with pytest.raises(MyCustomTestException):
+        with dm.mounted_device(btrfs_device) as md:
+            # That the device is mounted properly is guaranteed by a test
+            # above.
+            raise MyCustomTestException
+    assert not md.exists()
+    assert not dm.is_mounted(btrfs_device)
+    assert str(btrfs_device) not in dm.get_mounted_devices()
+
+
 @pytest.mark.parametrize("device", dm.get_mounted_devices())
 def test_is_mounted_detects(device: Path) -> None:
     assert dm.is_mounted(device)
