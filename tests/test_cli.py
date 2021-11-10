@@ -1,3 +1,6 @@
+import json
+import re
+import uuid
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from unittest import mock
@@ -6,7 +9,13 @@ import pytest
 from typer.testing import CliRunner
 
 from butter_backup import cli
+from butter_backup import config_parser as cp
+from butter_backup import device_managers as dm
 from butter_backup.cli import app
+
+
+def in_docker_container() -> bool:
+    return Path("/.dockerenv").exists()
 
 
 @pytest.fixture
@@ -61,10 +70,61 @@ def test_open_refuses_missing_xdg_config(runner) -> None:
     assert result.exit_code != 0
 
 
-def test_open_warns_about_not_being_implemented(runner) -> None:
+@pytest.mark.skipif(
+    in_docker_container(), reason="Test is known to fail in Docker container"
+)
+def test_close_does_not_close_unopened_device(runner, encrypted_btrfs_device) -> None:
+    password, device = encrypted_btrfs_device
+    device_id = uuid.uuid4()
+    config = cp.ParsedButterConfig(
+        files=set(),
+        files_dest="files-destination",
+        folders=set(),
+        pass_cmd=f"echo {password}",
+        uuid=device_id,
+    )
     with NamedTemporaryFile() as tempf:
         config_file = Path(tempf.name)
-        config_file.write_text("[]")
-        result = runner.invoke(app, ["open", "--config", str(config_file)])
-        assert "noch nicht implementiert" in result.stderr
-        assert result.exit_code == 1
+        config_file.write_text(json.dumps([config.as_dict()]))
+        device_by_uuid = Path("/dev/disk/by-uuid/") / str(device_id)
+        with dm.symbolic_link(src=device, dest=device_by_uuid):
+            close_result = runner.invoke(app, ["close", "--config", str(config_file)])
+            assert close_result.stdout == ""
+            assert close_result.exit_code == 0
+
+
+@pytest.mark.skipif(
+    in_docker_container(), reason="Test is known to fail in Docker container"
+)
+def test_open_close_roundtrip(runner, encrypted_btrfs_device) -> None:
+    password, device = encrypted_btrfs_device
+    device_id = uuid.uuid4()
+    expected_cryptsetup_map = Path(f"/dev/mapper/{device_id}")
+    config = cp.ParsedButterConfig(
+        files=set(),
+        files_dest="files-destination",
+        folders=set(),
+        pass_cmd=f"echo {password}",
+        uuid=device_id,
+    )
+    with NamedTemporaryFile() as tempf:
+        config_file = Path(tempf.name)
+        config_file.write_text(json.dumps([config.as_dict()]))
+        device_by_uuid = Path("/dev/disk/by-uuid/") / str(device_id)
+        with dm.symbolic_link(src=device, dest=device_by_uuid):
+            open_result = runner.invoke(app, ["open", "--config", str(config_file)])
+            expected_msg = (
+                f"Gerät {device_id} wurde in (?P<mount_dest>/[^ ]+) geöffnet."
+            )
+            match = re.fullmatch(expected_msg, open_result.stdout.strip())
+            assert match is not None
+            mount_dest = Path(match.group("mount_dest"))
+            assert any(
+                mount_dest in destinations
+                for destinations in dm.get_mounted_devices().values()
+            )
+            assert expected_cryptsetup_map.exists()
+            runner.invoke(app, ["close", "--config", str(config_file)])
+            assert not expected_cryptsetup_map.exists()
+            assert not dm.is_mounted(mount_dest)
+            assert not mount_dest.exists()

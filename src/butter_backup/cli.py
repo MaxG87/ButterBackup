@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 import os
 from pathlib import Path
+from tempfile import mkdtemp
 
 import typer
 
 from butter_backup import backup_logic as bl
+from butter_backup import config_parser as cp
+from butter_backup import device_managers as dm
 
 app = typer.Typer()
 DEFAULT_CONFIG_DIR = Path("~/.config/").expanduser()
@@ -27,8 +30,36 @@ def hilfe():
 
 @app.command()
 def open(config: Path = CONFIG_OPTION):
-    typer.echo("Unterbefehl `open` ist noch nicht implementiert.", err=True)
-    raise typer.Exit(1)
+    config_list = cp.load_configuration(config)
+    for raw_cfg in config_list:
+        parsed_cfg = cp.ParsedButterConfig.from_dict(raw_cfg)
+        cfg = cp.ButterConfig.from_raw_config(parsed_cfg)
+        if cfg.device().exists():
+            mount_dir = Path(mkdtemp())
+            decrypted = dm.open_encrypted_device(cfg.device(), cfg.pass_cmd)
+            dm.mount_btrfs_device(decrypted, mount_dir=mount_dir)
+            typer.echo(f"Gerät {cfg.uuid} wurde in {mount_dir} geöffnet.")
+
+
+@app.command()
+def close(config: Path = CONFIG_OPTION):
+    config_list = cp.load_configuration(config)
+    for raw_cfg in config_list:
+        parsed_cfg = cp.ParsedButterConfig.from_dict(raw_cfg)
+        cfg = cp.ButterConfig.from_raw_config(parsed_cfg)
+        mapped_device = f"/dev/mapper/{cfg.uuid}"
+        mounted_devices = dm.get_mounted_devices()
+        if cfg.device().exists() and mapped_device in mounted_devices:
+            mount_dirs = mounted_devices[mapped_device]
+            if len(mount_dirs) != 1:
+                # TODO introduce custom exception
+                raise ValueError(
+                    "Got several possible mount points. Expected exactly 1!"
+                )
+            mount_dir = mount_dirs.pop()
+            dm.unmount_device(mount_dir)
+            dm.close_decrypted_device(Path(mapped_device))
+            mount_dir.rmdir()
 
 
 @app.command()
