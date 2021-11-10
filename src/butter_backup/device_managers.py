@@ -15,8 +15,10 @@ def decrypted_device(device: Path, map_name: str, pass_cmd: str):
     close_cmd = ["sudo", "cryptsetup", "close", map_name]
     pwd_proc = subprocess.run(pass_cmd, stdout=subprocess.PIPE, shell=True, check=True)
     subprocess.run(decrypt_cmd, input=pwd_proc.stdout, check=True)
-    yield Path(f"/dev/mapper/{map_name}")
-    sh.run_cmd(cmd=close_cmd)
+    try:
+        yield Path(f"/dev/mapper/{map_name}")
+    finally:
+        sh.run_cmd(cmd=close_cmd)
 
 
 @contextlib.contextmanager
@@ -26,8 +28,10 @@ def mounted_device(device: Path):
     with TemporaryDirectory() as td:
         mount_dir = Path(td)
         mount_btrfs_device(device, Path(mount_dir))
-        yield Path(mount_dir)
-        unmount_device(device)
+        try:
+            yield Path(mount_dir)
+        finally:
+            unmount_device(device)
 
 
 @contextlib.contextmanager
@@ -58,8 +62,10 @@ def symbolic_link(src: Path, dest: Path):
         raise FileExistsError
     absolute_dest = dest.absolute()
     sh.run_cmd(cmd=["sudo", "ln", "-s", f"{src.absolute()}", f"{absolute_dest}"])
-    yield absolute_dest
-    sh.run_cmd(cmd=["sudo", "rm", f"{absolute_dest}"])
+    try:
+        yield absolute_dest
+    finally:
+        sh.run_cmd(cmd=["sudo", "rm", f"{absolute_dest}"])
 
 
 def mount_btrfs_device(device: Path, mount_dir: Path) -> None:

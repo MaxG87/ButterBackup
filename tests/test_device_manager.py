@@ -1,3 +1,4 @@
+import os
 import subprocess
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -5,6 +6,10 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 import pytest
 
 from butter_backup import device_managers as dm
+
+
+class MyCustomTestException(Exception):
+    pass
 
 
 def test_mounted_device(btrfs_device) -> None:
@@ -37,6 +42,17 @@ def test_mounted_device_fails_on_not_unmountable_device() -> None:
     with pytest.raises(subprocess.CalledProcessError):
         with dm.mounted_device(root):
             pass
+
+
+def test_mounted_device_unmounts_in_case_of_exception(btrfs_device) -> None:
+    with pytest.raises(MyCustomTestException):
+        with dm.mounted_device(btrfs_device) as md:
+            # That the device is mounted properly is guaranteed by a test
+            # above.
+            raise MyCustomTestException
+    assert not md.exists()
+    assert not dm.is_mounted(btrfs_device)
+    assert str(btrfs_device) not in dm.get_mounted_devices()
 
 
 @pytest.mark.parametrize("device", dm.get_mounted_devices())
@@ -79,6 +95,17 @@ def test_decrypted_device(encrypted_device) -> None:
         device=device, map_name=map_name, pass_cmd=f"echo {passphrase}"
     ) as dd:
         assert dd.exists()
+    assert not dd.exists()
+
+
+def test_decrypted_device_closes_in_case_of_exception(encrypted_device) -> None:
+    map_name = "decrypted_device_test"
+    passphrase, device = encrypted_device
+    with pytest.raises(MyCustomTestException):
+        with dm.decrypted_device(
+            device=device, map_name=map_name, pass_cmd=f"echo {passphrase}"
+        ) as dd:
+            raise MyCustomTestException
     assert not dd.exists()
 
 
@@ -131,3 +158,16 @@ def test_symbolic_link() -> None:
             assert out_dest.is_symlink()
             assert out_dest.read_bytes() == source.read_bytes()
         assert not out_dest.exists()
+
+
+def test_symbolic_link_removes_link_in_case_of_exception() -> None:
+    with pytest.raises(MyCustomTestException):
+        with NamedTemporaryFile() as src_f:
+            source = Path(src_f.name)
+            with NamedTemporaryFile() as dest_f:
+                dest_p = Path(dest_f.name)
+            assert not os.path.lexists(dest_p)
+            with dm.symbolic_link(src=source, dest=dest_p):
+                assert os.path.lexists(dest_p)
+                raise MyCustomTestException
+    assert not os.path.lexists(dest_p)
