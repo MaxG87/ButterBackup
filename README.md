@@ -9,6 +9,24 @@
     poetry build
     pipx install dist/butter-backup-<version>.whl
 
+## Ausführung der Tests
+
+### Schnell
+
+    poetry run flake8
+    poetry run mypy .
+    poetry run pytest
+
+### Cross-Platform-Tests
+
+Es existiert eine umfassende Testsuite, die auch gewisse
+Plattformabhängigkeiten erkennen kann. Die Docker-Tests existieren überhaupt
+nur, weil es Probleme mit Arch gab.
+
+Die Testsuite kann mittels `make -j1` ausgeführt werden. **WICHTIG:** Die
+Testsuite kann nicht parallelisiert ausgeführt werden. Eine parallelisierte
+Ausführung lässt einige Mount-Tests fehlschlagen.
+
 ## Ähnliche Projekte
 
   * https://digint.ch/btrbk/
@@ -24,5 +42,6 @@
     Ordnersicherungen abstrahieren.
   * ungenutzte Ordner entfernen
   * `format-device` implementieren
-  * `open` implementieren
+  * Testsuite umstellen von Docker auf virtuelle Maschinen
+  * Testsuite parallelisiert ausführen lassen
 
