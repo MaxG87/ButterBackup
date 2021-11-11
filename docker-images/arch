@@ -1,4 +1,5 @@
-FROM archlinux@sha256:bdb0a4f11f40fc5859026257c3ca5a03515e26eebe781009abc0e3fad210837f
+# archlinux:base as of Oct. 25th, 2021
+FROM archlinux@sha256:04d0ec982fe298e0a8fbda48461945c8ed6f0b24dc12492e68b31eac576fc327
 
 # Provide relevant binaries
 RUN pacman -Syy --noconfirm btrfs-progs cryptsetup curl make python python-pip sudo
