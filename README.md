@@ -17,7 +17,7 @@
     poetry run mypy .
     poetry run pytest
 
-### Cross-Platform-Tests
+### Plattformübergreifende Tests
 
 Es existiert eine umfassende Testsuite, die auch gewisse
 Plattformabhängigkeiten erkennen kann. Die Docker-Tests existieren überhaupt
