@@ -5,7 +5,7 @@ FROM archlinux@sha256:04d0ec982fe298e0a8fbda48461945c8ed6f0b24dc12492e68b31eac57
 RUN pacman -Syy --noconfirm btrfs-progs cryptsetup curl make python python-pip sudo
 
 # Setup Poetry
-ENV POETRY_VERSION=1.1.7
+ENV POETRY_VERSION=1.1.11
 RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/$POETRY_VERSION/get-poetry.py | python -
 ENV PATH=$PATH:/root/.poetry/bin
 
