@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import datetime as dt
 import json
 import sys
 from collections import Counter
@@ -46,7 +45,6 @@ class ParsedButterConfig:
 
 @dataclass(frozen=True)
 class ButterConfig:
-    date: dt.date
     files: set[Path]
     files_dest: str
     folders: set[tuple[Path, str]]
@@ -112,7 +110,6 @@ class ButterConfig:
         folders = {(Path(src).expanduser(), dest) for (src, dest) in raw_cfg.folders}
         files = {Path(src).expanduser() for src in raw_cfg.files}
         return cls(
-            date=dt.date.today(),
             files=files,
             files_dest=raw_cfg.files_dest,
             folders=folders,

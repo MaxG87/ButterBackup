@@ -125,7 +125,6 @@ def test_butter_config_accepts_raw_config(base_config):
 @given(date=st.dates(), uuid=st.uuids())
 def test_butter_config_uuid_is_mapname(date, uuid) -> None:
     cfg = cp.ButterConfig(
-        date=date,
         files=set(),
         files_dest="Einzeldateien",
         folders=set(),
