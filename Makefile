@@ -26,6 +26,9 @@ check-linters: | $(CACHEDIR)/check-linters
 run-tests: run-docker-tests | $(CACHEDIR)/run-undockered-tests
 .PHONY: run-docker-tests
 run-docker-tests: | $(CACHEDIR)/run-arch-tests $(CACHEDIR)/run-debian-tests
+.PHONY: get-service-id
+get-service-id:
+	@echo $(SERVICE_ID_FULL)
 
 $(CACHEDIR):
 	mkdir -p $@
