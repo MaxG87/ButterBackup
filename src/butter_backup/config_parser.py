@@ -5,7 +5,7 @@ import sys
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Iterable
 from uuid import UUID
 
 RAW_CONFIG_T = Dict[str, Any]
@@ -124,7 +124,8 @@ class ButterConfig:
         return str(self.uuid)
 
 
-def load_configuration(cfg_file: Path) -> list[dict[str, Any]]:
+def load_configuration(cfg_file: Path) -> Iterable[ButterConfig]:
+    """Lade, parse und validiere die Konfigurationsdatei"""
     if not cfg_file.exists():
         err_msg = f"Konfigurationsdatei {cfg_file} existiert nicht."
         help_hint = "Nutzen Sie `--help` um zu erfahren, wie eine Konfigurationsdatei explizit angegeben werden kann."
@@ -133,5 +134,12 @@ def load_configuration(cfg_file: Path) -> list[dict[str, Any]]:
     with cfg_file.open() as fh:
         config_lst = json.load(fh)
     if len(config_lst) == 0:
-        sys.exit("Empty configurations are not allowed!\n")
-    return config_lst  # type: ignore
+        sys.exit("Leere Konfigurationsdateien sind nicht erlaubt.\n")
+    if not isinstance(config_lst, list):
+        sys.exit("Die Konfiguration muss eine JSON-Liste sein!")
+    if not all(isinstance(elem, dict) for elem in config_lst):
+        sys.exit("Alle Einträge müssen ein JSON-Dictionary sein.")
+
+    for raw_cfg in config_lst:
+        parsed_cfg = ParsedButterConfig.from_dict(raw_cfg)
+        yield ButterConfig.from_raw_config(parsed_cfg)

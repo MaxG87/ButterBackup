@@ -30,10 +30,8 @@ def hilfe():
 
 @app.command()
 def open(config: Path = CONFIG_OPTION):
-    config_list = cp.load_configuration(config)
-    for raw_cfg in config_list:
-        parsed_cfg = cp.ParsedButterConfig.from_dict(raw_cfg)
-        cfg = cp.ButterConfig.from_raw_config(parsed_cfg)
+    configurations = list(cp.load_configuration(config))
+    for cfg in configurations:
         if cfg.device().exists():
             mount_dir = Path(mkdtemp())
             decrypted = dm.open_encrypted_device(cfg.device(), cfg.pass_cmd)
@@ -43,10 +41,8 @@ def open(config: Path = CONFIG_OPTION):
 
 @app.command()
 def close(config: Path = CONFIG_OPTION):
-    config_list = cp.load_configuration(config)
-    for raw_cfg in config_list:
-        parsed_cfg = cp.ParsedButterConfig.from_dict(raw_cfg)
-        cfg = cp.ButterConfig.from_raw_config(parsed_cfg)
+    configurations = list(cp.load_configuration(config))
+    for cfg in configurations:
         mapped_device = f"/dev/mapper/{cfg.uuid}"
         mounted_devices = dm.get_mounted_devices()
         if cfg.device().exists() and mapped_device in mounted_devices:

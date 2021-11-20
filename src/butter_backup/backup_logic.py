@@ -13,10 +13,8 @@ DEFAULT_CONFIG = DEFAULT_CONFIG_DIR / DEFAULT_CONFIG_NAME
 
 
 def do_backup(config: Path) -> None:
-    config_list = cp.load_configuration(config)
-    for raw_cfg in config_list:
-        parsed_cfg = cp.ParsedButterConfig.from_dict(raw_cfg)
-        cfg = cp.ButterConfig.from_raw_config(parsed_cfg)
+    configurations = list(cp.load_configuration(config))
+    for cfg in configurations:
         if cfg.device().exists():
             do_butter_backup(cfg)
 

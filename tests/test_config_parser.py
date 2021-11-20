@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
+from uuid import UUID
 
 import pytest
 from hypothesis import given
@@ -33,7 +34,7 @@ valid_unparsed_configs = st.builds(
 def test_useful_error_on_missing_file_name() -> None:
     missing_cfg = Path("/path/to/nowhere/butter-backup.cfg")
     with pytest.raises(SystemExit) as sysexit:
-        cp.load_configuration(missing_cfg)
+        list(cp.load_configuration(missing_cfg))
     assert str(missing_cfg) in str(sysexit.value)
     assert "--help" in str(sysexit.value)
 
@@ -42,7 +43,7 @@ def test_load_configuration_rejects_missing_cfg() -> None:
     with NamedTemporaryFile() as named_tmp:
         file_name = Path(named_tmp.name)
     with pytest.raises(SystemExit) as sysexit:
-        cp.load_configuration(file_name)
+        list(cp.load_configuration(file_name))
     assert sysexit.value.code not in SUCCESS_CODES
 
 
@@ -51,17 +52,57 @@ def test_load_configuration_rejects_empty_file() -> None:
         file_name = Path(td, "configuration")
         file_name.write_text("[]")
         with pytest.raises(SystemExit) as sysexit:
-            cp.load_configuration(file_name)
+            list(cp.load_configuration(file_name))
         assert sysexit.value.code not in SUCCESS_CODES
 
 
-@given(config=valid_unparsed_configs)
-def test_load_configuration_parses(config) -> None:
+@given(
+    uuid=st.uuids(),
+    pass_cmd=st.text(),
+    backup_dest_dirs=st.lists(st.text(), min_size=2, max_size=2, unique=True),
+)
+def test_load_configuration_parses(
+    uuid: UUID, pass_cmd: str, backup_dest_dirs: list[str]
+) -> None:
+    with TemporaryDirectory() as source:
+        config = cp.ParsedButterConfig(
+            uuid=uuid,
+            pass_cmd=pass_cmd,
+            folders={(source, backup_dest_dirs[0])},
+            files_dest=backup_dest_dirs[1],
+            files=set(),
+        )
+        butter_config = cp.ButterConfig.from_raw_config(config)
+        with TemporaryDirectory() as td:
+            file_name = Path(td, "configuration")
+            file_name.write_text(json.dumps([config.as_dict()]))
+            parse_result = list(cp.load_configuration(file_name))
+        assert [butter_config] == parse_result
+
+
+@given(
+    non_list=st.one_of(
+        st.dictionaries(st.text(), st.text(), min_size=1), st.text(min_size=1)
+    )
+)
+def test_load_configuration_warns_on_non_lists(non_list) -> None:
     with TemporaryDirectory() as td:
         file_name = Path(td, "configuration")
-        file_name.write_text(json.dumps(config))
-        reread_config = cp.load_configuration(file_name)
-        assert reread_config == config
+        file_name.write_text(json.dumps(non_list))
+        with pytest.raises(SystemExit) as sysexit:
+            list(cp.load_configuration(file_name))
+    assert sysexit.value.code not in SUCCESS_CODES
+    assert "muss eine JSON-Liste" in str(sysexit.value)
+
+
+def test_load_configuration_warns_on_non_dict_item() -> None:
+    with TemporaryDirectory() as td:
+        file_name = Path(td, "configuration")
+        file_name.write_text(json.dumps([{}, 1337]))
+        with pytest.raises(SystemExit) as sysexit:
+            list(cp.load_configuration(file_name))
+    assert sysexit.value.code not in SUCCESS_CODES
+    assert "Alle Einträge müssen" in str(sysexit.value)
 
 
 @given(
