@@ -7,10 +7,6 @@ from butter_backup import config_parser as cp
 from butter_backup import device_managers as dm
 from butter_backup import shell_interface as sh
 
-DEFAULT_CONFIG_DIR = Path("~/.config/").expanduser()
-DEFAULT_CONFIG_NAME = Path("butter-backup.cfg")
-DEFAULT_CONFIG = DEFAULT_CONFIG_DIR / DEFAULT_CONFIG_NAME
-
 
 def do_backup(config: Path) -> None:
     configurations = list(cp.load_configuration(config))
