@@ -29,7 +29,7 @@ Ausführung lässt einige Mount-Tests fehlschlagen.
 
 ## Ähnliche Projekte
 
-  * https://digint.ch/btrbk/
+- https://digint.ch/btrbk/
 
 ## Designentscheidungen
 
@@ -72,12 +72,11 @@ mischen.
 
 ## Ausstehende Aufgaben
 
-  * README schreiben und übersetzen
-  * Logo erstellen
-  * Tests der Backup-Logik
-  * Struktur umgestalten hin zu `BackupDirective`, die von Datei- oder
-    Ordnersicherungen abstrahieren.
-  * `format-device` implementieren
-  * Testsuite umstellen von Docker auf virtuelle Maschinen
-  * Testsuite parallelisiert ausführen lassen
-
+- README schreiben und übersetzen
+- Logo erstellen
+- Tests der Backup-Logik
+- Struktur umgestalten hin zu `BackupDirective`, die von Datei- oder
+  Ordnersicherungen abstrahieren.
+- `format-device` implementieren
+- Testsuite umstellen von Docker auf virtuelle Maschinen
+- Testsuite parallelisiert ausführen lassen
