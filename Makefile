@@ -17,7 +17,7 @@ CACHEDIR = $(CACHEBASE)/$(SERVICE_ID_FULL)
 .PHONY: all
 all: check-format check-linters run-tests
 .PHONY: apply-format
-apply-format: | $(CACHEDIR)/apply-format
+apply-format: $(CACHEDIR)/apply-format
 .PHONY: check-format
 check-format: | $(CACHEDIR)/check-format
 .PHONY: check-linters
@@ -63,7 +63,7 @@ $(CACHEDIR)/check-mypy: | $(CACHEDIR)
 
 
 # CHECKING FORMAT AND REFORMATTING
-$(CACHEDIR)/apply-format: | $(CACHEDIR)
+$(CACHEDIR)/apply-format: $(ALL_FILES) | $(CACHEDIR)
 	poetry run isort .
 	poetry run black .
 	touch $@
