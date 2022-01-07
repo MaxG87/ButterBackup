@@ -126,7 +126,7 @@ def test_parsing_config_fails_on_missing_keys(incomplete_cfg) -> None:
         lambda lst: len(lst) != NOF_FOLDER_BACKUP_MAPPING_ELEMS
     ),
 )
-def test_parsing_config_fails_on_malformed_folder_backiup_mappings(
+def test_parsing_config_fails_on_malformed_folder_backup_mappings(
     config, invalid_folder_mapping
 ) -> None:
     config["Folders"].append(invalid_folder_mapping)
