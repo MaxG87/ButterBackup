@@ -27,4 +27,4 @@ RUN poetry build \
 # Include test files
 COPY setup.cfg .
 
-CMD pytest .
+CMD pytest --no-cov .
