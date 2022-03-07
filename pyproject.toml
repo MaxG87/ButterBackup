@@ -28,6 +28,16 @@ butter-backup = "butter_backup.cli:cli"
 [tool.isort]
 profile = "black"
 
+[tool.mypy]
+allow_untyped_decorators = true
+check_untyped_defs = true
+ignore_missing_imports = false
+no_implicit_reexport = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_ignores = true
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
