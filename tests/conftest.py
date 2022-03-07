@@ -27,7 +27,7 @@ def big_file():
             pass
         return ntf.name
 
-    min_size = 128 * 1024 ** 2  # ~109MiB is the minimum size for BtrFS
+    min_size = 128 * 1024**2  # ~109MiB is the minimum size for BtrFS
     with TemporaryDirectory() as tempdir:
         filename = get_random_filename(dir_=tempdir)
         file = Path(filename)

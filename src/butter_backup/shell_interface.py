@@ -20,7 +20,7 @@ def run_cmd(
     *,
     cmd: _CMD_LIST,
     env: Optional[dict[str, str]] = None,
-    capture_output: bool = False
+    capture_output: bool = False,
 ) -> subprocess.CompletedProcess:
     if env is None:
         env = dict(os.environ)
@@ -32,7 +32,7 @@ def run_piped_commands(
     *,
     cmds: _LISTS_OF_CMD_LIST,
     env: Optional[dict[str, str]] = None,
-    capture_output: bool = False
+    capture_output: bool = False,
 ) -> subprocess.CompletedProcess:
     if env is None:
         env = dict(os.environ)
