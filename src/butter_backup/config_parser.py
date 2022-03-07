@@ -5,7 +5,7 @@ import sys
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable
+from typing import Any, Dict, Iterable, Union
 from uuid import UUID
 
 RAW_CONFIG_T = Dict[str, Any]
@@ -71,7 +71,7 @@ class ButterConfig:
 
     @staticmethod
     def exit_with_message_upon_duplicate(
-        counts: Counter, token: tuple[str, str]
+        counts: Union[Counter[Path], Counter[str]], token: tuple[str, str]
     ) -> None:
         if all(val == 1 for val in counts.values()):
             return
