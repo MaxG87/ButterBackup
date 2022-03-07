@@ -35,7 +35,7 @@ $(CACHEDIR):
 
 
 $(CACHEDIR)/run-undockered-tests: | $(CACHEDIR)
-	poetry run pytest --cov src --cov-branch --cov-fail-under 84
+	poetry run pytest
 	touch $@
 
 $(CACHEDIR)/run-%-tests: | $(CACHEDIR)/%-test-image
