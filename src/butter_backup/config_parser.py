@@ -8,7 +8,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, Union
 
-from pydantic import BaseModel, DirectoryPath, Extra, FilePath, validator
+from pydantic import (
+    BaseModel,
+    DirectoryPath,
+    Extra,
+    FilePath,
+    root_validator,
+    validator,
+)
 
 RAW_CONFIG_T = Dict[str, Any]
 
@@ -57,6 +64,16 @@ class BtrfsConfig(BaseModel, frozen=True, extra=Extra.forbid):
         file_names = Counter(f.name for f in files)
         cls.raise_with_message_upon_duplicate(file_names, ("Dateinamen", "Dateinamen"))
         return files
+
+    @root_validator(skip_on_failure=True)
+    def files_dest_is_no_folder_dest(cls, values):
+        files_dest = values["FilesDest"]
+        destinations = {dest for _, dest in values["Folders"]}
+        if files_dest in destinations:
+            raise ValueError(
+                f"Zielverzeichnis {files_dest} ist gleichzeitig Ziel für Ordner und Einzeldateien."
+            )
+        return values
 
     @staticmethod
     def raise_with_message_upon_duplicate(

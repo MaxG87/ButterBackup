@@ -393,6 +393,20 @@ def test_btrfs_config_rejects_malformed_folder_backup_mappings(
         cp.BtrfsConfig.parse_obj(config)
 
 
+@given(base_config=valid_unparsed_empty_btrfs_config(), dest_dir=filenames())
+def test_btrfs_config_rejects_file_dest_collision(base_config, dest_dir: str):
+    base_config["Folders"] = [
+        ["/usr/bin", "backup_bins"],
+        ["/etc", dest_dir],
+        ["/var/log", "backup_logs"],
+    ]
+    base_config["FilesDest"] = dest_dir
+    with NamedTemporaryFile() as src:
+        base_config["Files"] = [src.name]
+        with pytest.raises(ValidationError, match=re.escape(dest_dir)):
+            cp.BtrfsConfig.parse_obj(base_config)
+
+
 @given(base_config=valid_unparsed_empty_btrfs_config(), file_name=filenames())
 def test_btrfs_config_rejects_filename_collision(base_config, file_name):
     base_config["Folders"] = []
