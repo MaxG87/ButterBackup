@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import json
 import sys
+import uuid
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, Union
-from uuid import UUID
 
 RAW_CONFIG_T = Dict[str, Any]
 
@@ -17,7 +17,7 @@ class ParsedButterConfig:
     files_dest: str
     folders: set[tuple[str, str]]
     pass_cmd: str
-    uuid: UUID
+    uuid: uuid.UUID
 
     @classmethod
     def from_dict(cls, cfg: RAW_CONFIG_T) -> ParsedButterConfig:
@@ -31,7 +31,7 @@ class ParsedButterConfig:
             files_dest=cfg["Files"]["destination"],
             folders={(src, dest) for (src, dest) in cfg["Folders"]},
             pass_cmd=cfg["PassCmd"],
-            uuid=UUID(cfg["UUID"]),
+            uuid=uuid.UUID(cfg["UUID"]),
         )
 
     def as_dict(self) -> RAW_CONFIG_T:
@@ -49,7 +49,7 @@ class ButterConfig:
     files_dest: str
     folders: set[tuple[Path, str]]
     pass_cmd: str
-    uuid: UUID
+    uuid: uuid.UUID
 
     def __post_init__(self) -> None:
         sources = Counter(src for (src, _) in self.folders)
