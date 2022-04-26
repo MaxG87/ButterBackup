@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, Union
 
+from pydantic import BaseModel
+
 RAW_CONFIG_T = Dict[str, Any]
 
 
@@ -41,6 +43,14 @@ class ParsedButterConfig:
             "PassCmd": self.pass_cmd,
             "UUID": str(self.uuid),
         }
+
+
+class BtrfsConfig(BaseModel):
+    Files: set[Path]
+    FilesDest: str
+    Folders: set[tuple[Path, str]]
+    PassCmd: str
+    UUID: uuid.UUID
 
 
 @dataclass(frozen=True)
