@@ -65,6 +65,22 @@ class BtrfsConfig(BaseModel, frozen=True, extra=Extra.forbid):
         cls.raise_with_message_upon_duplicate(file_names, ("Dateinamen", "Dateinamen"))
         return files
 
+    @validator("Folders")
+    def folder_sources_must_be_unique(cls, folders):
+        sources = Counter(src for src, _ in folders)
+        cls.raise_with_message_upon_duplicate(
+            sources, ("Quellverzeichnissen", "Quellen")
+        )
+        return folders
+
+    @validator("Folders")
+    def folder_destinations_must_be_unique(cls, folders):
+        destinations = Counter(dest for _, dest in folders)
+        cls.raise_with_message_upon_duplicate(
+            destinations, ("Zielverzeichnissen", "Ziele")
+        )
+        return folders
+
     @root_validator(skip_on_failure=True)
     def files_dest_is_no_folder_dest(cls, values):
         files_dest = values["FilesDest"]

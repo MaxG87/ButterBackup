@@ -419,3 +419,40 @@ def test_btrfs_config_rejects_filename_collision(base_config, file_name):
             base_config["Files"] = [str(f) for f in files]
             with pytest.raises(ValidationError, match=re.escape(file_name)):
                 cp.BtrfsConfig.parse_obj(base_config)
+
+
+@given(
+    base_config=valid_unparsed_empty_btrfs_config(),
+    folder_dests=st.lists(filenames(), min_size=2, unique=True),
+)
+def test_btrfs_config_rejects_duplicate_src(base_config, folder_dests: list[str]):
+    with TemporaryDirectory() as src:
+        folders = [
+            ["/usr/bin", "backup_bins"],
+            [src, folder_dests[0]],
+            ["/var/log", "backup_logs"],
+            [src, folder_dests[1]],
+        ] + [[src, cur_dest] for cur_dest in folder_dests[2:]]
+        base_config["Folders"] = folders
+        base_config["Files"] = []
+        with pytest.raises(ValidationError, match=re.escape(src)):
+            cp.BtrfsConfig.parse_obj(base_config)
+
+
+@given(
+    base_config=valid_unparsed_configs(),
+    folder_dest=filenames(),
+)
+def test_btrfs_config_rejects_duplicate_dest(base_config, folder_dest: str):
+    with TemporaryDirectory() as src1:
+        with TemporaryDirectory() as src2:
+            folders = [
+                ["/usr/bin", "backup_bins"],
+                [src1, folder_dest],
+                ["/var/log", "backup_logs"],
+                [src2, folder_dest],
+            ]
+            base_config["Folders"] = folders
+            base_config["Files"] = []
+            with pytest.raises(ValidationError, match=re.escape(folder_dest)):
+                cp.BtrfsConfig.parse_obj(base_config)
