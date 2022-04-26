@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, DirectoryPath, Extra, FilePath, validator
 
 RAW_CONFIG_T = Dict[str, Any]
 
@@ -45,12 +45,32 @@ class ParsedButterConfig:
         }
 
 
-class BtrfsConfig(BaseModel):
-    Files: set[Path]
+class BtrfsConfig(BaseModel, frozen=True, extra=Extra.forbid):
+    Files: set[FilePath]
     FilesDest: str
-    Folders: set[tuple[Path, str]]
+    Folders: set[tuple[DirectoryPath, str]]
     PassCmd: str
     UUID: uuid.UUID
+
+    @validator("Files")
+    def source_file_names_must_be_unique(cls, files):
+        file_names = Counter(f.name for f in files)
+        cls.raise_with_message_upon_duplicate(file_names, ("Dateinamen", "Dateinamen"))
+        return files
+
+    @staticmethod
+    def raise_with_message_upon_duplicate(
+        counts: Union[Counter[Path], Counter[str]], token: tuple[str, str]
+    ) -> None:
+        if all(val == 1 for val in counts.values()):
+            return
+        errmsg_begin = (
+            f"Duplikate in {token[0]} entdeckt. Folgende {token[1]} kommen doppelt vor:"
+        )
+        errmsg_body = " ".join(
+            str(elem) for (elem, count) in counts.items() if count > 1
+        )
+        raise ValueError(f"{errmsg_begin} {errmsg_body}")
 
 
 @dataclass(frozen=True)

@@ -8,6 +8,7 @@ from uuid import UUID
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
+from pydantic import ValidationError
 
 from butter_backup import config_parser as cp
 
@@ -32,6 +33,22 @@ def valid_unparsed_configs(draw):
                 "Files": st.fixed_dictionaries(
                     {"destination": st.text(), "files": st.lists(st.text(min_size=1))}
                 ),
+            }
+        )
+    )
+    return config
+
+
+@st.composite
+def valid_unparsed_empty_btrfs_config(draw):
+    config = draw(
+        st.fixed_dictionaries(
+            {
+                "PassCmd": st.text(),
+                "Files": st.just([]),
+                "FilesDest": st.text(),
+                "Folders": st.just([]),
+                "UUID": st.uuids().map(str),
             }
         )
     )
@@ -345,3 +362,32 @@ def test_butter_config_as_dict_roundtrip(base_config):
     parsed_1 = cp.ParsedButterConfig.from_dict(base_config)
     parsed_2 = cp.ParsedButterConfig.from_dict(parsed_1.as_dict())
     assert parsed_1 == parsed_2
+
+
+@given(
+    config=valid_unparsed_empty_btrfs_config(),
+    invalid_folder_mapping=st.lists(st.text()).filter(
+        lambda lst: len(lst) != NOF_FOLDER_BACKUP_MAPPING_ELEMS
+    ),
+)
+def test_btrfs_config_rejects_malformed_folder_backup_mappings(
+    config, invalid_folder_mapping
+) -> None:
+    config["Folders"].append(invalid_folder_mapping)
+    with pytest.raises(ValidationError):
+        cp.BtrfsConfig.parse_obj(config)
+
+
+@given(base_config=valid_unparsed_empty_btrfs_config())
+def test_btrfs_config_rejects_filename_collision(base_config):
+    file_name = "my-file-name"
+    base_config["Folders"] = []
+    with TemporaryDirectory() as td1:
+        with TemporaryDirectory() as td2:
+            dirs = [td1, td2]
+            files = [Path(cur_dir) / file_name for cur_dir in dirs]
+            for f in files:
+                f.touch()
+            base_config["Files"] = [str(f) for f in files]
+            with pytest.raises(ValidationError, match=file_name):
+                cp.BtrfsConfig.parse_obj(base_config)
