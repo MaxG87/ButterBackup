@@ -65,6 +65,16 @@ class BtrfsConfig(BaseModel, frozen=True, extra=Extra.forbid):
         cls.raise_with_message_upon_duplicate(file_names, ("Dateinamen", "Dateinamen"))
         return files
 
+    @validator("Folders", pre=True)
+    def expand_tilde_in_folder_sources(cls, folders):
+        new = [(Path(src).expanduser(), dest) for src, dest in folders]
+        return new
+
+    @validator("Files", pre=True)
+    def expand_tilde_in_file_sources(cls, files):
+        new = [Path(cur).expanduser() for cur in files]
+        return new
+
     @validator("Folders")
     def folder_sources_must_be_unique(cls, folders):
         sources = Counter(src for src, _ in folders)

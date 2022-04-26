@@ -421,6 +421,24 @@ def test_btrfs_config_rejects_filename_collision(base_config, file_name):
                 cp.BtrfsConfig.parse_obj(base_config)
 
 
+@given(base_config=valid_unparsed_empty_btrfs_config())
+def test_btrfs_config_expands_user(base_config):
+    with TemporaryDirectory() as dest:
+        pass
+    folders = [
+        ("/usr/bin", "backup_bins"),
+        ("~", dest),
+        ("/var/log", "backup_logs"),
+    ]
+    base_config["Folders"] = folders
+    with NamedTemporaryFile(dir=Path.home()) as src_file:
+        fname = f"~/{Path(src_file.name).name}"
+        base_config["Files"] = ["/bin/bash", fname]
+        cfg = cp.BtrfsConfig.parse_obj(base_config)
+    assert Path("~").expanduser() in {src for (src, _) in cfg.Folders}
+    assert Path(src_file.name).expanduser() in cfg.Files
+
+
 @given(
     base_config=valid_unparsed_empty_btrfs_config(),
     folder_dests=st.lists(filenames(), min_size=2, unique=True),
