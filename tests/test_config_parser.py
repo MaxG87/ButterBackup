@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from uuid import UUID
@@ -14,6 +15,20 @@ from butter_backup import config_parser as cp
 
 SUCCESS_CODES = {0, None}
 NOF_FOLDER_BACKUP_MAPPING_ELEMS = 2
+
+
+@st.composite
+def filenames(draw, min_size=1) -> str:
+    alpha = "abcdefghijklmnopqrstuvwxyzäöu"
+    num = "01234567890"
+    special = "_-.,() "
+    permitted_chars = f"{alpha}{alpha.upper()}{num}{special}"
+    fname: str = draw(
+        st.text(permitted_chars, min_size=min_size).filter(
+            lambda fname: fname not in {".", ".."}
+        )
+    )
+    return fname
 
 
 @st.composite
@@ -378,9 +393,8 @@ def test_btrfs_config_rejects_malformed_folder_backup_mappings(
         cp.BtrfsConfig.parse_obj(config)
 
 
-@given(base_config=valid_unparsed_empty_btrfs_config())
-def test_btrfs_config_rejects_filename_collision(base_config):
-    file_name = "my-file-name"
+@given(base_config=valid_unparsed_empty_btrfs_config(), file_name=filenames())
+def test_btrfs_config_rejects_filename_collision(base_config, file_name):
     base_config["Folders"] = []
     with TemporaryDirectory() as td1:
         with TemporaryDirectory() as td2:
@@ -389,5 +403,5 @@ def test_btrfs_config_rejects_filename_collision(base_config):
             for f in files:
                 f.touch()
             base_config["Files"] = [str(f) for f in files]
-            with pytest.raises(ValidationError, match=file_name):
+            with pytest.raises(ValidationError, match=re.escape(file_name)):
                 cp.BtrfsConfig.parse_obj(base_config)
