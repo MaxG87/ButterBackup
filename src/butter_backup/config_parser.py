@@ -243,5 +243,11 @@ def load_configuration(cfg_file: Path) -> Iterable[ButterConfig]:
         sys.exit("Alle Einträge müssen ein JSON-Dictionary sein.")
 
     for raw_cfg in config_lst:
-        parsed_cfg = ParsedButterConfig.from_dict(raw_cfg)
-        yield ButterConfig.from_raw_config(parsed_cfg)
+        btrfs_cfg = BtrfsConfig.parse_obj(raw_cfg)
+        yield ButterConfig(
+            files=btrfs_cfg.Files,
+            files_dest=btrfs_cfg.FilesDest,
+            folders=btrfs_cfg.Folders,
+            pass_cmd=btrfs_cfg.PassCmd,
+            uuid=btrfs_cfg.UUID,
+        )
