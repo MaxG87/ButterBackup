@@ -283,8 +283,7 @@ def test_butter_config_expands_user(base_config):
     with NamedTemporaryFile(dir=Path.home()) as src_file:
         fname = f"~/{Path(src_file.name).name}"
         base_config["Files"]["files"] = ["/bin/bash", fname]
-        raw_config = cp.ParsedButterConfig.from_dict(base_config)
-        cfg = cp.BtrfsConfig.from_raw_config(raw_config)
+        cfg = cp.BtrfsConfig.from_raw_config(base_config)
     assert Path("~").expanduser() in {src for (src, _) in cfg.Folders}
     assert Path(src_file.name).expanduser() in cfg.Files
 
