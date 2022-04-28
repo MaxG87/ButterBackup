@@ -118,18 +118,11 @@ def test_load_configuration_parses(
                 "Files": [],
             }
         )
-        butter_config = cp.ButterConfig(
-            files=btrfs_cfg.Files,
-            files_dest=btrfs_cfg.FilesDest,
-            folders=btrfs_cfg.Folders,
-            pass_cmd=btrfs_cfg.PassCmd,
-            uuid=btrfs_cfg.UUID,
-        )
         with TemporaryDirectory() as td:
             file_name = Path(td, "configuration")
             file_name.write_text(f"[{btrfs_cfg.json()}]")
             parse_result = list(cp.load_configuration(file_name))
-        assert [butter_config] == parse_result
+        assert [btrfs_cfg] == parse_result
 
 
 @given(

@@ -4,7 +4,6 @@ import json
 import sys
 import uuid
 from collections import Counter
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, Union
 
@@ -101,76 +100,7 @@ class BtrfsConfig(BaseModel, frozen=True, extra=Extra.forbid):
         return str(self.UUID)
 
 
-@dataclass(frozen=True)
-class ButterConfig:
-    files: set[Path]
-    files_dest: str
-    folders: set[tuple[Path, str]]
-    pass_cmd: str
-    uuid: uuid.UUID
-
-    def __post_init__(self) -> None:
-        sources = Counter(src for (src, _) in self.folders)
-        destinations = Counter(dest for (_, dest) in self.folders)
-        file_names = Counter(f.name for f in self.files)
-        self.exit_with_message_upon_duplicate(
-            sources, ("Quellverzeichnissen", "Quellen")
-        )
-        self.exit_with_message_upon_duplicate(
-            destinations, ("Zielverzeichnissen", "Ziele")
-        )
-        self.exit_with_message_upon_duplicate(file_names, ("Dateinamen", "Dateinamen"))
-        self._ensure_all_folder_src_are_existing_dirs()
-        self._ensure_all_file_src_are_existing_files()
-        if self.files_dest in destinations:
-            sys.exit(
-                f"Zielverzeichnis {self.files_dest} ist gleichzeitig Ziel für Ordner und Einzeldateien."
-            )
-
-    @staticmethod
-    def exit_with_message_upon_duplicate(
-        counts: Union[Counter[Path], Counter[str]], token: tuple[str, str]
-    ) -> None:
-        if all(val == 1 for val in counts.values()):
-            return
-        errmsg_begin = (
-            f"Duplikate in {token[0]} entdeckt. Folgende {token[1]} kommen doppelt vor:"
-        )
-        errmsg_body = " ".join(
-            str(elem) for (elem, count) in counts.items() if count > 1
-        )
-        sys.exit(f"{errmsg_begin} {errmsg_body}")
-
-    def _ensure_all_folder_src_are_existing_dirs(self) -> None:
-        for src, _ in self.folders:
-            if not src.exists():
-                sys.exit(
-                    f"Konfiguration für UUID {self.uuid} nennt nicht existierendes Quellverzeichnis {src}."
-                )
-            if not src.is_dir():
-                sys.exit(
-                    f"Konfiguration für UUID {self.uuid} enthält Quelle {src} die kein Verzeichnis ist."
-                )
-
-    def _ensure_all_file_src_are_existing_files(self) -> None:
-        for src in self.files:
-            if not src.exists():
-                sys.exit(
-                    f"Konfiguration für UUID {self.uuid} nennt nicht existierende Quelldatei {src}."
-                )
-            if not src.is_file():
-                sys.exit(
-                    f"Konfiguration für UUID {self.uuid} enthält Quelle {src} die keine Datei ist."
-                )
-
-    def device(self) -> Path:
-        return Path(f"/dev/disk/by-uuid/{self.uuid}")
-
-    def map_name(self) -> str:
-        return str(self.uuid)
-
-
-def load_configuration(cfg_file: Path) -> Iterable[ButterConfig]:
+def load_configuration(cfg_file: Path) -> Iterable[BtrfsConfig]:
     """Lade, parse und validiere die Konfigurationsdatei"""
     if not cfg_file.exists():
         err_msg = f"Konfigurationsdatei {cfg_file} existiert nicht."
@@ -186,11 +116,4 @@ def load_configuration(cfg_file: Path) -> Iterable[ButterConfig]:
         sys.exit("Alle Einträge müssen ein JSON-Dictionary sein.")
 
     for raw_cfg in config_lst:
-        btrfs_cfg = BtrfsConfig.parse_obj(raw_cfg)
-        yield ButterConfig(
-            files=btrfs_cfg.Files,
-            files_dest=btrfs_cfg.FilesDest,
-            folders=btrfs_cfg.Folders,
-            pass_cmd=btrfs_cfg.PassCmd,
-            uuid=btrfs_cfg.UUID,
-        )
+        yield BtrfsConfig.parse_obj(raw_cfg)

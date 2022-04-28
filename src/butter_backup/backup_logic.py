@@ -15,19 +15,19 @@ def do_backup(config: Path) -> None:
             do_butter_backup(cfg)
 
 
-def do_butter_backup(cfg: cp.ButterConfig) -> None:
-    with dm.decrypted_device(cfg.device(), cfg.pass_cmd) as decrypted:
+def do_butter_backup(cfg: cp.BtrfsConfig) -> None:
+    with dm.decrypted_device(cfg.device(), cfg.PassCmd) as decrypted:
         with dm.mounted_device(decrypted) as mount_dir:
             backup_root = mount_dir / dt.datetime.now().strftime("%F_%H:%M:%S")
             src_snapshot = get_source_snapshot(mount_dir)
 
             snapshot(src=src_snapshot, dest=backup_root)
-            for src, dest_name in cfg.folders:
+            for src, dest_name in cfg.Folders:
                 dest = backup_root / dest_name
                 rsync_folder(src, dest)
 
-            files_dest = backup_root / cfg.files_dest
-            for src in cfg.files:
+            files_dest = backup_root / cfg.FilesDest
+            for src in cfg.Files:
                 rsync_file(src, files_dest)
 
 
