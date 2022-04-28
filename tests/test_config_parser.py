@@ -109,17 +109,25 @@ def test_load_configuration_parses(
     uuid: UUID, pass_cmd: str, backup_dest_dirs: list[str]
 ) -> None:
     with TemporaryDirectory() as source:
-        config = cp.ParsedButterConfig(
-            uuid=uuid,
-            pass_cmd=pass_cmd,
-            folders={(source, backup_dest_dirs[0])},
-            files_dest=backup_dest_dirs[1],
-            files=set(),
+        btrfs_cfg = cp.BtrfsConfig.parse_obj(
+            {
+                "UUID": uuid,
+                "PassCmd": pass_cmd,
+                "Folders": [[source, backup_dest_dirs[0]]],
+                "FilesDest": backup_dest_dirs[1],
+                "Files": [],
+            }
         )
-        butter_config = cp.ButterConfig.from_raw_config(config)
+        butter_config = cp.ButterConfig(
+            files=btrfs_cfg.Files,
+            files_dest=btrfs_cfg.FilesDest,
+            folders=btrfs_cfg.Folders,
+            pass_cmd=btrfs_cfg.PassCmd,
+            uuid=btrfs_cfg.UUID,
+        )
         with TemporaryDirectory() as td:
             file_name = Path(td, "configuration")
-            file_name.write_text(json.dumps([config.as_dict()]))
+            file_name.write_text(f"[{btrfs_cfg.json()}]")
             parse_result = list(cp.load_configuration(file_name))
         assert [butter_config] == parse_result
 
@@ -175,16 +183,6 @@ def test_parsing_config_fails_on_malformed_folder_backup_mappings(
 
     errmsg_regex = re.compile("(too many|not enough) values to unpack")
     assert any(errmsg_regex.match(cur["msg"]) for cur in valerr.value.errors())
-
-
-@given(config=valid_unparsed_configs())
-def test_parsing_config_parses(config) -> None:
-    cfg = cp.ParsedButterConfig.from_dict(config)
-    assert str(cfg.uuid) == config["UUID"]
-    assert cfg.pass_cmd == config["PassCmd"]
-    assert cfg.files_dest == config["Files"]["destination"]
-    assert cfg.folders == {tuple(elem) for elem in config["Folders"]}
-    assert cfg.files == set(config["Files"]["files"])
 
 
 @given(base_config=valid_unparsed_configs())
@@ -349,13 +347,6 @@ def test_butter_config_rejects_filename_collision(base_config):
             base_config["Files"]["files"] = [str(f) for f in files]
             with pytest.raises(ValidationError, match=re.escape(file_name)):
                 cp.BtrfsConfig.parse_obj(base_config)
-
-
-@given(base_config=valid_unparsed_configs())
-def test_butter_config_as_dict_roundtrip(base_config):
-    parsed_1 = cp.ParsedButterConfig.from_dict(base_config)
-    parsed_2 = cp.ParsedButterConfig.from_dict(parsed_1.as_dict())
-    assert parsed_1 == parsed_2
 
 
 @given(

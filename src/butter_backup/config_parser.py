@@ -20,38 +20,6 @@ from pydantic import (
 RAW_CONFIG_T = Dict[str, Any]
 
 
-@dataclass(frozen=True)
-class ParsedButterConfig:
-    files: set[str]
-    files_dest: str
-    folders: set[tuple[str, str]]
-    pass_cmd: str
-    uuid: uuid.UUID
-
-    @classmethod
-    def from_dict(cls, cfg: RAW_CONFIG_T) -> ParsedButterConfig:
-        expected_keys = {"UUID", "PassCmd", "Folders", "Files"}
-        if expected_keys != set(cfg.keys()):
-            sys.exit("Additional or missing keys in configuration.")
-        if any(len(cur_route) != 2 for cur_route in cfg["Folders"]):
-            sys.exit("All folder backup mappings must have exactly 2 elements.")
-        return cls(
-            files=set(cfg["Files"]["files"]),
-            files_dest=cfg["Files"]["destination"],
-            folders={(src, dest) for (src, dest) in cfg["Folders"]},
-            pass_cmd=cfg["PassCmd"],
-            uuid=uuid.UUID(cfg["UUID"]),
-        )
-
-    def as_dict(self) -> RAW_CONFIG_T:
-        return {
-            "Files": {"destination": self.files_dest, "files": list(self.files)},
-            "Folders": [[src, dest] for (src, dest) in self.folders],
-            "PassCmd": self.pass_cmd,
-            "UUID": str(self.uuid),
-        }
-
-
 class BtrfsConfig(BaseModel, frozen=True, extra=Extra.forbid):
     Files: set[FilePath]
     FilesDest: str
@@ -126,19 +94,6 @@ class BtrfsConfig(BaseModel, frozen=True, extra=Extra.forbid):
         )
         raise ValueError(f"{errmsg_begin} {errmsg_body}")
 
-    @classmethod
-    def from_raw_config(cls, raw_cfg: ParsedButterConfig) -> BtrfsConfig:
-        config = BtrfsConfig.parse_obj(
-            {
-                "Files": raw_cfg.files,
-                "FilesDest": raw_cfg.files_dest,
-                "PassCmd": raw_cfg.pass_cmd,
-                "Folders": raw_cfg.folders,
-                "UUID": raw_cfg.uuid,
-            }
-        )
-        return config
-
     def device(self) -> Path:
         return Path(f"/dev/disk/by-uuid/{self.UUID}")
 
@@ -207,18 +162,6 @@ class ButterConfig:
                 sys.exit(
                     f"Konfiguration für UUID {self.uuid} enthält Quelle {src} die keine Datei ist."
                 )
-
-    @classmethod
-    def from_raw_config(cls, raw_cfg: ParsedButterConfig) -> ButterConfig:
-        folders = {(Path(src).expanduser(), dest) for (src, dest) in raw_cfg.folders}
-        files = {Path(src).expanduser() for src in raw_cfg.files}
-        return cls(
-            files=files,
-            files_dest=raw_cfg.files_dest,
-            folders=folders,
-            pass_cmd=raw_cfg.pass_cmd,
-            uuid=raw_cfg.uuid,
-        )
 
     def device(self) -> Path:
         return Path(f"/dev/disk/by-uuid/{self.uuid}")
