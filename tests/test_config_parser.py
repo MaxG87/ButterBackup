@@ -170,9 +170,11 @@ def test_parsing_config_fails_on_malformed_folder_backup_mappings(
     config, invalid_folder_mapping
 ) -> None:
     config["Folders"].append(invalid_folder_mapping)
-    with pytest.raises(SystemExit) as sysexit:
-        cp.ParsedButterConfig.from_dict(config)
-    assert sysexit.value.code not in SUCCESS_CODES
+    with pytest.raises(ValidationError) as valerr:
+        cp.BtrfsConfig.parse_obj(config)
+
+    errmsg_regex = re.compile("(too many|not enough) values to unpack")
+    assert any(errmsg_regex.match(cur["msg"]) for cur in valerr.value.errors())
 
 
 @given(config=valid_unparsed_configs())
