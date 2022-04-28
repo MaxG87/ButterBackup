@@ -115,6 +115,19 @@ class BtrfsConfig(BaseModel, frozen=True, extra=Extra.forbid):
         )
         raise ValueError(f"{errmsg_begin} {errmsg_body}")
 
+    @classmethod
+    def from_raw_config(cls, raw_cfg: ParsedButterConfig) -> BtrfsConfig:
+        config = BtrfsConfig.parse_obj(
+            {
+                "Files": raw_cfg.files,
+                "FilesDest": raw_cfg.files_dest,
+                "PassCmd": raw_cfg.pass_cmd,
+                "Folders": raw_cfg.folders,
+                "UUID": raw_cfg.uuid,
+            }
+        )
+        return config
+
 
 @dataclass(frozen=True)
 class ButterConfig:

@@ -229,11 +229,8 @@ def test_butter_config_rejects_missing_folder_src(base_config):
     base_config["Folders"] = folders
     base_config["Files"]["files"] = []
     raw_config = cp.ParsedButterConfig.from_dict(base_config)
-    with pytest.raises(SystemExit) as sysexit:
-        cp.ButterConfig.from_raw_config(raw_config)
-    assert sysexit.value.code not in SUCCESS_CODES
-    assert str(raw_config.uuid) in sysexit.value.code  # type: ignore
-    assert src in sysexit.value.code  # type: ignore
+    with pytest.raises(ValidationError, match=re.escape(src)):
+        cp.BtrfsConfig.from_raw_config(raw_config)
 
 
 @given(base_config=valid_unparsed_configs())
@@ -248,11 +245,8 @@ def test_butter_config_rejects_non_dir_src(base_config):
         base_config["Folders"] = folders
         base_config["Files"]["files"] = []
         raw_config = cp.ParsedButterConfig.from_dict(base_config)
-        with pytest.raises(SystemExit) as sysexit:
-            cp.ButterConfig.from_raw_config(raw_config)
-    assert sysexit.value.code not in SUCCESS_CODES
-    assert str(raw_config.uuid) in sysexit.value.code  # type: ignore
-    assert src.name in sysexit.value.code  # type: ignore
+        with pytest.raises(ValueError, match=re.escape(src.name)):
+            cp.BtrfsConfig.from_raw_config(raw_config)
 
 
 @given(base_config=valid_unparsed_configs())
@@ -262,11 +256,8 @@ def test_butter_config_rejects_missing_file_src(base_config):
     base_config["Folders"] = []
     base_config["Files"]["files"] = [src.name]
     raw_config = cp.ParsedButterConfig.from_dict(base_config)
-    with pytest.raises(SystemExit) as sysexit:
-        cp.ButterConfig.from_raw_config(raw_config)
-    assert sysexit.value.code not in SUCCESS_CODES
-    assert str(raw_config.uuid) in sysexit.value.code  # type: ignore
-    assert src.name in sysexit.value.code  # type: ignore
+    with pytest.raises(ValueError, match=re.escape(src.name)):
+        cp.BtrfsConfig.from_raw_config(raw_config)
 
 
 @given(base_config=valid_unparsed_configs())
@@ -275,11 +266,8 @@ def test_butter_config_rejects_non_file_src(base_config):
         base_config["Files"]["files"] = [src]
         base_config["Folders"] = []
         raw_config = cp.ParsedButterConfig.from_dict(base_config)
-        with pytest.raises(SystemExit) as sysexit:
-            cp.ButterConfig.from_raw_config(raw_config)
-    assert sysexit.value.code not in SUCCESS_CODES
-    assert str(raw_config.uuid) in sysexit.value.code  # type: ignore
-    assert src in sysexit.value.code  # type: ignore
+        with pytest.raises(ValueError, match=re.escape(src)):
+            cp.BtrfsConfig.from_raw_config(raw_config)
 
 
 @given(base_config=valid_unparsed_configs())
@@ -296,9 +284,9 @@ def test_butter_config_expands_user(base_config):
         fname = f"~/{Path(src_file.name).name}"
         base_config["Files"]["files"] = ["/bin/bash", fname]
         raw_config = cp.ParsedButterConfig.from_dict(base_config)
-        cfg = cp.ButterConfig.from_raw_config(raw_config)
-    assert Path("~").expanduser() in {src for (src, _) in cfg.folders}
-    assert Path(src_file.name).expanduser() in cfg.files
+        cfg = cp.BtrfsConfig.from_raw_config(raw_config)
+    assert Path("~").expanduser() in {src for (src, _) in cfg.Folders}
+    assert Path(src_file.name).expanduser() in cfg.Files
 
 
 @given(base_config=valid_unparsed_configs())
@@ -314,9 +302,8 @@ def test_butter_config_rejects_duplicate_src(base_config):
         base_config["Folders"] = folders
         base_config["Files"]["files"] = []
         raw_config = cp.ParsedButterConfig.from_dict(base_config)
-        with pytest.raises(SystemExit) as sysexit:
-            cp.ButterConfig.from_raw_config(raw_config)
-        assert src in sysexit.value.code  # type: ignore
+        with pytest.raises(ValidationError, match=re.escape(src)):
+            cp.BtrfsConfig.from_raw_config(raw_config)
 
 
 @given(base_config=valid_unparsed_configs())
@@ -333,9 +320,8 @@ def test_butter_config_rejects_duplicate_dest(base_config):
             base_config["Folders"] = folders
             base_config["Files"]["files"] = []
             raw_config = cp.ParsedButterConfig.from_dict(base_config)
-            with pytest.raises(SystemExit) as sysexit:
-                cp.ButterConfig.from_raw_config(raw_config)
-            assert folder_dest in sysexit.value.code  # type: ignore
+            with pytest.raises(ValidationError, match=re.escape(folder_dest)):
+                cp.BtrfsConfig.from_raw_config(raw_config)
 
 
 @given(base_config=valid_unparsed_configs())
@@ -350,9 +336,8 @@ def test_butter_config_rejects_file_dest_collision(base_config):
     with NamedTemporaryFile() as src:
         base_config["Files"]["files"] = [src.name]
         raw_config = cp.ParsedButterConfig.from_dict(base_config)
-        with pytest.raises(SystemExit) as sysexit:
-            cp.ButterConfig.from_raw_config(raw_config)
-        assert dest_dir in sysexit.value.code  # type: ignore
+        with pytest.raises(ValidationError, match=re.escape(dest_dir)):
+            cp.BtrfsConfig.from_raw_config(raw_config)
 
 
 @given(base_config=valid_unparsed_configs())
@@ -367,9 +352,8 @@ def test_butter_config_rejects_filename_collision(base_config):
                 f.touch()
             base_config["Files"]["files"] = [str(f) for f in files]
             raw_config = cp.ParsedButterConfig.from_dict(base_config)
-            with pytest.raises(SystemExit) as sysexit:
-                cp.ButterConfig.from_raw_config(raw_config)
-            assert file_name in sysexit.value.code  # type: ignore
+            with pytest.raises(ValidationError, match=re.escape(file_name)):
+                cp.BtrfsConfig.from_raw_config(raw_config)
 
 
 @given(base_config=valid_unparsed_configs())
