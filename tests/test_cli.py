@@ -100,16 +100,16 @@ def test_open_close_roundtrip(runner, encrypted_btrfs_device) -> None:
     password, device = encrypted_btrfs_device
     device_id = uuid.uuid4()
     expected_cryptsetup_map = Path(f"/dev/mapper/{device_id}")
-    config = cp.ParsedButterConfig(
-        files=set(),
-        files_dest="files-destination",
-        folders=set(),
-        pass_cmd=f"echo {password}",
-        uuid=device_id,
+    config = cp.BtrfsConfig(
+        Files=set(),
+        FilesDest="files-destination",
+        Folders=set(),
+        PassCmd=f"echo {password}",
+        UUID=device_id,
     )
     with NamedTemporaryFile() as tempf:
         config_file = Path(tempf.name)
-        config_file.write_text(json.dumps([config.as_dict()]))
+        config_file.write_text(f"[{config.json()}]")
         device_by_uuid = Path("/dev/disk/by-uuid/") / str(device_id)
         with dm.symbolic_link(src=device, dest=device_by_uuid):
             open_result = runner.invoke(app, ["open", "--config", str(config_file)])
