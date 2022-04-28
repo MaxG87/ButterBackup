@@ -194,14 +194,15 @@ def test_butter_config_accepts_raw_config(base_config):
                 folders = [(src_folder, dest)]
                 base_config["Folders"] = folders
                 base_config["Files"]["files"] = [src_file.name]
-                raw_config = cp.ParsedButterConfig.from_dict(base_config)
-                cfg = cp.BtrfsConfig.from_raw_config(raw_config)
-    assert cfg.PassCmd == raw_config.pass_cmd
-    assert str(cfg.device()).endswith(str(raw_config.uuid))
-    assert {(str(src), str(dest)) for (src, dest) in cfg.Folders} == raw_config.folders
-    assert {str(file) for file in cfg.Files} == raw_config.files
-    assert cfg.FilesDest == raw_config.files_dest
-    assert cfg.UUID == raw_config.uuid
+                cfg = cp.BtrfsConfig.parse_obj(base_config)
+    assert cfg.PassCmd == base_config["PassCmd"]
+    assert str(cfg.device()).endswith(base_config["UUID"])
+    assert {(str(src), str(dest)) for (src, dest) in cfg.Folders} == set(
+        base_config["Folders"]
+    )
+    assert {str(file) for file in cfg.Files} == set(base_config["Files"]["files"])
+    assert cfg.FilesDest == base_config["Files"]["destination"]
+    assert str(cfg.UUID) == base_config["UUID"]
 
 
 @given(files_dest=st.text(), pass_cmd=st.text(), uuid=st.uuids())
