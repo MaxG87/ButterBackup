@@ -91,6 +91,17 @@ class BtrfsConfig(BaseModel, frozen=True, extra=Extra.forbid):
         )
         return folders
 
+    @root_validator(pre=True)
+    def handle_legacy_files_cfg(cls, values):
+        try:
+            files = values["Files"]["files"]
+            files_dest = values["Files"]["destination"]
+        except (KeyError, TypeError):
+            return values
+        values["Files"] = files
+        values["FilesDest"] = files_dest
+        return values
+
     @root_validator(skip_on_failure=True)
     def files_dest_is_no_folder_dest(cls, values):
         files_dest = values["FilesDest"]
