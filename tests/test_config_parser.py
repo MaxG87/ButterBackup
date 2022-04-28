@@ -231,9 +231,8 @@ def test_butter_config_rejects_missing_folder_src(base_config):
     ]
     base_config["Folders"] = folders
     base_config["Files"]["files"] = []
-    raw_config = cp.ParsedButterConfig.from_dict(base_config)
     with pytest.raises(ValidationError, match=re.escape(src)):
-        cp.BtrfsConfig.from_raw_config(raw_config)
+        cp.BtrfsConfig.parse_obj(base_config)
 
 
 @given(base_config=valid_unparsed_configs())
@@ -247,9 +246,8 @@ def test_butter_config_rejects_non_dir_src(base_config):
         ]
         base_config["Folders"] = folders
         base_config["Files"]["files"] = []
-        raw_config = cp.ParsedButterConfig.from_dict(base_config)
         with pytest.raises(ValueError, match=re.escape(src.name)):
-            cp.BtrfsConfig.from_raw_config(raw_config)
+            cp.BtrfsConfig.parse_obj(base_config)
 
 
 @given(base_config=valid_unparsed_configs())
@@ -258,9 +256,8 @@ def test_butter_config_rejects_missing_file_src(base_config):
         pass
     base_config["Folders"] = []
     base_config["Files"]["files"] = [src.name]
-    raw_config = cp.ParsedButterConfig.from_dict(base_config)
     with pytest.raises(ValueError, match=re.escape(src.name)):
-        cp.BtrfsConfig.from_raw_config(raw_config)
+        cp.BtrfsConfig.parse_obj(base_config)
 
 
 @given(base_config=valid_unparsed_configs())
@@ -268,9 +265,8 @@ def test_butter_config_rejects_non_file_src(base_config):
     with TemporaryDirectory() as src:
         base_config["Files"]["files"] = [src]
         base_config["Folders"] = []
-        raw_config = cp.ParsedButterConfig.from_dict(base_config)
         with pytest.raises(ValueError, match=re.escape(src)):
-            cp.BtrfsConfig.from_raw_config(raw_config)
+            cp.BtrfsConfig.parse_obj(base_config)
 
 
 @given(base_config=valid_unparsed_configs())
@@ -304,9 +300,8 @@ def test_butter_config_rejects_duplicate_src(base_config):
         ]
         base_config["Folders"] = folders
         base_config["Files"]["files"] = []
-        raw_config = cp.ParsedButterConfig.from_dict(base_config)
         with pytest.raises(ValidationError, match=re.escape(src)):
-            cp.BtrfsConfig.from_raw_config(raw_config)
+            cp.BtrfsConfig.parse_obj(base_config)
 
 
 @given(base_config=valid_unparsed_configs())
@@ -322,9 +317,8 @@ def test_butter_config_rejects_duplicate_dest(base_config):
             ]
             base_config["Folders"] = folders
             base_config["Files"]["files"] = []
-            raw_config = cp.ParsedButterConfig.from_dict(base_config)
             with pytest.raises(ValidationError, match=re.escape(folder_dest)):
-                cp.BtrfsConfig.from_raw_config(raw_config)
+                cp.BtrfsConfig.parse_obj(base_config)
 
 
 @given(base_config=valid_unparsed_configs())
@@ -338,9 +332,8 @@ def test_butter_config_rejects_file_dest_collision(base_config):
     base_config["Files"]["destination"] = dest_dir
     with NamedTemporaryFile() as src:
         base_config["Files"]["files"] = [src.name]
-        raw_config = cp.ParsedButterConfig.from_dict(base_config)
         with pytest.raises(ValidationError, match=re.escape(dest_dir)):
-            cp.BtrfsConfig.from_raw_config(raw_config)
+            cp.BtrfsConfig.parse_obj(base_config)
 
 
 @given(base_config=valid_unparsed_configs())
@@ -354,9 +347,8 @@ def test_butter_config_rejects_filename_collision(base_config):
             for f in files:
                 f.touch()
             base_config["Files"]["files"] = [str(f) for f in files]
-            raw_config = cp.ParsedButterConfig.from_dict(base_config)
             with pytest.raises(ValidationError, match=re.escape(file_name)):
-                cp.BtrfsConfig.from_raw_config(raw_config)
+                cp.BtrfsConfig.parse_obj(base_config)
 
 
 @given(base_config=valid_unparsed_configs())
