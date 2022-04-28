@@ -195,25 +195,27 @@ def test_butter_config_accepts_raw_config(base_config):
                 base_config["Folders"] = folders
                 base_config["Files"]["files"] = [src_file.name]
                 raw_config = cp.ParsedButterConfig.from_dict(base_config)
-                cfg = cp.ButterConfig.from_raw_config(raw_config)
-    assert cfg.pass_cmd == raw_config.pass_cmd
+                cfg = cp.BtrfsConfig.from_raw_config(raw_config)
+    assert cfg.PassCmd == raw_config.pass_cmd
     assert str(cfg.device()).endswith(str(raw_config.uuid))
-    assert {(str(src), str(dest)) for (src, dest) in cfg.folders} == raw_config.folders
-    assert {str(file) for file in cfg.files} == raw_config.files
-    assert cfg.files_dest == raw_config.files_dest
-    assert cfg.uuid == raw_config.uuid
+    assert {(str(src), str(dest)) for (src, dest) in cfg.Folders} == raw_config.folders
+    assert {str(file) for file in cfg.Files} == raw_config.files
+    assert cfg.FilesDest == raw_config.files_dest
+    assert cfg.UUID == raw_config.uuid
 
 
-@given(date=st.dates(), uuid=st.uuids())
-def test_butter_config_uuid_is_mapname(date, uuid) -> None:
-    cfg = cp.ButterConfig(
-        files=set(),
-        files_dest="Einzeldateien",
-        folders=set(),
-        pass_cmd="echo supersecure",
-        uuid=uuid,
+@given(files_dest=st.text(), pass_cmd=st.text(), uuid=st.uuids())
+def test_butter_config_uuid_is_mapname(
+    files_dest: str, pass_cmd: str, uuid: UUID
+) -> None:
+    cfg = cp.BtrfsConfig(
+        Files=set(),
+        FilesDest=files_dest,
+        Folders=set(),
+        PassCmd=pass_cmd,
+        UUID=uuid,
     )
-    assert str(cfg.uuid) == cfg.map_name()
+    assert str(uuid) == cfg.map_name()
 
 
 @given(base_config=valid_unparsed_configs())

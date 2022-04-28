@@ -128,6 +128,12 @@ class BtrfsConfig(BaseModel, frozen=True, extra=Extra.forbid):
         )
         return config
 
+    def device(self) -> Path:
+        return Path(f"/dev/disk/by-uuid/{self.UUID}")
+
+    def map_name(self) -> str:
+        return str(self.UUID)
+
 
 @dataclass(frozen=True)
 class ButterConfig:
