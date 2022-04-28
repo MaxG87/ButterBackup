@@ -32,23 +32,28 @@ def filenames(draw, min_size=1) -> str:
 
 
 @st.composite
-def valid_unparsed_configs(draw):
+def valid_unparsed_configs(draw, may_be_incomplete: bool = False):
+    item_strategy_mapping = {
+        "UUID": st.uuids().map(str),
+        "PassCmd": st.text(),
+        "Folders": st.lists(
+            st.lists(
+                filenames(),
+                min_size=NOF_FOLDER_BACKUP_MAPPING_ELEMS,
+                max_size=NOF_FOLDER_BACKUP_MAPPING_ELEMS,
+            ),
+        ),
+        "Files": st.fixed_dictionaries(
+            {
+                "destination": st.text(),
+                "files": st.lists(filenames()),
+            }
+        ),
+    }
     config = draw(
         st.fixed_dictionaries(
-            {
-                "UUID": st.uuids().map(str),
-                "PassCmd": st.text(),
-                "Folders": st.lists(
-                    st.lists(
-                        st.text(min_size=1),
-                        min_size=NOF_FOLDER_BACKUP_MAPPING_ELEMS,
-                        max_size=NOF_FOLDER_BACKUP_MAPPING_ELEMS,
-                    ),
-                ),
-                "Files": st.fixed_dictionaries(
-                    {"destination": st.text(), "files": st.lists(st.text(min_size=1))}
-                ),
-            }
+            {} if may_be_incomplete else item_strategy_mapping,
+            optional=item_strategy_mapping if may_be_incomplete else {},
         )
     )
     return config
@@ -145,20 +150,14 @@ def test_load_configuration_warns_on_non_dict_item() -> None:
 
 
 @given(
-    incomplete_cfg=valid_unparsed_configs()
-    .flatmap(
-        lambda cfg_dict: st.lists(
-            st.sampled_from(sorted(cfg_dict.items())),
-            unique_by=lambda tup: tup[0],  # type: ignore
-            max_size=len(cfg_dict) - 1,
-        )
+    incomplete_cfg=valid_unparsed_configs(may_be_incomplete=True).filter(
+        lambda cfg: len(cfg) < 4
     )
-    .map(dict)
 )
 def test_parsing_config_fails_on_missing_keys(incomplete_cfg) -> None:
-    with pytest.raises(SystemExit) as sysexit:
-        cp.ParsedButterConfig.from_dict(incomplete_cfg)
-    assert sysexit.value.code not in SUCCESS_CODES
+    with pytest.raises(ValidationError) as exc:
+        cp.BtrfsConfig.parse_obj(incomplete_cfg)
+    assert any(cur["msg"] == "field required" for cur in exc.value.errors())
 
 
 @given(
