@@ -116,4 +116,8 @@ def load_configuration(cfg_file: Path) -> Iterable[BtrfsConfig]:
         sys.exit("Alle Einträge müssen ein JSON-Dictionary sein.")
 
     for raw_cfg in config_lst:
+        # TODO Einige Validierungsfehler dürfen nicht zum Programmabbruch
+        # führen. Ein Beispiel wären fehlende Dateien. Dadurch würde es
+        # möglich, einen gemeinsaman Satz Konfigurationen für verschiedene
+        # Rechner zu nutzen.
         yield BtrfsConfig.parse_obj(raw_cfg)
