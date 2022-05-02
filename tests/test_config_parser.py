@@ -76,7 +76,8 @@ def valid_unparsed_empty_btrfs_config(draw):
 
 
 def test_useful_error_on_missing_file_name() -> None:
-    missing_cfg = Path("/path/to/nowhere/butter-backup.cfg")
+    with NamedTemporaryFile() as named_tmp:
+        missing_cfg = Path(named_tmp.name)
     with pytest.raises(SystemExit) as sysexit:
         list(cp.load_configuration(missing_cfg))
     assert str(missing_cfg) in str(sysexit.value)
@@ -92,11 +93,11 @@ def test_load_configuration_rejects_missing_cfg() -> None:
 
 
 def test_load_configuration_rejects_empty_file() -> None:
-    with TemporaryDirectory() as td:
-        file_name = Path(td, "configuration")
-        file_name.write_text("[]")
+    with NamedTemporaryFile() as named_tmp:
+        config_file = Path(named_tmp.name)
+        config_file.write_text("[]")
         with pytest.raises(SystemExit) as sysexit:
-            list(cp.load_configuration(file_name))
+            list(cp.load_configuration(config_file))
         assert sysexit.value.code not in SUCCESS_CODES
 
 
