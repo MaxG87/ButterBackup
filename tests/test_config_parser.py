@@ -6,7 +6,7 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 from uuid import UUID
 
 import pytest
-from hypothesis import given
+from hypothesis import assume, given
 from hypothesis import strategies as st
 from pydantic import ValidationError
 
@@ -164,6 +164,19 @@ def test_btrfs_config_device_ends_in_uuid(
         UUID=uuid,
     )
     assert cfg.device() == Path(f"/dev/disk/by-uuid/{cfg.UUID}")
+
+
+@given(base_config=valid_unparsed_empty_btrfs_config(), folder_dest=filenames())
+def test_btrfs_config_json_roundtrip(base_config, folder_dest: str):
+    assume(folder_dest != base_config["FilesDest"])
+    with TemporaryDirectory() as src_folder:
+        with NamedTemporaryFile() as src_file:
+            base_config["Folders"] = {src_folder: folder_dest}
+            base_config["Files"] = [src_file.name]
+            cfg = cp.BtrfsConfig.parse_obj(base_config)
+            as_json = cfg.json()
+            deserialised = cp.BtrfsConfig.parse_raw(as_json)
+    assert cfg == deserialised
 
 
 @given(base_config=valid_unparsed_configs())
