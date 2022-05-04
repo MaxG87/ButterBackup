@@ -135,14 +135,12 @@ def test_load_configuration_parses(
     uuid: UUID, pass_cmd: str, backup_dest_dirs: list[str]
 ) -> None:
     with TemporaryDirectory() as source:
-        btrfs_cfg = cp.BtrfsConfig.parse_obj(
-            {
-                "UUID": uuid,
-                "PassCmd": pass_cmd,
-                "Folders": [[source, backup_dest_dirs[0]]],
-                "FilesDest": backup_dest_dirs[1],
-                "Files": [],
-            }
+        btrfs_cfg = cp.BtrfsConfig(
+            UUID=uuid,
+            PassCmd=pass_cmd,
+            Folders={(Path(source), backup_dest_dirs[0])},
+            FilesDest=backup_dest_dirs[1],
+            Files=set(),
         )
         with TemporaryDirectory() as td:
             file_name = Path(td, "configuration")
