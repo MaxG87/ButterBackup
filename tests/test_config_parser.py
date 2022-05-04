@@ -67,7 +67,7 @@ def valid_unparsed_empty_btrfs_config(draw):
                 "PassCmd": st.text(),
                 "Files": st.just([]),
                 "FilesDest": st.text(),
-                "Folders": st.just([]),
+                "Folders": st.just({}),
                 "UUID": st.uuids().map(str),
             }
         )
@@ -138,7 +138,7 @@ def test_load_configuration_parses(
         btrfs_cfg = cp.BtrfsConfig(
             UUID=uuid,
             PassCmd=pass_cmd,
-            Folders={(Path(source), backup_dest_dirs[0])},
+            Folders={Path(source): backup_dest_dirs[0]},
             FilesDest=backup_dest_dirs[1],
             Files=set(),
         )
@@ -158,7 +158,7 @@ def test_btrfs_config_handles_old_style_config(base_config):
                 base_config["Folders"] = folders
                 base_config["Files"]["files"] = [src_file.name]
                 cfg = cp.BtrfsConfig.parse_obj(base_config)
-    result_folders = {(str(src), str(dest)) for src, dest in cfg.Folders}
+    result_folders = {(str(src), dest) for src, dest in cfg.Folders.items()}
     assert cfg.PassCmd == base_config["PassCmd"]
     assert str(cfg.device()).endswith(base_config["UUID"])
     assert result_folders == set(base_config["Folders"])
@@ -167,44 +167,13 @@ def test_btrfs_config_handles_old_style_config(base_config):
     assert str(cfg.UUID) == base_config["UUID"]
 
 
-@given(
-    config=valid_unparsed_empty_btrfs_config(),
-    invalid_folder_mapping=st.lists(st.text()).filter(
-        lambda lst: len(lst) != NOF_FOLDER_BACKUP_MAPPING_ELEMS
-    ),
-)
-def test_parsing_config_fails_on_malformed_folder_backup_mappings(
-    config, invalid_folder_mapping
-) -> None:
-    config["Folders"].append(invalid_folder_mapping)
-    with pytest.raises(ValidationError) as valerr:
-        cp.BtrfsConfig.parse_obj(config)
-
-    errmsg_regex = re.compile("(too many|not enough) values to unpack")
-    assert any(errmsg_regex.match(cur["msg"]) for cur in valerr.value.errors())
-
-
-@given(
-    config=valid_unparsed_empty_btrfs_config(),
-    invalid_folder_mapping=st.lists(st.text()).filter(
-        lambda lst: len(lst) != NOF_FOLDER_BACKUP_MAPPING_ELEMS
-    ),
-)
-def test_btrfs_config_rejects_malformed_folder_backup_mappings(
-    config, invalid_folder_mapping
-) -> None:
-    config["Folders"].append(invalid_folder_mapping)
-    with pytest.raises(ValidationError):
-        cp.BtrfsConfig.parse_obj(config)
-
-
 @given(base_config=valid_unparsed_empty_btrfs_config(), dest_dir=filenames())
 def test_btrfs_config_rejects_file_dest_collision(base_config, dest_dir: str):
-    base_config["Folders"] = [
-        ["/usr/bin", "backup_bins"],
-        ["/etc", dest_dir],
-        ["/var/log", "backup_logs"],
-    ]
+    base_config["Folders"] = {
+        "/usr/bin": "backup_bins",
+        "/etc": dest_dir,
+        "/var/log": "backup_logs",
+    }
     base_config["FilesDest"] = dest_dir
     with NamedTemporaryFile() as src:
         base_config["Files"] = [src.name]
@@ -214,7 +183,7 @@ def test_btrfs_config_rejects_file_dest_collision(base_config, dest_dir: str):
 
 @given(base_config=valid_unparsed_empty_btrfs_config(), file_name=filenames())
 def test_btrfs_config_rejects_filename_collision(base_config, file_name):
-    base_config["Folders"] = []
+    base_config["Folders"] = {}
     with TemporaryDirectory() as td1:
         with TemporaryDirectory() as td2:
             dirs = [td1, td2]
@@ -230,36 +199,18 @@ def test_btrfs_config_rejects_filename_collision(base_config, file_name):
 def test_btrfs_config_expands_user(base_config):
     with TemporaryDirectory() as dest:
         pass
-    folders = [
-        ("/usr/bin", "backup_bins"),
-        ("~", dest),
-        ("/var/log", "backup_logs"),
-    ]
+    folders = {
+        "/usr/bin": "backup_bins",
+        "~": dest,
+        "/var/log": "backup_logs",
+    }
     base_config["Folders"] = folders
     with NamedTemporaryFile(dir=Path.home()) as src_file:
         fname = f"~/{Path(src_file.name).name}"
         base_config["Files"] = ["/bin/bash", fname]
         cfg = cp.BtrfsConfig.parse_obj(base_config)
-    assert Path("~").expanduser() in {src for (src, _) in cfg.Folders}
+    assert Path("~").expanduser() in cfg.Folders
     assert Path(src_file.name).expanduser() in cfg.Files
-
-
-@given(
-    base_config=valid_unparsed_empty_btrfs_config(),
-    folder_dests=st.lists(filenames(), min_size=2, unique=True),
-)
-def test_btrfs_config_rejects_duplicate_src(base_config, folder_dests: list[str]):
-    with TemporaryDirectory() as src:
-        folders = [
-            ["/usr/bin", "backup_bins"],
-            [src, folder_dests[0]],
-            ["/var/log", "backup_logs"],
-            [src, folder_dests[1]],
-        ] + [[src, cur_dest] for cur_dest in folder_dests[2:]]
-        base_config["Folders"] = folders
-        base_config["Files"] = []
-        with pytest.raises(ValidationError, match=re.escape(src)):
-            cp.BtrfsConfig.parse_obj(base_config)
 
 
 @given(
@@ -269,12 +220,12 @@ def test_btrfs_config_rejects_duplicate_src(base_config, folder_dests: list[str]
 def test_btrfs_config_rejects_duplicate_dest(base_config, folder_dest: str):
     with TemporaryDirectory() as src1:
         with TemporaryDirectory() as src2:
-            folders = [
-                ["/usr/bin", "backup_bins"],
-                [src1, folder_dest],
-                ["/var/log", "backup_logs"],
-                [src2, folder_dest],
-            ]
+            folders = {
+                "/usr/bin": "backup_bins",
+                src1: folder_dest,
+                "/var/log": "backup_logs",
+                src2: folder_dest,
+            }
             base_config["Folders"] = folders
             base_config["Files"] = []
             with pytest.raises(ValidationError, match=re.escape(folder_dest)):
@@ -288,7 +239,7 @@ def test_btrfs_config_uuid_is_mapname(
     cfg = cp.BtrfsConfig(
         Files=set(),
         FilesDest=files_dest,
-        Folders=set(),
+        Folders={},
         PassCmd=pass_cmd,
         UUID=uuid,
     )
@@ -302,7 +253,7 @@ def test_btrfs_config_device_ends_in_uuid(
     cfg = cp.BtrfsConfig(
         Files=set(),
         FilesDest=files_dest,
-        Folders=set(),
+        Folders={},
         PassCmd=pass_cmd,
         UUID=uuid,
     )

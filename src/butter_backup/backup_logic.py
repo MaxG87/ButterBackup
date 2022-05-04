@@ -22,7 +22,7 @@ def do_butter_backup(cfg: cp.BtrfsConfig) -> None:
             src_snapshot = get_source_snapshot(mount_dir)
 
             snapshot(src=src_snapshot, dest=backup_root)
-            for src, dest_name in cfg.Folders:
+            for src, dest_name in cfg.Folders.items():
                 dest = backup_root / dest_name
                 rsync_folder(src, dest)
 

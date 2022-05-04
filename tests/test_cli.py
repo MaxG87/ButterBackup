@@ -78,7 +78,7 @@ def test_close_does_not_close_unopened_device(runner, encrypted_btrfs_device) ->
     config = cp.BtrfsConfig(
         Files=set(),
         FilesDest="files-destination",
-        Folders=set(),
+        Folders={},
         PassCmd=f"echo {password}",
         UUID=device_id,
     )
@@ -102,7 +102,7 @@ def test_open_close_roundtrip(runner, encrypted_btrfs_device) -> None:
     config = cp.BtrfsConfig(
         Files=set(),
         FilesDest="files-destination",
-        Folders=set(),
+        Folders={},
         PassCmd=f"echo {password}",
         UUID=device_id,
     )

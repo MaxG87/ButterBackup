@@ -17,14 +17,25 @@ from pydantic import (
 )
 
 RAW_CONFIG_T = Dict[str, Any]
+FoldersT = dict[DirectoryPath, str]
 
 
-class BtrfsConfig(BaseModel, frozen=True, extra=Extra.forbid):
+def path_aware_json_decoding(v, *, default) -> str:
+    v["Folders"] = {str(key): val for key, val in v["Folders"].items()}
+    return json.dumps(v, default=default)
+
+
+class BtrfsConfig(BaseModel):
     Files: set[FilePath]
     FilesDest: str
-    Folders: set[tuple[DirectoryPath, str]]
+    Folders: FoldersT
     PassCmd: str
     UUID: uuid.UUID
+
+    class Config:
+        extra = Extra.forbid
+        frozen = True
+        json_dumps = path_aware_json_decoding
 
     @validator("Files")
     def source_file_names_must_be_unique(cls, files):
@@ -33,30 +44,35 @@ class BtrfsConfig(BaseModel, frozen=True, extra=Extra.forbid):
         return files
 
     @validator("Folders", pre=True)
+    def handle_legacy_folders_cfg(cls, folders):
+        if isinstance(folders, dict):
+            return folders
+
+        sources = Counter(src for src, _ in folders)
+        cls.raise_with_message_upon_duplicate(
+            sources, ("Quellverzeichnissen", "Quellen")
+        )
+
+        as_dict = {src: dest for src, dest in folders}
+        return as_dict
+
+    @validator("Folders")
+    def folder_destinations_must_be_unique(cls, folders: FoldersT) -> FoldersT:
+        destinations = Counter(folders.values())
+        cls.raise_with_message_upon_duplicate(
+            destinations, ("Zielverzeichnissen", "Ziele")
+        )
+        return folders
+
+    @validator("Folders", pre=True)
     def expand_tilde_in_folder_sources(cls, folders):
-        new = [(Path(src).expanduser(), dest) for src, dest in folders]
+        new = {Path(src).expanduser(): dest for src, dest in folders.items()}
         return new
 
     @validator("Files", pre=True)
     def expand_tilde_in_file_sources(cls, files):
         new = [Path(cur).expanduser() for cur in files]
         return new
-
-    @validator("Folders")
-    def folder_sources_must_be_unique(cls, folders):
-        sources = Counter(src for src, _ in folders)
-        cls.raise_with_message_upon_duplicate(
-            sources, ("Quellverzeichnissen", "Quellen")
-        )
-        return folders
-
-    @validator("Folders")
-    def folder_destinations_must_be_unique(cls, folders):
-        destinations = Counter(dest for _, dest in folders)
-        cls.raise_with_message_upon_duplicate(
-            destinations, ("Zielverzeichnissen", "Ziele")
-        )
-        return folders
 
     @root_validator(pre=True)
     def handle_legacy_files_cfg(cls, values):
@@ -72,7 +88,7 @@ class BtrfsConfig(BaseModel, frozen=True, extra=Extra.forbid):
     @root_validator(skip_on_failure=True)
     def files_dest_is_no_folder_dest(cls, values):
         files_dest = values["FilesDest"]
-        destinations = {dest for _, dest in values["Folders"]}
+        destinations = values["Folders"].values()
         if files_dest in destinations:
             raise ValueError(
                 f"Zielverzeichnis {files_dest} ist gleichzeitig Ziel für Ordner und Einzeldateien."
