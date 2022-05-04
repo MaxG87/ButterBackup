@@ -73,24 +73,6 @@ def valid_unparsed_empty_btrfs_config(draw):
     return config
 
 
-@given(base_config=valid_unparsed_configs())
-def test_btrfs_config_handles_old_style_config(base_config):
-    with TemporaryDirectory() as src_folder:
-        with TemporaryDirectory() as dest:
-            with NamedTemporaryFile() as src_file:
-                folders = [(src_folder, dest)]
-                base_config["Folders"] = folders
-                base_config["Files"]["files"] = [src_file.name]
-                cfg = cp.BtrfsConfig.parse_obj(base_config)
-    result_folders = {(str(src), dest) for src, dest in cfg.Folders.items()}
-    assert cfg.PassCmd == base_config["PassCmd"]
-    assert str(cfg.device()).endswith(base_config["UUID"])
-    assert result_folders == set(base_config["Folders"])
-    assert {str(file) for file in cfg.Files} == set(base_config["Files"]["files"])
-    assert cfg.FilesDest == base_config["Files"]["destination"]
-    assert str(cfg.UUID) == base_config["UUID"]
-
-
 @given(base_config=valid_unparsed_empty_btrfs_config(), dest_dir=filenames())
 def test_btrfs_config_rejects_file_dest_collision(base_config, dest_dir: str):
     base_config["Folders"] = {
@@ -182,3 +164,21 @@ def test_btrfs_config_device_ends_in_uuid(
         UUID=uuid,
     )
     assert cfg.device() == Path(f"/dev/disk/by-uuid/{cfg.UUID}")
+
+
+@given(base_config=valid_unparsed_configs())
+def test_btrfs_config_handles_old_style_config(base_config):
+    with TemporaryDirectory() as src_folder:
+        with TemporaryDirectory() as dest:
+            with NamedTemporaryFile() as src_file:
+                folders = [(src_folder, dest)]
+                base_config["Folders"] = folders
+                base_config["Files"]["files"] = [src_file.name]
+                cfg = cp.BtrfsConfig.parse_obj(base_config)
+    result_folders = {(str(src), dest) for src, dest in cfg.Folders.items()}
+    assert cfg.PassCmd == base_config["PassCmd"]
+    assert str(cfg.device()).endswith(base_config["UUID"])
+    assert result_folders == set(base_config["Folders"])
+    assert {str(file) for file in cfg.Files} == set(base_config["Files"]["files"])
+    assert cfg.FilesDest == base_config["Files"]["destination"]
+    assert str(cfg.UUID) == base_config["UUID"]
