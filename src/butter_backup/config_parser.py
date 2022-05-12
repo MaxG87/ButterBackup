@@ -117,10 +117,11 @@ class BtrfsConfig(BaseModel):
 
 
 class ResticConfig(BaseModel):
+    DevicePassCmd: str
     Files: set[FilePath]
     FilesDest: str
     Folders: FoldersT
-    PassCmd: str
+    ResticPassCmd: str
     UUID: uuid.UUID
 
     class Config:

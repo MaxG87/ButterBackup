@@ -18,10 +18,11 @@ def valid_unparsed_empty_restic_config(draw):
     config = draw(
         st.fixed_dictionaries(
             {
-                "PassCmd": st.text(),
+                "DevicePassCmd": st.text(),
                 "Files": st.just([]),
                 "FilesDest": st.text(),
                 "Folders": st.just({}),
+                "ResticPassCmd": st.text(),
                 "UUID": st.uuids().map(str),
             }
         )
