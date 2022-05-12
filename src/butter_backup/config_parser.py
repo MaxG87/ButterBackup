@@ -116,6 +116,97 @@ class BtrfsConfig(BaseModel):
         return str(self.UUID)
 
 
+class ResticConfig(BaseModel):
+    Files: set[FilePath]
+    FilesDest: str
+    Folders: FoldersT
+    PassCmd: str
+    UUID: uuid.UUID
+
+    class Config:
+        extra = Extra.forbid
+        frozen = True
+        json_dumps = path_aware_json_decoding
+
+    @validator("Files")
+    def source_file_names_must_be_unique(cls, files):
+        file_names = Counter(f.name for f in files)
+        cls.raise_with_message_upon_duplicate(file_names, ("Dateinamen", "Dateinamen"))
+        return files
+
+    @validator("Folders", pre=True)
+    def handle_legacy_folders_cfg(cls, folders):
+        if isinstance(folders, dict):
+            return folders
+
+        sources = Counter(src for src, _ in folders)
+        cls.raise_with_message_upon_duplicate(
+            sources, ("Quellverzeichnissen", "Quellen")
+        )
+
+        as_dict = {src: dest for src, dest in folders}
+        return as_dict
+
+    @validator("Folders")
+    def folder_destinations_must_be_unique(cls, folders: FoldersT) -> FoldersT:
+        destinations = Counter(folders.values())
+        cls.raise_with_message_upon_duplicate(
+            destinations, ("Zielverzeichnissen", "Ziele")
+        )
+        return folders
+
+    @validator("Folders", pre=True)
+    def expand_tilde_in_folder_sources(cls, folders):
+        new = {Path(src).expanduser(): dest for src, dest in folders.items()}
+        return new
+
+    @validator("Files", pre=True)
+    def expand_tilde_in_file_sources(cls, files):
+        new = [Path(cur).expanduser() for cur in files]
+        return new
+
+    @root_validator(pre=True)
+    def handle_legacy_files_cfg(cls, values):
+        try:
+            files = values["Files"]["files"]
+            files_dest = values["Files"]["destination"]
+        except (KeyError, TypeError):
+            return values
+        values["Files"] = files
+        values["FilesDest"] = files_dest
+        return values
+
+    @root_validator(skip_on_failure=True)
+    def files_dest_is_no_folder_dest(cls, values):
+        files_dest = values["FilesDest"]
+        destinations = values["Folders"].values()
+        if files_dest in destinations:
+            raise ValueError(
+                f"Zielverzeichnis {files_dest} ist gleichzeitig Ziel für Ordner und Einzeldateien."
+            )
+        return values
+
+    @staticmethod
+    def raise_with_message_upon_duplicate(
+        counts: Union[Counter[Path], Counter[str]], token: tuple[str, str]
+    ) -> None:
+        if all(val == 1 for val in counts.values()):
+            return
+        errmsg_begin = (
+            f"Duplikate in {token[0]} entdeckt. Folgende {token[1]} kommen doppelt vor:"
+        )
+        errmsg_body = " ".join(
+            str(elem) for (elem, count) in counts.items() if count > 1
+        )
+        raise ValueError(f"{errmsg_begin} {errmsg_body}")
+
+    def device(self) -> Path:
+        return Path(f"/dev/disk/by-uuid/{self.UUID}")
+
+    def map_name(self) -> str:
+        return str(self.UUID)
+
+
 def load_configuration(cfg_file: Path) -> Iterable[BtrfsConfig]:
     """Lade, parse und validiere die Konfigurationsdatei"""
     if not cfg_file.exists():
