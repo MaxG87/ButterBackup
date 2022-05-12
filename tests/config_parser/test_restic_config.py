@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-from uuid import UUID
 
 import pytest
 from hypothesis import assume, given
@@ -95,32 +94,17 @@ def test_restic_config_rejects_duplicate_dest(base_config, folder_dest: str):
                 cp.ResticConfig.parse_obj(base_config)
 
 
-@given(files_dest=st.text(), pass_cmd=st.text(), uuid=st.uuids())
-def test_restic_config_uuid_is_mapname(
-    files_dest: str, pass_cmd: str, uuid: UUID
-) -> None:
-    cfg = cp.ResticConfig(
-        Files=set(),
-        FilesDest=files_dest,
-        Folders={},
-        PassCmd=pass_cmd,
-        UUID=uuid,
-    )
-    assert str(uuid) == cfg.map_name()
+@given(base_config=valid_unparsed_empty_restic_config())
+def test_restic_config_uuid_is_mapname(base_config) -> None:
+    cfg = cp.ResticConfig.parse_obj(base_config)
+    assert base_config["UUID"] == cfg.map_name()
 
 
-@given(files_dest=st.text(), pass_cmd=st.text(), uuid=st.uuids())
-def test_restic_config_device_ends_in_uuid(
-    files_dest: str, pass_cmd: str, uuid: UUID
-) -> None:
-    cfg = cp.ResticConfig(
-        Files=set(),
-        FilesDest=files_dest,
-        Folders={},
-        PassCmd=pass_cmd,
-        UUID=uuid,
-    )
-    assert cfg.device() == Path(f"/dev/disk/by-uuid/{cfg.UUID}")
+@given(base_config=valid_unparsed_empty_restic_config())
+def test_restic_config_device_ends_in_uuid(base_config) -> None:
+    cfg = cp.ResticConfig.parse_obj(base_config)
+    uuid = base_config["UUID"]
+    assert cfg.device() == Path(f"/dev/disk/by-uuid/{uuid}")
 
 
 @given(base_config=valid_unparsed_empty_restic_config(), folder_dest=hu.filenames())
