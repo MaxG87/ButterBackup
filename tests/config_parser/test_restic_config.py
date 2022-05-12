@@ -11,22 +11,9 @@ from hypothesis import strategies as st
 from pydantic import ValidationError
 
 from butter_backup import config_parser as cp
+from tests import hypothesis_utils as hu
 
 NOF_FOLDER_BACKUP_MAPPING_ELEMS = 2
-
-
-@st.composite
-def filenames(draw, min_size=1) -> str:
-    alpha = "abcdefghijklmnopqrstuvwxyzäöu"
-    num = "01234567890"
-    special = "_-.,() "
-    permitted_chars = f"{alpha}{alpha.upper()}{num}{special}"
-    fname: str = draw(
-        st.text(permitted_chars, min_size=min_size).filter(
-            lambda fname: fname not in {".", ".."}
-        )
-    )
-    return fname
 
 
 @st.composite
@@ -36,7 +23,7 @@ def valid_unparsed_configs(draw, may_be_incomplete: bool = False):
         "PassCmd": st.text(),
         "Folders": st.lists(
             st.lists(
-                filenames(),
+                hu.filenames(),
                 min_size=NOF_FOLDER_BACKUP_MAPPING_ELEMS,
                 max_size=NOF_FOLDER_BACKUP_MAPPING_ELEMS,
             ),
@@ -44,7 +31,7 @@ def valid_unparsed_configs(draw, may_be_incomplete: bool = False):
         "Files": st.fixed_dictionaries(
             {
                 "destination": st.text(),
-                "files": st.lists(filenames()),
+                "files": st.lists(hu.filenames()),
             }
         ),
     }
@@ -73,7 +60,7 @@ def valid_unparsed_empty_restic_config(draw):
     return config
 
 
-@given(base_config=valid_unparsed_empty_restic_config(), dest_dir=filenames())
+@given(base_config=valid_unparsed_empty_restic_config(), dest_dir=hu.filenames())
 def test_restic_config_rejects_file_dest_collision(base_config, dest_dir: str):
     base_config["Folders"] = {
         "/usr/bin": "backup_bins",
@@ -87,7 +74,7 @@ def test_restic_config_rejects_file_dest_collision(base_config, dest_dir: str):
             cp.ResticConfig.parse_obj(base_config)
 
 
-@given(base_config=valid_unparsed_empty_restic_config(), file_name=filenames())
+@given(base_config=valid_unparsed_empty_restic_config(), file_name=hu.filenames())
 def test_restic_config_rejects_filename_collision(base_config, file_name):
     base_config["Folders"] = {}
     with TemporaryDirectory() as td1:
@@ -121,7 +108,7 @@ def test_restic_config_expands_user(base_config):
 
 @given(
     base_config=valid_unparsed_configs(),
-    folder_dest=filenames(),
+    folder_dest=hu.filenames(),
 )
 def test_restic_config_rejects_duplicate_dest(base_config, folder_dest: str):
     with TemporaryDirectory() as src1:
@@ -166,7 +153,7 @@ def test_restic_config_device_ends_in_uuid(
     assert cfg.device() == Path(f"/dev/disk/by-uuid/{cfg.UUID}")
 
 
-@given(base_config=valid_unparsed_empty_restic_config(), folder_dest=filenames())
+@given(base_config=valid_unparsed_empty_restic_config(), folder_dest=hu.filenames())
 def test_restic_config_json_roundtrip(base_config, folder_dest: str):
     assume(folder_dest != base_config["FilesDest"])
     with TemporaryDirectory() as src_folder:
