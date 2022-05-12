@@ -107,7 +107,7 @@ def test_btrfs_config_expands_user(base_config):
 
 
 @given(
-    base_config=valid_unparsed_configs(),
+    base_config=valid_unparsed_empty_btrfs_config(),
     folder_dest=hu.filenames(),
 )
 def test_btrfs_config_rejects_duplicate_dest(base_config, folder_dest: str):
