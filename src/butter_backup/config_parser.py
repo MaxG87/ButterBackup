@@ -134,19 +134,6 @@ class ResticConfig(BaseModel):
         cls.raise_with_message_upon_duplicate(file_names, ("Dateinamen", "Dateinamen"))
         return files
 
-    @validator("Folders", pre=True)
-    def handle_legacy_folders_cfg(cls, folders):
-        if isinstance(folders, dict):
-            return folders
-
-        sources = Counter(src for src, _ in folders)
-        cls.raise_with_message_upon_duplicate(
-            sources, ("Quellverzeichnissen", "Quellen")
-        )
-
-        as_dict = {src: dest for src, dest in folders}
-        return as_dict
-
     @validator("Folders")
     def folder_destinations_must_be_unique(cls, folders: FoldersT) -> FoldersT:
         destinations = Counter(folders.values())
@@ -164,17 +151,6 @@ class ResticConfig(BaseModel):
     def expand_tilde_in_file_sources(cls, files):
         new = [Path(cur).expanduser() for cur in files]
         return new
-
-    @root_validator(pre=True)
-    def handle_legacy_files_cfg(cls, values):
-        try:
-            files = values["Files"]["files"]
-            files_dest = values["Files"]["destination"]
-        except (KeyError, TypeError):
-            return values
-        values["Files"] = files
-        values["FilesDest"] = files_dest
-        return values
 
     @root_validator(skip_on_failure=True)
     def files_dest_is_no_folder_dest(cls, values):
