@@ -152,12 +152,7 @@ def load_configuration(cfg_file: Path) -> Iterable[BtrfsConfig]:
         sys.exit(f"{err_msg} {help_hint}\n")
 
     config_lst = json.loads(cfg_file.read_text())
-    if len(config_lst) == 0:
-        sys.exit("Leere Konfigurationsdateien sind nicht erlaubt.\n")
-    if not isinstance(config_lst, list):
-        sys.exit("Die Konfiguration muss eine JSON-Liste sein!")
-    if not all(isinstance(elem, dict) for elem in config_lst):
-        sys.exit("Alle Einträge müssen ein JSON-Dictionary sein.")
+    ensure_valid_config_json_list(config_lst)
 
     for raw_cfg in config_lst:
         # TODO Einige Validierungsfehler dürfen nicht zum Programmabbruch
@@ -165,3 +160,13 @@ def load_configuration(cfg_file: Path) -> Iterable[BtrfsConfig]:
         # möglich, einen gemeinsaman Satz Konfigurationen für verschiedene
         # Rechner zu nutzen.
         yield BtrfsConfig.parse_obj(raw_cfg)
+
+
+def ensure_valid_config_json_list(config_lst):
+    # Getestet durch Tests für `load_configuration`.
+    if len(config_lst) == 0:
+        sys.exit("Leere Konfigurationsdateien sind nicht erlaubt.\n")
+    if not isinstance(config_lst, list):
+        sys.exit("Die Konfiguration muss eine JSON-Liste sein!")
+    if not all(isinstance(elem, dict) for elem in config_lst):
+        sys.exit("Alle Einträge müssen ein JSON-Dictionary sein.")
