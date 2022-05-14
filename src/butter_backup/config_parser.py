@@ -120,6 +120,7 @@ class ResticConfig(BaseModel):
     DevicePassCmd: str
     Files: set[FilePath]
     Folders: FoldersT
+    FilesAndFolders: set[Union[FilePath, DirectoryPath]]
     RepositoryPassCmd: str
     UUID: uuid.UUID
 
