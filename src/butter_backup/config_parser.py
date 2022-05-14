@@ -20,7 +20,12 @@ RAW_CONFIG_T = Dict[str, Any]
 FoldersT = dict[DirectoryPath, str]
 
 
-def path_aware_json_decoding(v, *, default) -> str:
+def path_aware_btrfs_json_decoding(v, *, default) -> str:
+    v["Folders"] = {str(key): val for key, val in v["Folders"].items()}
+    return json.dumps(v, default=default)
+
+
+def path_aware_restic_json_decoding(v, *, default) -> str:
     v["FilesAndFolders"] = {str(cur) for cur in v["FilesAndFolders"]}
     return json.dumps(v, default=default)
 
@@ -35,7 +40,7 @@ class BtrfsConfig(BaseModel):
     class Config:
         extra = Extra.forbid
         frozen = True
-        json_dumps = path_aware_json_decoding
+        json_dumps = path_aware_btrfs_json_decoding
 
     @validator("Files")
     def source_file_names_must_be_unique(cls, files):
@@ -125,7 +130,7 @@ class ResticConfig(BaseModel):
     class Config:
         extra = Extra.forbid
         frozen = True
-        json_dumps = path_aware_json_decoding
+        json_dumps = path_aware_restic_json_decoding
 
     @validator("FilesAndFolders", pre=True)
     def expand_tilde_in_sources(cls, files_and_folders):
