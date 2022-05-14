@@ -12,6 +12,7 @@ from pydantic import (
     DirectoryPath,
     Extra,
     FilePath,
+    ValidationError,
     root_validator,
     validator,
 )
@@ -144,7 +145,7 @@ class ResticConfig(BaseModel):
         return str(self.UUID)
 
 
-def load_configuration(cfg_file: Path) -> Iterable[BtrfsConfig]:
+def load_configuration(cfg_file: Path) -> Iterable[Union[BtrfsConfig, ResticConfig]]:
     """Lade, parse und validiere die Konfigurationsdatei"""
     if not cfg_file.exists():
         err_msg = f"Konfigurationsdatei {cfg_file} existiert nicht."
@@ -159,7 +160,10 @@ def load_configuration(cfg_file: Path) -> Iterable[BtrfsConfig]:
         # führen. Ein Beispiel wären fehlende Dateien. Dadurch würde es
         # möglich, einen gemeinsaman Satz Konfigurationen für verschiedene
         # Rechner zu nutzen.
-        yield BtrfsConfig.parse_obj(raw_cfg)
+        try:
+            yield BtrfsConfig.parse_obj(raw_cfg)
+        except ValidationError:
+            yield ResticConfig.parse_obj(raw_cfg)
 
 
 def ensure_valid_config_json_list(config_lst):

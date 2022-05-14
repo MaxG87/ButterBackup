@@ -11,6 +11,12 @@ from butter_backup import shell_interface as sh
 def do_backup(config: Path) -> None:
     configurations = list(cp.load_configuration(config))
     for cfg in configurations:
+        if isinstance(cfg, cp.ResticConfig):
+            print(
+                "Konfiguration für Restic gefunden. Restic wird noch nicht"
+                " unterstützt, daher wird diese Konfiguration übersprungen."
+            )
+            continue
         if cfg.device().exists():
             do_butter_backup(cfg)
 

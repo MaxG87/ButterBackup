@@ -32,6 +32,12 @@ def hilfe():
 def open(config: Path = CONFIG_OPTION):
     configurations = list(cp.load_configuration(config))
     for cfg in configurations:
+        if isinstance(cfg, cp.ResticConfig):
+            typer.echo(
+                "Konfiguration für Restic gefunden. Restic wird noch nicht"
+                " unterstützt, daher wird diese Konfiguration übersprungen."
+            )
+            continue
         if cfg.device().exists():
             mount_dir = Path(mkdtemp())
             decrypted = dm.open_encrypted_device(cfg.device(), cfg.PassCmd)
@@ -44,6 +50,12 @@ def close(config: Path = CONFIG_OPTION):
     configurations = list(cp.load_configuration(config))
     mounted_devices = dm.get_mounted_devices()
     for cfg in configurations:
+        if isinstance(cfg, cp.ResticConfig):
+            typer.echo(
+                "Konfiguration für Restic gefunden. Restic wird noch nicht"
+                " unterstützt, daher wird diese Konfiguration übersprungen."
+            )
+            continue
         mapped_device = f"/dev/mapper/{cfg.UUID}"
         if cfg.device().exists() and mapped_device in mounted_devices:
             mount_dirs = mounted_devices[mapped_device]
