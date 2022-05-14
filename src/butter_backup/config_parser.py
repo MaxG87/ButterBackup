@@ -121,7 +121,7 @@ class ResticConfig(BaseModel):
     Files: set[FilePath]
     FilesDest: str
     Folders: FoldersT
-    ResticPassCmd: str
+    RepositoryPassCmd: str
     UUID: uuid.UUID
 
     class Config:

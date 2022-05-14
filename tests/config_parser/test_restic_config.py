@@ -22,7 +22,7 @@ def valid_unparsed_empty_restic_config(draw):
                 "Files": st.just([]),
                 "FilesDest": st.text(),
                 "Folders": st.just({}),
-                "ResticPassCmd": st.text(),
+                "RepositoryPassCmd": st.text(),
                 "UUID": st.uuids().map(str),
             }
         )
