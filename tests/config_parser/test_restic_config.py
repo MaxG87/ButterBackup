@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
@@ -19,9 +18,7 @@ def valid_unparsed_empty_restic_config(draw):
         st.fixed_dictionaries(
             {
                 "DevicePassCmd": st.text(),
-                "Files": st.just([]),
                 "FilesAndFolders": st.just([]),
-                "Folders": st.just({}),
                 "RepositoryPassCmd": st.text(),
                 "UUID": st.uuids().map(str),
             }
@@ -30,18 +27,13 @@ def valid_unparsed_empty_restic_config(draw):
     return config
 
 
-@given(base_config=valid_unparsed_empty_restic_config(), file_name=hu.filenames())
-def test_restic_config_rejects_filename_collision(base_config, file_name):
-    base_config["Folders"] = {}
-    with TemporaryDirectory() as td1:
-        with TemporaryDirectory() as td2:
-            dirs = [td1, td2]
-            files = [Path(cur_dir) / file_name for cur_dir in dirs]
-            for f in files:
-                f.touch()
-            base_config["Files"] = [str(f) for f in files]
-            with pytest.raises(ValidationError, match=re.escape(file_name)):
-                cp.ResticConfig.parse_obj(base_config)
+@given(base_config=valid_unparsed_empty_restic_config())
+def test_restic_config_rejects_missing_source(base_config):
+    with NamedTemporaryFile() as src_file:
+        fname = src_file.name
+    base_config["FilesAndFolders"] = {fname}
+    with pytest.raises(ValidationError):
+        cp.ResticConfig.parse_obj(base_config)
 
 
 @given(base_config=valid_unparsed_empty_restic_config())
@@ -52,25 +44,6 @@ def test_restic_config_expands_user(base_config):
         cfg = cp.ResticConfig.parse_obj(base_config)
     expected = {Path("~").expanduser(), Path(src_file.name).expanduser()}
     assert cfg.FilesAndFolders == expected
-
-
-@given(
-    base_config=valid_unparsed_empty_restic_config(),
-    folder_dest=hu.filenames(),
-)
-def test_restic_config_rejects_duplicate_dest(base_config, folder_dest: str):
-    with TemporaryDirectory() as src1:
-        with TemporaryDirectory() as src2:
-            folders = {
-                "/usr/bin": "backup_bins",
-                src1: folder_dest,
-                "/var/log": "backup_logs",
-                src2: folder_dest,
-            }
-            base_config["Folders"] = folders
-            base_config["Files"] = []
-            with pytest.raises(ValidationError, match=re.escape(folder_dest)):
-                cp.ResticConfig.parse_obj(base_config)
 
 
 @given(base_config=valid_unparsed_empty_restic_config())
@@ -90,8 +63,7 @@ def test_restic_config_device_ends_in_uuid(base_config) -> None:
 def test_restic_config_json_roundtrip(base_config, folder_dest: str):
     with TemporaryDirectory() as src_folder:
         with NamedTemporaryFile() as src_file:
-            base_config["Folders"] = {src_folder: folder_dest}
-            base_config["Files"] = [src_file.name]
+            base_config["FilesAndFolders"] = {src_folder, src_file.name}
             cfg = cp.ResticConfig.parse_obj(base_config)
             as_json = cfg.json()
             deserialised = cp.ResticConfig.parse_raw(as_json)
