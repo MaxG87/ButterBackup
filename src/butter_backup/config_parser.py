@@ -143,14 +143,9 @@ class ResticConfig(BaseModel):
         )
         return folders
 
-    @validator("Folders", pre=True)
-    def expand_tilde_in_folder_sources(cls, folders):
-        new = {Path(src).expanduser(): dest for src, dest in folders.items()}
-        return new
-
-    @validator("Files", pre=True)
-    def expand_tilde_in_file_sources(cls, files):
-        new = [Path(cur).expanduser() for cur in files]
+    @validator("FilesAndFolders", pre=True)
+    def expand_tilde_in_sources(cls, files_and_folders):
+        new = {Path(src).expanduser() for src in files_and_folders}
         return new
 
     @staticmethod

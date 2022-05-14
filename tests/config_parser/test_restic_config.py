@@ -46,20 +46,12 @@ def test_restic_config_rejects_filename_collision(base_config, file_name):
 
 @given(base_config=valid_unparsed_empty_restic_config())
 def test_restic_config_expands_user(base_config):
-    with TemporaryDirectory() as dest:
-        pass
-    folders = {
-        "/usr/bin": "backup_bins",
-        "~": dest,
-        "/var/log": "backup_logs",
-    }
-    base_config["Folders"] = folders
     with NamedTemporaryFile(dir=Path.home()) as src_file:
         fname = f"~/{Path(src_file.name).name}"
-        base_config["Files"] = ["/bin/bash", fname]
+        base_config["FilesAndFolders"] = {"~", fname}
         cfg = cp.ResticConfig.parse_obj(base_config)
-    assert Path("~").expanduser() in cfg.Folders
-    assert Path(src_file.name).expanduser() in cfg.Files
+    expected = {Path("~").expanduser(), Path(src_file.name).expanduser()}
+    assert cfg.FilesAndFolders == expected
 
 
 @given(
