@@ -21,7 +21,7 @@ FoldersT = dict[DirectoryPath, str]
 
 
 def path_aware_json_decoding(v, *, default) -> str:
-    v["Folders"] = {str(key): val for key, val in v["Folders"].items()}
+    v["FilesAndFolders"] = {str(cur) for cur in v["FilesAndFolders"]}
     return json.dumps(v, default=default)
 
 
@@ -108,6 +108,29 @@ class BtrfsConfig(BaseModel):
             str(elem) for (elem, count) in counts.items() if count > 1
         )
         raise ValueError(f"{errmsg_begin} {errmsg_body}")
+
+    def device(self) -> Path:
+        return Path(f"/dev/disk/by-uuid/{self.UUID}")
+
+    def map_name(self) -> str:
+        return str(self.UUID)
+
+
+class ResticConfig(BaseModel):
+    DevicePassCmd: str
+    FilesAndFolders: set[Union[FilePath, DirectoryPath]]
+    RepositoryPassCmd: str
+    UUID: uuid.UUID
+
+    class Config:
+        extra = Extra.forbid
+        frozen = True
+        json_dumps = path_aware_json_decoding
+
+    @validator("FilesAndFolders", pre=True)
+    def expand_tilde_in_sources(cls, files_and_folders):
+        new = {Path(src).expanduser() for src in files_and_folders}
+        return new
 
     def device(self) -> Path:
         return Path(f"/dev/disk/by-uuid/{self.UUID}")

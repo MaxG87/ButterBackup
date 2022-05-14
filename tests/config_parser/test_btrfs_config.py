@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-from uuid import UUID
 
 import pytest
 from hypothesis import assume, given
@@ -11,22 +10,9 @@ from hypothesis import strategies as st
 from pydantic import ValidationError
 
 from butter_backup import config_parser as cp
+from tests import hypothesis_utils as hu
 
 NOF_FOLDER_BACKUP_MAPPING_ELEMS = 2
-
-
-@st.composite
-def filenames(draw, min_size=1) -> str:
-    alpha = "abcdefghijklmnopqrstuvwxyzäöu"
-    num = "01234567890"
-    special = "_-.,() "
-    permitted_chars = f"{alpha}{alpha.upper()}{num}{special}"
-    fname: str = draw(
-        st.text(permitted_chars, min_size=min_size).filter(
-            lambda fname: fname not in {".", ".."}
-        )
-    )
-    return fname
 
 
 @st.composite
@@ -36,7 +22,7 @@ def valid_unparsed_configs(draw, may_be_incomplete: bool = False):
         "PassCmd": st.text(),
         "Folders": st.lists(
             st.lists(
-                filenames(),
+                hu.filenames(),
                 min_size=NOF_FOLDER_BACKUP_MAPPING_ELEMS,
                 max_size=NOF_FOLDER_BACKUP_MAPPING_ELEMS,
             ),
@@ -44,7 +30,7 @@ def valid_unparsed_configs(draw, may_be_incomplete: bool = False):
         "Files": st.fixed_dictionaries(
             {
                 "destination": st.text(),
-                "files": st.lists(filenames()),
+                "files": st.lists(hu.filenames()),
             }
         ),
     }
@@ -73,7 +59,7 @@ def valid_unparsed_empty_btrfs_config(draw):
     return config
 
 
-@given(base_config=valid_unparsed_empty_btrfs_config(), dest_dir=filenames())
+@given(base_config=valid_unparsed_empty_btrfs_config(), dest_dir=hu.filenames())
 def test_btrfs_config_rejects_file_dest_collision(base_config, dest_dir: str):
     base_config["Folders"] = {
         "/usr/bin": "backup_bins",
@@ -87,7 +73,7 @@ def test_btrfs_config_rejects_file_dest_collision(base_config, dest_dir: str):
             cp.BtrfsConfig.parse_obj(base_config)
 
 
-@given(base_config=valid_unparsed_empty_btrfs_config(), file_name=filenames())
+@given(base_config=valid_unparsed_empty_btrfs_config(), file_name=hu.filenames())
 def test_btrfs_config_rejects_filename_collision(base_config, file_name):
     base_config["Folders"] = {}
     with TemporaryDirectory() as td1:
@@ -120,8 +106,8 @@ def test_btrfs_config_expands_user(base_config):
 
 
 @given(
-    base_config=valid_unparsed_configs(),
-    folder_dest=filenames(),
+    base_config=valid_unparsed_empty_btrfs_config(),
+    folder_dest=hu.filenames(),
 )
 def test_btrfs_config_rejects_duplicate_dest(base_config, folder_dest: str):
     with TemporaryDirectory() as src1:
@@ -138,35 +124,20 @@ def test_btrfs_config_rejects_duplicate_dest(base_config, folder_dest: str):
                 cp.BtrfsConfig.parse_obj(base_config)
 
 
-@given(files_dest=st.text(), pass_cmd=st.text(), uuid=st.uuids())
-def test_btrfs_config_uuid_is_mapname(
-    files_dest: str, pass_cmd: str, uuid: UUID
-) -> None:
-    cfg = cp.BtrfsConfig(
-        Files=set(),
-        FilesDest=files_dest,
-        Folders={},
-        PassCmd=pass_cmd,
-        UUID=uuid,
-    )
-    assert str(uuid) == cfg.map_name()
+@given(base_config=valid_unparsed_empty_btrfs_config())
+def test_btrfs_config_uuid_is_mapname(base_config) -> None:
+    cfg = cp.BtrfsConfig.parse_obj(base_config)
+    assert base_config["UUID"] == cfg.map_name()
 
 
-@given(files_dest=st.text(), pass_cmd=st.text(), uuid=st.uuids())
-def test_btrfs_config_device_ends_in_uuid(
-    files_dest: str, pass_cmd: str, uuid: UUID
-) -> None:
-    cfg = cp.BtrfsConfig(
-        Files=set(),
-        FilesDest=files_dest,
-        Folders={},
-        PassCmd=pass_cmd,
-        UUID=uuid,
-    )
-    assert cfg.device() == Path(f"/dev/disk/by-uuid/{cfg.UUID}")
+@given(base_config=valid_unparsed_empty_btrfs_config())
+def test_btrfs_config_device_ends_in_uuid(base_config) -> None:
+    cfg = cp.BtrfsConfig.parse_obj(base_config)
+    uuid = base_config["UUID"]
+    assert cfg.device() == Path(f"/dev/disk/by-uuid/{uuid}")
 
 
-@given(base_config=valid_unparsed_empty_btrfs_config(), folder_dest=filenames())
+@given(base_config=valid_unparsed_empty_btrfs_config(), folder_dest=hu.filenames())
 def test_btrfs_config_json_roundtrip(base_config, folder_dest: str):
     assume(folder_dest != base_config["FilesDest"])
     with TemporaryDirectory() as src_folder:
