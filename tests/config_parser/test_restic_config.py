@@ -5,7 +5,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
-from hypothesis import assume, given
+from hypothesis import given
 from hypothesis import strategies as st
 from pydantic import ValidationError
 
@@ -20,7 +20,6 @@ def valid_unparsed_empty_restic_config(draw):
             {
                 "DevicePassCmd": st.text(),
                 "Files": st.just([]),
-                "FilesDest": st.text(),
                 "Folders": st.just({}),
                 "RepositoryPassCmd": st.text(),
                 "UUID": st.uuids().map(str),
@@ -28,20 +27,6 @@ def valid_unparsed_empty_restic_config(draw):
         )
     )
     return config
-
-
-@given(base_config=valid_unparsed_empty_restic_config(), dest_dir=hu.filenames())
-def test_restic_config_rejects_file_dest_collision(base_config, dest_dir: str):
-    base_config["Folders"] = {
-        "/usr/bin": "backup_bins",
-        "/etc": dest_dir,
-        "/var/log": "backup_logs",
-    }
-    base_config["FilesDest"] = dest_dir
-    with NamedTemporaryFile() as src:
-        base_config["Files"] = [src.name]
-        with pytest.raises(ValidationError, match=re.escape(dest_dir)):
-            cp.ResticConfig.parse_obj(base_config)
 
 
 @given(base_config=valid_unparsed_empty_restic_config(), file_name=hu.filenames())
@@ -110,7 +95,6 @@ def test_restic_config_device_ends_in_uuid(base_config) -> None:
 
 @given(base_config=valid_unparsed_empty_restic_config(), folder_dest=hu.filenames())
 def test_restic_config_json_roundtrip(base_config, folder_dest: str):
-    assume(folder_dest != base_config["FilesDest"])
     with TemporaryDirectory() as src_folder:
         with NamedTemporaryFile() as src_file:
             base_config["Folders"] = {src_folder: folder_dest}

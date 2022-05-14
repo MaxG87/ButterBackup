@@ -119,7 +119,6 @@ class BtrfsConfig(BaseModel):
 class ResticConfig(BaseModel):
     DevicePassCmd: str
     Files: set[FilePath]
-    FilesDest: str
     Folders: FoldersT
     RepositoryPassCmd: str
     UUID: uuid.UUID
@@ -152,16 +151,6 @@ class ResticConfig(BaseModel):
     def expand_tilde_in_file_sources(cls, files):
         new = [Path(cur).expanduser() for cur in files]
         return new
-
-    @root_validator(skip_on_failure=True)
-    def files_dest_is_no_folder_dest(cls, values):
-        files_dest = values["FilesDest"]
-        destinations = values["Folders"].values()
-        if files_dest in destinations:
-            raise ValueError(
-                f"Zielverzeichnis {files_dest} ist gleichzeitig Ziel für Ordner und Einzeldateien."
-            )
-        return values
 
     @staticmethod
     def raise_with_message_upon_duplicate(
