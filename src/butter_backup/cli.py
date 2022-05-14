@@ -42,9 +42,9 @@ def open(config: Path = CONFIG_OPTION):
 @app.command()
 def close(config: Path = CONFIG_OPTION):
     configurations = list(cp.load_configuration(config))
+    mounted_devices = dm.get_mounted_devices()
     for cfg in configurations:
         mapped_device = f"/dev/mapper/{cfg.UUID}"
-        mounted_devices = dm.get_mounted_devices()
         if cfg.device().exists() and mapped_device in mounted_devices:
             mount_dirs = mounted_devices[mapped_device]
             if len(mount_dirs) != 1:
