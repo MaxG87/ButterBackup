@@ -28,31 +28,6 @@ def run_cmd(
     return result
 
 
-def run_piped_commands(
-    *,
-    cmds: _LISTS_OF_CMD_LIST,
-    env: Optional[dict[str, str]] = None,
-    capture_output: bool = False,
-) -> subprocess.CompletedProcess[bytes]:
-    if env is None:
-        env = dict(os.environ)
-    if len(cmds) < 2:
-        raise ShellInterfaceError("Mindestens zwei Shell-Kommandos erwartet!")
-
-    cmd = cmds.pop(0)
-    new_proc = subprocess.run(cmd, stdout=subprocess.PIPE, check=True, env=env)
-    for cur_cmd in cmds:
-        old_proc = new_proc
-        new_proc = subprocess.run(
-            cur_cmd,
-            input=old_proc.stdout,
-            stdout=subprocess.PIPE,
-            check=True,
-            env=env,
-        )
-    return new_proc
-
-
 def pipe_pass_cmd_to_real_cmd(
     pass_cmd: str, command: StrPathList
 ) -> subprocess.CompletedProcess[bytes]:
