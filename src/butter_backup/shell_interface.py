@@ -51,3 +51,11 @@ def run_piped_commands(
             env=env,
         )
     return new_proc
+
+
+def pipe_pass_cmd_to_real_cmd(
+    pass_cmd: str, command: StrPathList
+) -> subprocess.CompletedProcess[bytes]:
+    pwd_proc = subprocess.run(pass_cmd, stdout=subprocess.PIPE, shell=True, check=True)
+    completed_process = subprocess.run(command, input=pwd_proc.stdout, check=True)
+    return completed_process
