@@ -2,23 +2,22 @@ from __future__ import annotations
 
 import datetime as dt
 from pathlib import Path
+from typing import Union
 
 from butter_backup import config_parser as cp
 from butter_backup import device_managers as dm
 from butter_backup import shell_interface as sh
 
 
-def do_backup(config: Path) -> None:
-    configurations = list(cp.load_configuration(config))
-    for cfg in configurations:
-        if isinstance(cfg, cp.ResticConfig):
-            print(
-                "Konfiguration für Restic gefunden. Restic wird noch nicht"
-                " unterstützt, daher wird diese Konfiguration übersprungen."
-            )
-            continue
-        if cfg.device().exists():
-            do_butter_backup(cfg)
+def do_backup(config: Union[cp.BtrfsConfig, cp.ResticConfig]) -> None:
+    if isinstance(config, cp.ResticConfig):
+        print(
+            "Konfiguration für Restic gefunden. Restic wird noch nicht"
+            " unterstützt, daher wird diese Konfiguration übersprungen."
+        )
+        return
+    if config.device().exists():
+        do_butter_backup(config)
 
 
 def do_butter_backup(cfg: cp.BtrfsConfig) -> None:

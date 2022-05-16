@@ -60,7 +60,9 @@ def close(config: Path = CONFIG_OPTION):
 
 @app.command()
 def backup(config: Path = CONFIG_OPTION):
-    bl.do_backup(config)
+    configurations = list(cp.load_configuration(config))
+    for cfg in configurations:
+        bl.do_backup(cfg)
 
 
 def cli() -> None:
