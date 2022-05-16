@@ -17,23 +17,23 @@ def do_backup(config: Union[cp.BtrfsConfig, cp.ResticConfig]) -> None:
         )
         return
     if config.device().exists():
-        do_butter_backup(config)
+        with dm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted:
+            with dm.mounted_device(decrypted) as mount_dir:
+                do_butter_backup(config, mount_dir)
 
 
-def do_butter_backup(cfg: cp.BtrfsConfig) -> None:
-    with dm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted:
-        with dm.mounted_device(decrypted) as mount_dir:
-            backup_root = mount_dir / dt.datetime.now().strftime("%F_%H:%M:%S")
-            src_snapshot = get_source_snapshot(mount_dir)
+def do_butter_backup(cfg: cp.BtrfsConfig, mount_dir: Path) -> None:
+    backup_root = mount_dir / dt.datetime.now().strftime("%F_%H:%M:%S")
+    src_snapshot = get_source_snapshot(mount_dir)
 
-            snapshot(src=src_snapshot, dest=backup_root)
-            for src, dest_name in cfg.Folders.items():
-                dest = backup_root / dest_name
-                rsync_folder(src, dest)
+    snapshot(src=src_snapshot, dest=backup_root)
+    for src, dest_name in cfg.Folders.items():
+        dest = backup_root / dest_name
+        rsync_folder(src, dest)
 
-            files_dest = backup_root / cfg.FilesDest
-            for src in cfg.Files:
-                rsync_file(src, files_dest)
+    files_dest = backup_root / cfg.FilesDest
+    for src in cfg.Files:
+        rsync_file(src, files_dest)
 
 
 def get_source_snapshot(root: Path) -> Path:
