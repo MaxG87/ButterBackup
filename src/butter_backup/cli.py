@@ -40,7 +40,7 @@ def open(config: Path = CONFIG_OPTION):
             continue
         if cfg.device().exists():
             mount_dir = Path(mkdtemp())
-            decrypted = dm.open_encrypted_device(cfg.device(), cfg.PassCmd)
+            decrypted = dm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
             dm.mount_btrfs_device(decrypted, mount_dir=mount_dir)
             typer.echo(f"Gerät {cfg.UUID} wurde in {mount_dir} geöffnet.")
 

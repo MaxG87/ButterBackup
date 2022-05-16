@@ -48,7 +48,7 @@ def valid_unparsed_empty_btrfs_config(draw):
     config = draw(
         st.fixed_dictionaries(
             {
-                "PassCmd": st.text(),
+                "DevicePassCmd": st.text(),
                 "Files": st.just([]),
                 "FilesDest": st.text(),
                 "Folders": st.just({}),
@@ -160,7 +160,7 @@ def test_btrfs_config_handles_old_style_config(base_config):
                 base_config["Files"]["files"] = [src_file.name]
                 cfg = cp.BtrfsConfig.parse_obj(base_config)
     result_folders = {(str(src), dest) for src, dest in cfg.Folders.items()}
-    assert cfg.PassCmd == base_config["PassCmd"]
+    assert cfg.DevicePassCmd == base_config["PassCmd"]
     assert str(cfg.device()).endswith(base_config["UUID"])
     assert result_folders == set(base_config["Folders"])
     assert {str(file) for file in cfg.Files} == set(base_config["Files"]["files"])

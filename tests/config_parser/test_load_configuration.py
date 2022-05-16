@@ -73,11 +73,11 @@ def test_load_configuration_parses_btrfs_config(
 ) -> None:
     with TemporaryDirectory() as source:
         btrfs_cfg = cp.BtrfsConfig(
-            UUID=uuid,
-            PassCmd=pass_cmd,
-            Folders={Path(source): backup_dest_dirs[0]},
-            FilesDest=backup_dest_dirs[1],
+            DevicePassCmd=pass_cmd,
             Files=set(),
+            FilesDest=backup_dest_dirs[1],
+            Folders={Path(source): backup_dest_dirs[0]},
+            UUID=uuid,
         )
         with TemporaryDirectory() as td:
             file_name = Path(td, "configuration")

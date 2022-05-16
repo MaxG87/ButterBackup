@@ -11,6 +11,7 @@ from pydantic import (
     BaseModel,
     DirectoryPath,
     Extra,
+    Field,
     FilePath,
     ValidationError,
     root_validator,
@@ -32,13 +33,14 @@ def path_aware_restic_json_decoding(v, *, default) -> str:
 
 
 class BtrfsConfig(BaseModel):
+    DevicePassCmd: str = Field(alias="PassCmd")
     Files: set[FilePath]
     FilesDest: str
     Folders: FoldersT
-    PassCmd: str
     UUID: uuid.UUID
 
     class Config:
+        allow_population_by_field_name = True
         extra = Extra.forbid
         frozen = True
         json_dumps = path_aware_btrfs_json_decoding

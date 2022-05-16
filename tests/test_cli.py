@@ -76,10 +76,10 @@ def test_close_does_not_close_unopened_device(runner, encrypted_btrfs_device) ->
     password, device = encrypted_btrfs_device
     device_id = uuid.uuid4()
     config = cp.BtrfsConfig(
+        DevicePassCmd=f"echo {password}",
         Files=set(),
         FilesDest="files-destination",
         Folders={},
-        PassCmd=f"echo {password}",
         UUID=device_id,
     )
     with NamedTemporaryFile() as tempf:
@@ -100,10 +100,10 @@ def test_open_close_roundtrip(runner, encrypted_btrfs_device) -> None:
     device_id = uuid.uuid4()
     expected_cryptsetup_map = Path(f"/dev/mapper/{device_id}")
     config = cp.BtrfsConfig(
+        DevicePassCmd=f"echo {password}",
         Files=set(),
         FilesDest="files-destination",
         Folders={},
-        PassCmd=f"echo {password}",
         UUID=device_id,
     )
     with NamedTemporaryFile() as tempf:
