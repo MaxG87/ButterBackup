@@ -95,17 +95,30 @@ def test_close_does_not_close_unopened_device(runner, encrypted_btrfs_device) ->
 @pytest.mark.skipif(
     in_docker_container(), reason="Test is known to fail in Docker container"
 )
-def test_open_close_roundtrip(runner, encrypted_btrfs_device) -> None:
+@pytest.mark.parametrize("config_cls", [cp.BtrfsConfig, cp.ResticConfig])
+def test_open_close_roundtrip(runner, encrypted_btrfs_device, config_cls) -> None:
+    def get_empty_config(config_cls, password, device_id):
+        if config_cls == cp.BtrfsConfig:
+            return config_cls(
+                DevicePassCmd=f"echo {password}",
+                Files=set(),
+                FilesDest="files-destination",
+                Folders={},
+                UUID=device_id,
+            )
+        if config_cls == cp.ResticConfig:
+            return config_cls(
+                DevicePassCmd=f"echo {password}",
+                RepositoryPassCmd="false",
+                FilesAndFolders=set(),
+                UUID=device_id,
+            )
+        raise ValueError
+
     password, device = encrypted_btrfs_device
     device_id = uuid.uuid4()
     expected_cryptsetup_map = Path(f"/dev/mapper/{device_id}")
-    config = cp.BtrfsConfig(
-        DevicePassCmd=f"echo {password}",
-        Files=set(),
-        FilesDest="files-destination",
-        Folders={},
-        UUID=device_id,
-    )
+    config = get_empty_config(config_cls, password, device_id)
     with NamedTemporaryFile() as tempf:
         config_file = Path(tempf.name)
         config_file.write_text(f"[{config.json()}]")
