@@ -68,19 +68,45 @@ def test_load_configuration_warns_on_non_dict_item() -> None:
     pass_cmd=st.text(),
     backup_dest_dirs=st.lists(st.text(), min_size=2, max_size=2, unique=True),
 )
-def test_load_configuration_parses(
+def test_load_configuration_parses_btrfs_config(
     uuid: UUID, pass_cmd: str, backup_dest_dirs: list[str]
 ) -> None:
     with TemporaryDirectory() as source:
         btrfs_cfg = cp.BtrfsConfig(
-            UUID=uuid,
-            PassCmd=pass_cmd,
-            Folders={Path(source): backup_dest_dirs[0]},
-            FilesDest=backup_dest_dirs[1],
+            DevicePassCmd=pass_cmd,
             Files=set(),
+            FilesDest=backup_dest_dirs[1],
+            Folders={Path(source): backup_dest_dirs[0]},
+            UUID=uuid,
         )
         with TemporaryDirectory() as td:
             file_name = Path(td, "configuration")
             file_name.write_text(f"[{btrfs_cfg.json()}]")
             parse_result = list(cp.load_configuration(file_name))
         assert [btrfs_cfg] == parse_result
+
+
+@given(
+    backup_dest_dirs=st.lists(st.text(), min_size=2, max_size=2, unique=True),
+    device_pass_cmd=st.text(),
+    repository_pass_cmd=st.text(),
+    uuid=st.uuids(),
+)
+def test_load_configuration_parses_restic_config(
+    uuid: UUID,
+    device_pass_cmd: str,
+    repository_pass_cmd: str,
+    backup_dest_dirs: list[str],
+) -> None:
+    with TemporaryDirectory() as source:
+        restic_cfg = cp.ResticConfig(
+            UUID=uuid,
+            DevicePassCmd=device_pass_cmd,
+            RepositoryPassCmd=repository_pass_cmd,
+            FilesAndFolders={Path(source)},
+        )
+        with TemporaryDirectory() as td:
+            file_name = Path(td, "configuration")
+            file_name.write_text(f"[{restic_cfg.json()}]")
+            parse_result = list(cp.load_configuration(file_name))
+        assert [restic_cfg] == parse_result

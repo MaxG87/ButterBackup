@@ -31,18 +31,23 @@ def test_run_cmd_captures_output(message: str) -> None:
     assert proc.stdout.strip().decode("utf-8") == message
 
 
-def test_run_piped_commands_fails_on_empty_list() -> None:
-    empty_cmd: list[list[str]] = []
-    with pytest.raises(sh.ShellInterfaceError):
-        sh.run_piped_commands(cmds=empty_cmd)
+def test_pipe_pass_cmd_to_cmd() -> None:
+    pass_cmd = "echo Hallo Welt"
+    real_command: sh.StrPathList = ["grep", "-o", "Welt"]
+    proc = sh.pipe_pass_cmd_to_real_cmd(pass_cmd, real_command)
+    assert proc.args == real_command
+    assert proc.returncode == 0
 
 
-def test_run_piped_commands_fails_on_one_element_list() -> None:
-    with pytest.raises(sh.ShellInterfaceError):
-        sh.run_piped_commands(cmds=[["echo", "Hallo Welt"]])
+def test_pipe_pass_cmd_to_cmd_breaks_on_failing_pass_cmd() -> None:
+    pass_cmd = "false"
+    real_command: sh.StrPathList = ["true"]
+    with pytest.raises(CalledProcessError):
+        sh.pipe_pass_cmd_to_real_cmd(pass_cmd, real_command)
 
 
-def test_run_piped_commands_works() -> None:
-    commands = [["echo", "Hallo Welt"], ["grep", "-o", "Welt"]]
-    proc = sh.run_piped_commands(cmds=commands)
-    assert proc.stdout.strip().decode("utf-8") == "Welt"
+def test_pipe_pass_cmd_to_cmd_breaks_on_failing_real_cmd() -> None:
+    pass_cmd = "echo Hallo Welt"
+    real_command: sh.StrPathList = ["false"]
+    with pytest.raises(CalledProcessError):
+        sh.pipe_pass_cmd_to_real_cmd(pass_cmd, real_command)

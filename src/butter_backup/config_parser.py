@@ -11,7 +11,9 @@ from pydantic import (
     BaseModel,
     DirectoryPath,
     Extra,
+    Field,
     FilePath,
+    ValidationError,
     root_validator,
     validator,
 )
@@ -20,22 +22,28 @@ RAW_CONFIG_T = Dict[str, Any]
 FoldersT = dict[DirectoryPath, str]
 
 
-def path_aware_json_decoding(v, *, default) -> str:
+def path_aware_btrfs_json_decoding(v, *, default) -> str:
+    v["Folders"] = {str(key): val for key, val in v["Folders"].items()}
+    return json.dumps(v, default=default)
+
+
+def path_aware_restic_json_decoding(v, *, default) -> str:
     v["FilesAndFolders"] = {str(cur) for cur in v["FilesAndFolders"]}
     return json.dumps(v, default=default)
 
 
 class BtrfsConfig(BaseModel):
+    DevicePassCmd: str = Field(alias="PassCmd")
     Files: set[FilePath]
     FilesDest: str
     Folders: FoldersT
-    PassCmd: str
     UUID: uuid.UUID
 
     class Config:
+        allow_population_by_field_name = True
         extra = Extra.forbid
         frozen = True
-        json_dumps = path_aware_json_decoding
+        json_dumps = path_aware_btrfs_json_decoding
 
     @validator("Files")
     def source_file_names_must_be_unique(cls, files):
@@ -125,7 +133,7 @@ class ResticConfig(BaseModel):
     class Config:
         extra = Extra.forbid
         frozen = True
-        json_dumps = path_aware_json_decoding
+        json_dumps = path_aware_restic_json_decoding
 
     @validator("FilesAndFolders", pre=True)
     def expand_tilde_in_sources(cls, files_and_folders):
@@ -139,7 +147,7 @@ class ResticConfig(BaseModel):
         return str(self.UUID)
 
 
-def load_configuration(cfg_file: Path) -> Iterable[BtrfsConfig]:
+def load_configuration(cfg_file: Path) -> Iterable[Union[BtrfsConfig, ResticConfig]]:
     """Lade, parse und validiere die Konfigurationsdatei"""
     if not cfg_file.exists():
         err_msg = f"Konfigurationsdatei {cfg_file} existiert nicht."
@@ -147,16 +155,24 @@ def load_configuration(cfg_file: Path) -> Iterable[BtrfsConfig]:
         sys.exit(f"{err_msg} {help_hint}\n")
 
     config_lst = json.loads(cfg_file.read_text())
-    if len(config_lst) == 0:
-        sys.exit("Leere Konfigurationsdateien sind nicht erlaubt.\n")
-    if not isinstance(config_lst, list):
-        sys.exit("Die Konfiguration muss eine JSON-Liste sein!")
-    if not all(isinstance(elem, dict) for elem in config_lst):
-        sys.exit("Alle Einträge müssen ein JSON-Dictionary sein.")
+    ensure_valid_config_json_list(config_lst)
 
     for raw_cfg in config_lst:
         # TODO Einige Validierungsfehler dürfen nicht zum Programmabbruch
         # führen. Ein Beispiel wären fehlende Dateien. Dadurch würde es
         # möglich, einen gemeinsaman Satz Konfigurationen für verschiedene
         # Rechner zu nutzen.
-        yield BtrfsConfig.parse_obj(raw_cfg)
+        try:
+            yield BtrfsConfig.parse_obj(raw_cfg)
+        except ValidationError:
+            yield ResticConfig.parse_obj(raw_cfg)
+
+
+def ensure_valid_config_json_list(config_lst):
+    # Getestet durch Tests für `load_configuration`.
+    if len(config_lst) == 0:
+        sys.exit("Leere Konfigurationsdateien sind nicht erlaubt.\n")
+    if not isinstance(config_lst, list):
+        sys.exit("Die Konfiguration muss eine JSON-Liste sein!")
+    if not all(isinstance(elem, dict) for elem in config_lst):
+        sys.exit("Alle Einträge müssen ein JSON-Dictionary sein.")
