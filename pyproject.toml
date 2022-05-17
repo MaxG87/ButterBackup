@@ -35,6 +35,7 @@ check_untyped_defs = true
 disallow_any_generics = true
 ignore_missing_imports = false
 no_implicit_reexport = true
+strict_equality = true
 warn_redundant_casts = true
 warn_return_any = true
 warn_unreachable = true
