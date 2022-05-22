@@ -11,7 +11,7 @@ RUN pacman -Syu --noconfirm
 RUN pacman -S --noconfirm btrfs-progs cryptsetup curl make python python-pip sudo
 
 # Setup Poetry
-ENV POETRY_VERSION=1.1.11
+ENV POETRY_VERSION=1.1.13
 RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/$POETRY_VERSION/get-poetry.py | python -
 ENV PATH=$PATH:/root/.poetry/bin
 
