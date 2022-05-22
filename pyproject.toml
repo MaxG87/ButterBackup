@@ -22,6 +22,7 @@ mypy = "^0.931"
 isort = "^5.10.1"
 black = "^22.1.0"
 flake8-bugbear = "^22.1.11"
+flake8-tuple = "^0.4.1"
 
 [tool.poetry.scripts]
 butter-backup = "butter_backup.cli:cli"
