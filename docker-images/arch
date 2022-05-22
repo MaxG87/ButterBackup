@@ -20,7 +20,7 @@ ENV PATH=$PATH:/root/.poetry/bin
 WORKDIR /project
 COPY pyproject.toml poetry.lock ./
 RUN --mount=type=cache,target=/root/.cache/pip \
-    poetry export --dev > requirements.txt \
+    poetry export --without-hashes --dev > requirements.txt \
     && python3 -m pip install -r requirements.txt \
     && rm requirements.txt
 
