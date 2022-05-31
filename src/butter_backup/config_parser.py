@@ -5,7 +5,7 @@ import sys
 import uuid
 from collections import Counter
 from pathlib import Path
-from typing import Any, Dict, Iterable, Union
+from typing import Any, Dict, Iterable, Set, Union
 
 from pydantic import (
     BaseModel,
@@ -19,7 +19,7 @@ from pydantic import (
 )
 
 RAW_CONFIG_T = Dict[str, Any]
-FoldersT = dict[DirectoryPath, str]
+FoldersT = Dict[DirectoryPath, str]
 
 
 def path_aware_btrfs_json_decoding(v, *, default) -> str:
@@ -34,7 +34,7 @@ def path_aware_restic_json_decoding(v, *, default) -> str:
 
 class BtrfsConfig(BaseModel):
     DevicePassCmd: str = Field(alias="PassCmd")
-    Files: set[FilePath]
+    Files: Set[FilePath]
     FilesDest: str
     Folders: FoldersT
     UUID: uuid.UUID
@@ -126,7 +126,7 @@ class BtrfsConfig(BaseModel):
 
 class ResticConfig(BaseModel):
     DevicePassCmd: str
-    FilesAndFolders: set[Union[FilePath, DirectoryPath]]
+    FilesAndFolders: Set[Union[FilePath, DirectoryPath]]
     RepositoryPassCmd: str
     UUID: uuid.UUID
 
