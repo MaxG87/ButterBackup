@@ -25,7 +25,7 @@ check-linters: | $(CACHEDIR)/check-linters
 .PHONY: run-tests
 run-tests: run-docker-tests | $(CACHEDIR)/run-undockered-tests
 .PHONY: run-docker-tests
-run-docker-tests: | $(CACHEDIR)/run-arch-tests $(CACHEDIR)/run-debian-tests
+run-docker-tests: | $(addprefix $(CACHEDIR)/,run-arch-tests run-debian-tests run-python3.7-tests run-python3.8-tests run-python3.9-tests run-python3.10-tests)
 .PHONY: get-service-id
 get-service-id:
 	@echo $(SERVICE_ID_FULL)

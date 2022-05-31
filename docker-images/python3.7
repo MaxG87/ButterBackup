@@ -1,10 +1,10 @@
-# Debian stable-slim as of Oct. 12th, 2021
-FROM debian@sha256:edb0a5915350ee6e2fedd8f9d0fe2e7f956f7a58f7f41b5e836e0bb7543e48a1
+# python:3.7.13-slim-bullseye as of May 26th, 2022
+FROM python@sha256:514ea9ba9eea6cc26bd64b7fd19b413578536c875a70db19289da2a0f0c58cea
 
 # Provide excecutables
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update && \
-    apt install -y btrfs-progs cryptsetup curl make python3 python3-pip sudo && \
+    apt install -y btrfs-progs cryptsetup curl make sudo && \
     apt autoclean
 
 # Setup Poetry
