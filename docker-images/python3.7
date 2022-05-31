@@ -1,0 +1,28 @@
+# python:3.7.13-slim-bullseye as of May 26th, 2022
+FROM python@sha256:514ea9ba9eea6cc26bd64b7fd19b413578536c875a70db19289da2a0f0c58cea
+
+# Provide excecutables
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt update && \
+    apt install -y btrfs-progs cryptsetup curl make sudo && \
+    apt autoclean
+
+# Setup Poetry
+ENV POETRY_VERSION=1.1.13
+RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/$POETRY_VERSION/get-poetry.py | python3 -
+ENV PATH=$PATH:/root/.poetry/bin
+
+
+# Setup production dependencies
+WORKDIR /project
+COPY pyproject.toml poetry.lock ./
+RUN poetry install
+
+# Install project
+COPY src/ src/
+RUN poetry install
+
+# Include test files
+COPY setup.cfg .
+
+CMD poetry run pytest --no-cov .
