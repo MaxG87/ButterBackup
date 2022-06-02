@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import contextlib
+import secrets
+import string
 import subprocess
 from collections import defaultdict
 from pathlib import Path
@@ -121,3 +123,9 @@ def encrypt_device(device: Path, passphrase: str) -> None:
     password_cmd = f"echo {passphrase}"
     format_cmd: sh.StrPathList = ["sudo", "cryptsetup", "luksFormat", device]
     sh.pipe_pass_cmd_to_real_cmd(pass_cmd=password_cmd, command=format_cmd)
+
+
+def generate_password() -> str:
+    n_chars = 16
+    alphabet = string.ascii_letters + string.digits
+    return "".join(secrets.choice(alphabet) for _ in range(n_chars))

@@ -1,5 +1,6 @@
 import os
 import subprocess
+from collections import Counter
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
@@ -182,3 +183,25 @@ def test_symbolic_link_removes_link_in_case_of_exception() -> None:
                 assert os.path.lexists(dest_p)
                 raise MyCustomTestException
     assert not os.path.lexists(dest_p)
+
+
+def test_generate_password_is_not_static():
+    N = 128
+    passwords = Counter(dm.generate_password() for _ in range(N))
+    assert set(passwords.values()) == {1}
+
+
+def test_generate_password_samples_uniformly():
+    # TODO: The bounds should be tightened. Finally, the test should have a
+    # probability to fail one in ~100 runs or so.
+    N = 128
+    chars: Counter[str] = Counter()
+    for _ in range(N):
+        chars.update(dm.generate_password())
+
+    nof_chars = sum(chars.values())
+    expected_frequency = 1 / (26 + 26 + 10)
+    lower_bound = 0.25 * expected_frequency
+    upper_bound = 1.75 * expected_frequency
+    assert all(len(char) == 1 for char in chars)
+    assert all(lower_bound < (cur / nof_chars) < upper_bound for cur in chars.values())
