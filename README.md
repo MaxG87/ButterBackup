@@ -51,23 +51,6 @@ Außerdem ist es vorstellbar, dass die Quelle zwar gelöscht wurde, aber im
 Backup archiviert werden soll. Dieser Anwendungsfall würde unmöglich gemacht,
 würden nicht mehr gelistete Ziele aus der Sicherungskopie entfernt.
 
-### Warum ist das Parsen der Konfigurationen so umständlich
-
-Es ist in der Tat etwas unglücklich, dass so viele Zwischenschritte nötig sind,
-um aus einer Konfigurationsdatei eine brauchbare Konfiguration zu erstellen.
-Hier sind Verbesserungen wünschenswert.
-
-Der Grund für die Kleinteiligkeit ist, dass dadurch Zuständigkeiten besser
-aufgeteilt werden können. Die Klasse `ParsedButterConfig` verantwortet die
-syntaktische Korrektheit der Konfiguration. Darunetr fällt beispielsweise, dass
-genau die erwarteten Schlüssel angegeben werden. Die Klasse `ButterConfig` ist
-für die semantische Korrektheit zuständig. Sie überprüft beispielsweise, dass
-Quellen und Ziele nur jeweils einmal angegeben wurden, oder dass alle Quellen
-auch existieren.
-
-Es erscheint dem Autor nicht richtig, diese beiden Verantwortlichkeiten zu
-mischen.
-
 ## Beispiele
 
 ## Ausstehende Aufgaben
