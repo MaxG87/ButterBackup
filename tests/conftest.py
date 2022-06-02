@@ -48,9 +48,7 @@ def btrfs_device(big_file: Path):
 @pytest.fixture
 def encrypted_device(big_file: Path):
     _PassPhrase = "supersecure"
-    password_cmd = f"echo {_PassPhrase}"
-    format_cmd: sh.StrPathList = ["sudo", "cryptsetup", "luksFormat", big_file]
-    sh.pipe_pass_cmd_to_real_cmd(pass_cmd=password_cmd, command=format_cmd)
+    dm.encrypt_device(big_file, _PassPhrase)
     yield _PassPhrase, big_file
 
 

@@ -115,3 +115,9 @@ def close_decrypted_device(device: Path) -> None:
     map_name = device.name
     close_cmd = ["sudo", "cryptsetup", "close", map_name]
     sh.run_cmd(cmd=close_cmd)
+
+
+def encrypt_device(device: Path, passphrase: str) -> None:
+    password_cmd = f"echo {passphrase}"
+    format_cmd: sh.StrPathList = ["sudo", "cryptsetup", "luksFormat", device]
+    sh.pipe_pass_cmd_to_real_cmd(pass_cmd=password_cmd, command=format_cmd)
