@@ -125,6 +125,17 @@ def encrypt_device(device: Path, passphrase: str) -> None:
     sh.pipe_pass_cmd_to_real_cmd(pass_cmd=password_cmd, command=format_cmd)
 
 
+def prepare_device_for_butterbackend(device: Path) -> str:
+    passphrase = generate_password()
+    encrypt_device(device, passphrase)
+    with decrypted_device(device, f"echo {passphrase}") as decrypted:
+        mkfs_btrfs(decrypted)
+        with mounted_device(decrypted) as mounted:
+            initial_subvol = mounted / "1970-01-01_00:00:00"
+            sh.run_cmd(cmd=["sudo", "btrfs", "subvolume", "create", initial_subvol])
+    return passphrase
+
+
 def mkfs_btrfs(file: Path) -> None:
     cmd: sh.StrPathList = ["sudo", "mkfs.btrfs", file]
     sh.run_cmd(cmd=cmd)
