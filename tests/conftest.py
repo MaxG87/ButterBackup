@@ -35,13 +35,6 @@ def big_file():
 
 
 @pytest.fixture
-def encrypted_device(big_file: Path):
-    _PassPhrase = "supersecure"
-    dm.encrypt_device(big_file, _PassPhrase)
-    yield _PassPhrase, big_file
-
-
-@pytest.fixture
 def encrypted_btrfs_device(big_file):
     passphrase = dm.prepare_device_for_butterbackend(big_file)
     return passphrase, big_file
