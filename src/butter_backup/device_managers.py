@@ -125,6 +125,11 @@ def encrypt_device(device: Path, passphrase: str) -> None:
     sh.pipe_pass_cmd_to_real_cmd(pass_cmd=password_cmd, command=format_cmd)
 
 
+def mkfs_btrfs(file: Path) -> None:
+    cmd: sh.StrPathList = ["sudo", "mkfs.btrfs", file]
+    sh.run_cmd(cmd=cmd)
+
+
 def generate_password() -> str:
     n_chars = 16
     alphabet = string.ascii_letters + string.digits

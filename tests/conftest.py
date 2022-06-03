@@ -34,14 +34,9 @@ def big_file():
         yield file
 
 
-def _mkfs_btrfs(file: Path) -> None:
-    cmd: sh.StrPathList = ["sudo", "mkfs.btrfs", file]
-    sh.run_cmd(cmd=cmd)
-
-
 @pytest.fixture
 def btrfs_device(big_file: Path):
-    _mkfs_btrfs(big_file)
+    dm.mkfs_btrfs(big_file)
     return big_file
 
 
@@ -56,5 +51,5 @@ def encrypted_device(big_file: Path):
 def encrypted_btrfs_device(encrypted_device):
     password, device = encrypted_device
     with dm.decrypted_device(device=device, pass_cmd=f"echo {password}") as dd:
-        _mkfs_btrfs(dd)
+        dm.mkfs_btrfs(dd)
     return encrypted_device
