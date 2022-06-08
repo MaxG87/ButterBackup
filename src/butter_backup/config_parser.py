@@ -90,6 +90,16 @@ class BtrfsConfig(BaseModel):
         )
         raise ValueError(f"{errmsg_begin} {errmsg_body}")
 
+    @classmethod
+    def from_uuid_and_passphrase(cls, uuid: uuid.UUID, passphrase: str) -> BtrfsConfig:
+        return cls(
+            DevicePassCmd=f"echo {passphrase}",
+            Files=set(),
+            FilesDest="Einzeldateien",
+            Folders={},
+            UUID=uuid,
+        )
+
     def device(self) -> Path:
         return Path(f"/dev/disk/by-uuid/{self.UUID}")
 
