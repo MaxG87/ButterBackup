@@ -123,6 +123,17 @@ class ResticConfig(BaseModel):
         new = {Path(src).expanduser() for src in files_and_folders}
         return new
 
+    @classmethod
+    def from_uuid_and_passphrases(
+        cls, uuid: uuid.UUID, device_passphrase: str, repository_passphrase
+    ) -> ResticConfig:
+        return cls(
+            DevicePassCmd=f"echo {device_passphrase}",
+            FilesAndFolders=set(),
+            RepositoryPassCmd=f"echo {repository_passphrase}",
+            UUID=uuid,
+        )
+
     def device(self) -> Path:
         return Path(f"/dev/disk/by-uuid/{self.UUID}")
 
