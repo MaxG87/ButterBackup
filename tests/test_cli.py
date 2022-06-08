@@ -7,7 +7,6 @@ import pytest
 from typer.testing import CliRunner
 
 from butter_backup import cli
-from butter_backup import config_parser as cp
 from butter_backup import device_managers as dm
 from butter_backup.cli import app
 
@@ -84,24 +83,9 @@ def test_close_does_not_close_unopened_device(runner, encrypted_btrfs_device) ->
 @pytest.mark.skipif(
     in_docker_container(), reason="Test is known to fail in Docker container"
 )
-@pytest.mark.parametrize("config_cls", [cp.BtrfsConfig, cp.ResticConfig])
-def test_open_close_roundtrip(runner, encrypted_btrfs_device, config_cls) -> None:
-    def get_empty_config(config_cls, password, device_id):
-        if config_cls == cp.BtrfsConfig:
-            return config_cls.from_uuid_and_passphrase(device_id, password)
-        if config_cls == cp.ResticConfig:
-            return config_cls(
-                DevicePassCmd=f"echo {password}",
-                RepositoryPassCmd="false",
-                FilesAndFolders=set(),
-                UUID=device_id,
-            )
-        raise ValueError
-
-    config, device = encrypted_btrfs_device
-    passphrase = config.DevicePassCmd.split()[-1]
+def test_open_close_roundtrip(runner, encrypted_device) -> None:
+    config, device = encrypted_device
     expected_cryptsetup_map = Path(f"/dev/mapper/{config.UUID}")
-    config = get_empty_config(config_cls, passphrase, config.UUID)
     with NamedTemporaryFile() as tempf:
         config_file = Path(tempf.name)
         config_file.write_text(f"[{config.json()}]")

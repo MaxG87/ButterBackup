@@ -140,6 +140,27 @@ def prepare_device_for_butterbackend(uuid: UUID) -> cp.BtrfsConfig:
     return config
 
 
+def prepare_device_for_resticbackend(uuid: UUID) -> cp.ResticConfig:
+    device_passphrase = generate_password()
+    repository_passphrase = generate_password()
+    repository = "restic-repository"
+    device = Path("/dev/disk/by-uuid") / str(uuid)
+    encrypt_device(device, device_passphrase)
+    with decrypted_device(device, f"echo {device_passphrase}") as decrypted:
+        mkfs_btrfs(decrypted)
+        with mounted_device(decrypted) as mounted:
+            backup_repo = mounted / repository
+            sh.run_cmd(cmd=["sudo", "mkdir", backup_repo])
+            sh.pipe_pass_cmd_to_real_cmd(
+                f"echo {repository_passphrase}",
+                ["sudo", "restic", "init", "-r", backup_repo],
+            )
+    config = cp.ResticConfig.from_uuid_and_passphrases(
+        uuid, device_passphrase, repository_passphrase
+    )
+    return config
+
+
 def mkfs_btrfs(file: Path) -> None:
     cmd: sh.StrPathList = ["sudo", "mkfs.btrfs", file]
     sh.run_cmd(cmd=cmd)

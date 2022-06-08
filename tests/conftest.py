@@ -61,6 +61,29 @@ def encrypted_btrfs_device(virgin_device):
 
 
 @pytest.fixture
+def encrypted_restic_device(virgin_device):
+    """
+    Prepare device for Restic on BtrFS and return its config
+
+    Returns
+    -------
+    config: ResticConfig
+        configuration allowing to interact with the returned device
+    device: Path
+        temporary file prepared as encrypted BtrFS device
+    """
+    device_uuid, device = virgin_device
+    config = dm.prepare_device_for_resticbackend(device_uuid)
+    yield config, device
+
+
+@pytest.fixture(params=["encrypted_btrfs_device", "encrypted_restic_device"])
+def encrypted_device(request):
+    config, device = request.getfixturevalue(request.param)
+    yield config, device
+
+
+@pytest.fixture
 def btrfs_device(encrypted_btrfs_device):
     config, device = encrypted_btrfs_device
     with dm.decrypted_device(device, config.DevicePassCmd) as decrypted:
