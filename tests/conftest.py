@@ -36,9 +36,17 @@ def big_file():
 
 
 @pytest.fixture
-def encrypted_btrfs_device(big_file):
+def virgin_device(big_file):
+    device_uuid = uuid.uuid4()
+    device = Path("/dev/disk/by-uuid/") / str(device_uuid)
+    with dm.symbolic_link(big_file, device):
+        yield device_uuid, device
+
+
+@pytest.fixture
+def encrypted_btrfs_device(virgin_device):
     """
-    Prepare BtrFS device and return its config
+    Prepare device for ButterBackup and return its config
 
     Returns
     -------
@@ -47,11 +55,9 @@ def encrypted_btrfs_device(big_file):
     device: Path
         temporary file prepared as encrypted BtrFS device
     """
-    device_uuid = uuid.uuid4()
-    device = Path("/dev/disk/by-uuid/") / str(device_uuid)
-    with dm.symbolic_link(big_file, device):
-        config = dm.prepare_device_for_butterbackend(device_uuid)
-        yield config, device
+    device_uuid, device = virgin_device
+    config = dm.prepare_device_for_butterbackend(device_uuid)
+    yield config, device
 
 
 @pytest.fixture
