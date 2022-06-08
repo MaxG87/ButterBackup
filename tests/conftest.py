@@ -37,6 +37,16 @@ def big_file():
 
 @pytest.fixture
 def encrypted_btrfs_device(big_file):
+    """
+    Prepare BtrFS device and return its config
+
+    Returns
+    -------
+    config: BtrfsConfig
+        configuration allowing to interact with the returned device
+    device: Path
+        temporary file prepared as encrypted BtrFS device
+    """
     device_uuid = uuid.uuid4()
     device = Path("/dev/disk/by-uuid/") / str(device_uuid)
     with dm.symbolic_link(big_file, device):
