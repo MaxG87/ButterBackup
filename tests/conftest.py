@@ -34,29 +34,14 @@ def big_file():
         yield file
 
 
-def _mkfs_btrfs(file: Path) -> None:
-    cmd: sh.StrPathList = ["sudo", "mkfs.btrfs", file]
-    sh.run_cmd(cmd=cmd)
+@pytest.fixture
+def encrypted_btrfs_device(big_file):
+    passphrase = dm.prepare_device_for_butterbackend(big_file)
+    return passphrase, big_file
 
 
 @pytest.fixture
-def btrfs_device(big_file: Path):
-    _mkfs_btrfs(big_file)
-    return big_file
-
-
-@pytest.fixture
-def encrypted_device(big_file: Path):
-    _PassPhrase = "supersecure"
-    password_cmd = f"echo {_PassPhrase}"
-    format_cmd: sh.StrPathList = ["sudo", "cryptsetup", "luksFormat", big_file]
-    sh.pipe_pass_cmd_to_real_cmd(pass_cmd=password_cmd, command=format_cmd)
-    yield _PassPhrase, big_file
-
-
-@pytest.fixture
-def encrypted_btrfs_device(encrypted_device):
-    password, device = encrypted_device
-    with dm.decrypted_device(device=device, pass_cmd=f"echo {password}") as dd:
-        _mkfs_btrfs(dd)
-    return encrypted_device
+def btrfs_device(encrypted_btrfs_device):
+    passphrase, device = encrypted_btrfs_device
+    with dm.decrypted_device(device, f"echo {passphrase}") as decrypted:
+        yield decrypted

@@ -1,5 +1,6 @@
 import os
 import subprocess
+from collections import Counter
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
@@ -90,8 +91,8 @@ def test_unmount_device(btrfs_device) -> None:
         assert not dm.is_mounted(btrfs_device)
 
 
-def test_decrypt_device_roundtrip(encrypted_device) -> None:
-    passphrase, device = encrypted_device
+def test_decrypt_device_roundtrip(encrypted_btrfs_device) -> None:
+    passphrase, device = encrypted_btrfs_device
     pass_cmd = f"echo {passphrase}"
     decrypted = dm.open_encrypted_device(device=Path(device), pass_cmd=pass_cmd)
     assert decrypted.exists()
@@ -108,27 +109,27 @@ def test_close_decrypted_device_rejects_invalid_device_name(uuid) -> None:
             dm.close_decrypted_device(device)
 
 
-def test_decrypted_device(encrypted_device) -> None:
-    passphrase, device = encrypted_device
+def test_decrypted_device(encrypted_btrfs_device) -> None:
+    passphrase, device = encrypted_btrfs_device
     with dm.decrypted_device(device=device, pass_cmd=f"echo {passphrase}") as dd:
         assert dd.exists()
     assert not dd.exists()
 
 
-def test_decrypted_device_closes_in_case_of_exception(encrypted_device) -> None:
-    passphrase, device = encrypted_device
+def test_decrypted_device_closes_in_case_of_exception(encrypted_btrfs_device) -> None:
+    passphrase, device = encrypted_btrfs_device
     with pytest.raises(MyCustomTestException):
         with dm.decrypted_device(device=device, pass_cmd=f"echo {passphrase}") as dd:
             raise MyCustomTestException
     assert not dd.exists()
 
 
-def test_decrypted_device_can_use_home_for_passcmd(encrypted_device) -> None:
+def test_decrypted_device_can_use_home_for_passcmd(encrypted_btrfs_device) -> None:
     # Regression Test
     # Test if `decrypted_device` can use a program that is located in PATH. For
     # some reason, when passing `{}` as environment, `echo` works, but `pass`
     # did not. This test ensures that the necessary fix is not reverted again.
-    passphrase, device = encrypted_device
+    passphrase, device = encrypted_btrfs_device
     relative_home = Path("~")  # must be relative to trigger regression
     with NamedTemporaryFile(dir=relative_home.expanduser()) as pwd_f:
         absolute_pwd_f = Path(pwd_f.name)
@@ -182,3 +183,25 @@ def test_symbolic_link_removes_link_in_case_of_exception() -> None:
                 assert os.path.lexists(dest_p)
                 raise MyCustomTestException
     assert not os.path.lexists(dest_p)
+
+
+def test_generate_password_is_not_static():
+    N = 128
+    passwords = Counter(dm.generate_password() for _ in range(N))
+    assert set(passwords.values()) == {1}
+
+
+def test_generate_password_samples_uniformly():
+    # TODO: The bounds should be tightened. Finally, the test should have a
+    # probability to fail one in ~100 runs or so.
+    N = 128
+    chars: Counter[str] = Counter()
+    for _ in range(N):
+        chars.update(dm.generate_password())
+
+    nof_chars = sum(chars.values())
+    expected_frequency = 1 / (26 + 26 + 10)
+    lower_bound = 0.25 * expected_frequency
+    upper_bound = 1.75 * expected_frequency
+    assert all(len(char) == 1 for char in chars)
+    assert all(lower_bound < (cur / nof_chars) < upper_bound for cur in chars.values())
