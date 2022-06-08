@@ -4,9 +4,9 @@ import datetime as dt
 from pathlib import Path
 from typing import Union
 
-from butter_backup import config_parser as cp
-from butter_backup import device_managers as dm
-from butter_backup import shell_interface as sh
+from . import config_parser as cp
+from . import device_managers as dm
+from . import shell_interface as sh
 
 
 def do_backup(config: Union[cp.BtrfsConfig, cp.ResticConfig]) -> None:

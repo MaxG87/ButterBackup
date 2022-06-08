@@ -8,7 +8,7 @@ from collections import defaultdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from butter_backup import shell_interface as sh
+from . import shell_interface as sh
 
 
 class InvalidDecryptedDevice(ValueError):
