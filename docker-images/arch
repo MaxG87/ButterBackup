@@ -8,7 +8,7 @@ RUN pacman-key --populate archlinux
 
 # Provide relevant binaries
 RUN pacman -Syu --noconfirm
-RUN pacman -S --noconfirm btrfs-progs cryptsetup curl make python python-pip rsync sudo
+RUN pacman -S --noconfirm btrfs-progs cryptsetup curl make python python-pip restic rsync sudo
 
 # Setup Poetry
 ENV POETRY_VERSION=1.1.13
