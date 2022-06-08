@@ -12,36 +12,6 @@ from pydantic import ValidationError
 from butter_backup import config_parser as cp
 from tests import hypothesis_utils as hu
 
-NOF_FOLDER_BACKUP_MAPPING_ELEMS = 2
-
-
-@st.composite
-def valid_unparsed_configs(draw, may_be_incomplete: bool = False):
-    item_strategy_mapping = {
-        "UUID": st.uuids().map(str),
-        "PassCmd": st.text(),
-        "Folders": st.lists(
-            st.lists(
-                hu.filenames(),
-                min_size=NOF_FOLDER_BACKUP_MAPPING_ELEMS,
-                max_size=NOF_FOLDER_BACKUP_MAPPING_ELEMS,
-            ),
-        ),
-        "Files": st.fixed_dictionaries(
-            {
-                "destination": st.text(),
-                "files": st.lists(hu.filenames()),
-            }
-        ),
-    }
-    config = draw(
-        st.fixed_dictionaries(
-            {} if may_be_incomplete else item_strategy_mapping,
-            optional=item_strategy_mapping if may_be_incomplete else {},
-        )
-    )
-    return config
-
 
 @st.composite
 def valid_unparsed_empty_btrfs_config(draw):
@@ -148,21 +118,3 @@ def test_btrfs_config_json_roundtrip(base_config, folder_dest: str):
             as_json = cfg.json()
             deserialised = cp.BtrfsConfig.parse_raw(as_json)
     assert cfg == deserialised
-
-
-@given(base_config=valid_unparsed_configs())
-def test_btrfs_config_handles_old_style_config(base_config):
-    with TemporaryDirectory() as src_folder:
-        with TemporaryDirectory() as dest:
-            with NamedTemporaryFile() as src_file:
-                folders = [(src_folder, dest)]
-                base_config["Folders"] = folders
-                base_config["Files"]["files"] = [src_file.name]
-                cfg = cp.BtrfsConfig.parse_obj(base_config)
-    result_folders = {(str(src), dest) for src, dest in cfg.Folders.items()}
-    assert cfg.DevicePassCmd == base_config["PassCmd"]
-    assert str(cfg.device()).endswith(base_config["UUID"])
-    assert result_folders == set(base_config["Folders"])
-    assert {str(file) for file in cfg.Files} == set(base_config["Files"]["files"])
-    assert cfg.FilesDest == base_config["Files"]["destination"]
-    assert str(cfg.UUID) == base_config["UUID"]

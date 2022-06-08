@@ -5,20 +5,18 @@ import sys
 import uuid
 from collections import Counter
 from pathlib import Path
-from typing import Any, Dict, Iterable, Set, Union
+from typing import Dict, Iterable, Set, Union
 
 from pydantic import (
     BaseModel,
     DirectoryPath,
     Extra,
-    Field,
     FilePath,
     ValidationError,
     root_validator,
     validator,
 )
 
-RAW_CONFIG_T = Dict[str, Any]
 FoldersT = Dict[DirectoryPath, str]
 
 
@@ -33,14 +31,13 @@ def path_aware_restic_json_decoding(v, *, default) -> str:
 
 
 class BtrfsConfig(BaseModel):
-    DevicePassCmd: str = Field(alias="PassCmd")
+    DevicePassCmd: str
     Files: Set[FilePath]
     FilesDest: str
     Folders: FoldersT
     UUID: uuid.UUID
 
     class Config:
-        allow_population_by_field_name = True
         extra = Extra.forbid
         frozen = True
         json_dumps = path_aware_btrfs_json_decoding
@@ -50,19 +47,6 @@ class BtrfsConfig(BaseModel):
         file_names = Counter(f.name for f in files)
         cls.raise_with_message_upon_duplicate(file_names, ("Dateinamen", "Dateinamen"))
         return files
-
-    @validator("Folders", pre=True)
-    def handle_legacy_folders_cfg(cls, folders):
-        if isinstance(folders, dict):
-            return folders
-
-        sources = Counter(src for src, _ in folders)
-        cls.raise_with_message_upon_duplicate(
-            sources, ("Quellverzeichnissen", "Quellen")
-        )
-
-        as_dict = {src: dest for src, dest in folders}
-        return as_dict
 
     @validator("Folders")
     def folder_destinations_must_be_unique(cls, folders: FoldersT) -> FoldersT:
@@ -81,17 +65,6 @@ class BtrfsConfig(BaseModel):
     def expand_tilde_in_file_sources(cls, files):
         new = [Path(cur).expanduser() for cur in files]
         return new
-
-    @root_validator(pre=True)
-    def handle_legacy_files_cfg(cls, values):
-        try:
-            files = values["Files"]["files"]
-            files_dest = values["Files"]["destination"]
-        except (KeyError, TypeError):
-            return values
-        values["Files"] = files
-        values["FilesDest"] = files_dest
-        return values
 
     @root_validator(skip_on_failure=True)
     def files_dest_is_no_folder_dest(cls, values):
