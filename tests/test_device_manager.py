@@ -92,9 +92,8 @@ def test_unmount_device(btrfs_device) -> None:
 
 
 def test_decrypt_device_roundtrip(encrypted_btrfs_device) -> None:
-    passphrase, device = encrypted_btrfs_device
-    pass_cmd = f"echo {passphrase}"
-    decrypted = dm.open_encrypted_device(device=Path(device), pass_cmd=pass_cmd)
+    config, device = encrypted_btrfs_device
+    decrypted = dm.open_encrypted_device(device=device, pass_cmd=config.DevicePassCmd)
     assert decrypted.exists()
     assert decrypted.name == device.name
     dm.close_decrypted_device(device=decrypted)
@@ -110,16 +109,16 @@ def test_close_decrypted_device_rejects_invalid_device_name(uuid) -> None:
 
 
 def test_decrypted_device(encrypted_btrfs_device) -> None:
-    passphrase, device = encrypted_btrfs_device
-    with dm.decrypted_device(device=device, pass_cmd=f"echo {passphrase}") as dd:
+    config, device = encrypted_btrfs_device
+    with dm.decrypted_device(device=device, pass_cmd=config.DevicePassCmd) as dd:
         assert dd.exists()
     assert not dd.exists()
 
 
 def test_decrypted_device_closes_in_case_of_exception(encrypted_btrfs_device) -> None:
-    passphrase, device = encrypted_btrfs_device
+    config, device = encrypted_btrfs_device
     with pytest.raises(MyCustomTestException):
-        with dm.decrypted_device(device=device, pass_cmd=f"echo {passphrase}") as dd:
+        with dm.decrypted_device(device=device, pass_cmd=config.DevicePassCmd) as dd:
             raise MyCustomTestException
     assert not dd.exists()
 
@@ -129,7 +128,8 @@ def test_decrypted_device_can_use_home_for_passcmd(encrypted_btrfs_device) -> No
     # Test if `decrypted_device` can use a program that is located in PATH. For
     # some reason, when passing `{}` as environment, `echo` works, but `pass`
     # did not. This test ensures that the necessary fix is not reverted again.
-    passphrase, device = encrypted_btrfs_device
+    config, device = encrypted_btrfs_device
+    passphrase = config.DevicePassCmd.split()[-1]
     relative_home = Path("~")  # must be relative to trigger regression
     with NamedTemporaryFile(dir=relative_home.expanduser()) as pwd_f:
         absolute_pwd_f = Path(pwd_f.name)

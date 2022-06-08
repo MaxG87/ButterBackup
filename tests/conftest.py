@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
@@ -36,12 +37,15 @@ def big_file():
 
 @pytest.fixture
 def encrypted_btrfs_device(big_file):
-    passphrase = dm.prepare_device_for_butterbackend(big_file)
-    return passphrase, big_file
+    device_uuid = uuid.uuid4()
+    device = Path("/dev/disk/by-uuid/") / str(device_uuid)
+    with dm.symbolic_link(big_file, device):
+        config = dm.prepare_device_for_butterbackend(device_uuid)
+        yield config, device
 
 
 @pytest.fixture
 def btrfs_device(encrypted_btrfs_device):
-    passphrase, device = encrypted_btrfs_device
-    with dm.decrypted_device(device, f"echo {passphrase}") as decrypted:
+    config, device = encrypted_btrfs_device
+    with dm.decrypted_device(device, config.DevicePassCmd) as decrypted:
         yield decrypted

@@ -1,5 +1,4 @@
 import re
-import uuid
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from unittest import mock
@@ -73,23 +72,13 @@ def test_open_refuses_missing_xdg_config(runner) -> None:
     in_docker_container(), reason="Test is known to fail in Docker container"
 )
 def test_close_does_not_close_unopened_device(runner, encrypted_btrfs_device) -> None:
-    password, device = encrypted_btrfs_device
-    device_id = uuid.uuid4()
-    config = cp.BtrfsConfig(
-        DevicePassCmd=f"echo {password}",
-        Files=set(),
-        FilesDest="files-destination",
-        Folders={},
-        UUID=device_id,
-    )
+    config, device = encrypted_btrfs_device
     with NamedTemporaryFile() as tempf:
         config_file = Path(tempf.name)
         config_file.write_text(f"[{config.json()}]")
-        device_by_uuid = Path("/dev/disk/by-uuid/") / str(device_id)
-        with dm.symbolic_link(src=device, dest=device_by_uuid):
-            close_result = runner.invoke(app, ["close", "--config", str(config_file)])
-            assert close_result.stdout == ""
-            assert close_result.exit_code == 0
+        close_result = runner.invoke(app, ["close", "--config", str(config_file)])
+        assert close_result.stdout == ""
+        assert close_result.exit_code == 0
 
 
 @pytest.mark.skipif(
@@ -99,13 +88,7 @@ def test_close_does_not_close_unopened_device(runner, encrypted_btrfs_device) ->
 def test_open_close_roundtrip(runner, encrypted_btrfs_device, config_cls) -> None:
     def get_empty_config(config_cls, password, device_id):
         if config_cls == cp.BtrfsConfig:
-            return config_cls(
-                DevicePassCmd=f"echo {password}",
-                Files=set(),
-                FilesDest="files-destination",
-                Folders={},
-                UUID=device_id,
-            )
+            return config_cls.from_uuid_and_passphrase(device_id, password)
         if config_cls == cp.ResticConfig:
             return config_cls(
                 DevicePassCmd=f"echo {password}",
@@ -115,28 +98,24 @@ def test_open_close_roundtrip(runner, encrypted_btrfs_device, config_cls) -> Non
             )
         raise ValueError
 
-    password, device = encrypted_btrfs_device
-    device_id = uuid.uuid4()
-    expected_cryptsetup_map = Path(f"/dev/mapper/{device_id}")
-    config = get_empty_config(config_cls, password, device_id)
+    config, device = encrypted_btrfs_device
+    passphrase = config.DevicePassCmd.split()[-1]
+    expected_cryptsetup_map = Path(f"/dev/mapper/{config.UUID}")
+    config = get_empty_config(config_cls, passphrase, config.UUID)
     with NamedTemporaryFile() as tempf:
         config_file = Path(tempf.name)
         config_file.write_text(f"[{config.json()}]")
-        device_by_uuid = Path("/dev/disk/by-uuid/") / str(device_id)
-        with dm.symbolic_link(src=device, dest=device_by_uuid):
-            open_result = runner.invoke(app, ["open", "--config", str(config_file)])
-            expected_msg = (
-                f"Gerät {device_id} wurde in (?P<mount_dest>/[^ ]+) geöffnet."
-            )
-            match = re.fullmatch(expected_msg, open_result.stdout.strip())
-            assert match is not None
-            mount_dest = Path(match.group("mount_dest"))
-            assert any(
-                mount_dest in destinations
-                for destinations in dm.get_mounted_devices().values()
-            )
-            assert expected_cryptsetup_map.exists()
-            runner.invoke(app, ["close", "--config", str(config_file)])
-            assert not expected_cryptsetup_map.exists()
-            assert not dm.is_mounted(mount_dest)
-            assert not mount_dest.exists()
+        open_result = runner.invoke(app, ["open", "--config", str(config_file)])
+        expected_msg = f"Gerät {config.UUID} wurde in (?P<mount_dest>/[^ ]+) geöffnet."
+        match = re.fullmatch(expected_msg, open_result.stdout.strip())
+        assert match is not None
+        mount_dest = Path(match.group("mount_dest"))
+        assert any(
+            mount_dest in destinations
+            for destinations in dm.get_mounted_devices().values()
+        )
+        assert expected_cryptsetup_map.exists()
+        runner.invoke(app, ["close", "--config", str(config_file)])
+        assert not expected_cryptsetup_map.exists()
+        assert not dm.is_mounted(mount_dest)
+        assert not mount_dest.exists()
