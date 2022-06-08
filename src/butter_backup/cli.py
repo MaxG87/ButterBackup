@@ -5,9 +5,9 @@ from tempfile import mkdtemp
 
 import typer
 
-from butter_backup import backup_logic as bl
-from butter_backup import config_parser as cp
-from butter_backup import device_managers as dm
+from . import backup_logic as bl
+from . import config_parser as cp
+from . import device_managers as dm
 
 app = typer.Typer()
 DEFAULT_CONFIG_DIR = Path("~/.config/").expanduser()

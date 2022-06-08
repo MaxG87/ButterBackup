@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
+from uuid import UUID
 
 import pytest
 from hypothesis import assume, given
@@ -11,36 +12,6 @@ from pydantic import ValidationError
 
 from butter_backup import config_parser as cp
 from tests import hypothesis_utils as hu
-
-NOF_FOLDER_BACKUP_MAPPING_ELEMS = 2
-
-
-@st.composite
-def valid_unparsed_configs(draw, may_be_incomplete: bool = False):
-    item_strategy_mapping = {
-        "UUID": st.uuids().map(str),
-        "PassCmd": st.text(),
-        "Folders": st.lists(
-            st.lists(
-                hu.filenames(),
-                min_size=NOF_FOLDER_BACKUP_MAPPING_ELEMS,
-                max_size=NOF_FOLDER_BACKUP_MAPPING_ELEMS,
-            ),
-        ),
-        "Files": st.fixed_dictionaries(
-            {
-                "destination": st.text(),
-                "files": st.lists(hu.filenames()),
-            }
-        ),
-    }
-    config = draw(
-        st.fixed_dictionaries(
-            {} if may_be_incomplete else item_strategy_mapping,
-            optional=item_strategy_mapping if may_be_incomplete else {},
-        )
-    )
-    return config
 
 
 @st.composite
@@ -57,6 +28,30 @@ def valid_unparsed_empty_btrfs_config(draw):
         )
     )
     return config
+
+
+@given(uuid=st.uuids(), passphrase=st.text())
+def test_btrfs_from_uuid_and_pashphrase(uuid: UUID, passphrase: str) -> None:
+    config = cp.BtrfsConfig.from_uuid_and_passphrase(uuid, passphrase)
+    assert config.Folders == {}
+    assert config.Files == set()
+    assert config.UUID == uuid
+    assert passphrase in config.DevicePassCmd
+
+
+@pytest.mark.xfail(reason="safety checks not yet implemented")
+@given(
+    uuid=st.uuids(),
+    passphrase=st.sampled_from(
+        ["contains_'quote", "contains;_semicolon", "contains&ampersand"]
+    ),
+)
+def test_btrfs_from_uuid_and_passphrase_rejects_unsafe_passphrases(
+    uuid: UUID,
+    passphrase: str,
+) -> None:
+    with pytest.raises(ValueError):
+        cp.BtrfsConfig.from_uuid_and_passphrase(uuid, passphrase)
 
 
 @given(base_config=valid_unparsed_empty_btrfs_config(), dest_dir=hu.filenames())
@@ -148,21 +143,3 @@ def test_btrfs_config_json_roundtrip(base_config, folder_dest: str):
             as_json = cfg.json()
             deserialised = cp.BtrfsConfig.parse_raw(as_json)
     assert cfg == deserialised
-
-
-@given(base_config=valid_unparsed_configs())
-def test_btrfs_config_handles_old_style_config(base_config):
-    with TemporaryDirectory() as src_folder:
-        with TemporaryDirectory() as dest:
-            with NamedTemporaryFile() as src_file:
-                folders = [(src_folder, dest)]
-                base_config["Folders"] = folders
-                base_config["Files"]["files"] = [src_file.name]
-                cfg = cp.BtrfsConfig.parse_obj(base_config)
-    result_folders = {(str(src), dest) for src, dest in cfg.Folders.items()}
-    assert cfg.DevicePassCmd == base_config["PassCmd"]
-    assert str(cfg.device()).endswith(base_config["UUID"])
-    assert result_folders == set(base_config["Folders"])
-    assert {str(file) for file in cfg.Files} == set(base_config["Files"]["files"])
-    assert cfg.FilesDest == base_config["Files"]["destination"]
-    assert str(cfg.UUID) == base_config["UUID"]
