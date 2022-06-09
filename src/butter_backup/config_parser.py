@@ -5,7 +5,7 @@ import sys
 import uuid
 from collections import Counter
 from pathlib import Path
-from typing import Dict, Iterable, Set, Union
+from typing import ClassVar, Dict, Iterable, Set, Union
 
 from pydantic import (
     BaseModel,
@@ -36,6 +36,7 @@ class BtrfsConfig(BaseModel):
     FilesDest: str
     Folders: FoldersT
     UUID: uuid.UUID
+    SubvolTimestampFmt: ClassVar[str] = "%F_%H:%M:%S"
 
     class Config:
         extra = Extra.forbid

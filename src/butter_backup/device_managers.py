@@ -5,6 +5,7 @@ import secrets
 import string
 import subprocess
 from collections import defaultdict
+from datetime import date
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from uuid import UUID
@@ -134,7 +135,9 @@ def prepare_device_for_butterbackend(uuid: UUID) -> cp.BtrfsConfig:
     with decrypted_device(device, f"echo {passphrase}") as decrypted:
         mkfs_btrfs(decrypted)
         with mounted_device(decrypted) as mounted:
-            initial_subvol = mounted / "1970-01-01_00:00:00"
+            initial_subvol = mounted / date.today().strftime(
+                cp.BtrfsConfig.SubvolTimestampFmt
+            )
             sh.run_cmd(cmd=["sudo", "btrfs", "subvolume", "create", initial_subvol])
     config = cp.BtrfsConfig.from_uuid_and_passphrase(uuid, passphrase)
     return config
