@@ -130,7 +130,7 @@ def encrypt_device(device: Path, password_cmd: str) -> None:
 def prepare_device_for_butterbackend(uuid: UUID) -> cp.BtrfsConfig:
     password_cmd = generate_passcmd()
     config = cp.BtrfsConfig(
-        BackupRepositoryFolder="BackupRepository",
+        BackupRepositoryFolder="ButterBackupRepository",
         DevicePassCmd=password_cmd,
         Files=set(),
         FilesDest="Einzeldateien",
@@ -154,9 +154,8 @@ def prepare_device_for_butterbackend(uuid: UUID) -> cp.BtrfsConfig:
 def prepare_device_for_resticbackend(uuid: UUID) -> cp.ResticConfig:
     device_passcmd = generate_passcmd()
     repository_passcmd = generate_passcmd()
-    repository_folder = "restic-repository"
     config = cp.ResticConfig(
-        BackupRepositoryFolder=repository_folder,
+        BackupRepositoryFolder="ResticBackupRepository",
         DevicePassCmd=device_passcmd,
         FilesAndFolders=set(),
         RepositoryPassCmd=repository_passcmd,
