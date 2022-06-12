@@ -80,7 +80,7 @@ def test_do_backup_for_resticbackend(
                         "sudo",
                         "restic",
                         "-r",
-                        mount_dir,
+                        mount_dir / config.BackupRepositoryFolder,
                         "restore",
                         "latest",
                         "--target",

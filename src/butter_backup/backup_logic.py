@@ -46,7 +46,7 @@ def do_restic_backup(cfg: cp.ResticConfig, mount_dir: Path) -> None:
         "restic",
         "backup",
         "--repo",
-        mount_dir,
+        mount_dir / cfg.BackupRepositoryFolder,
     ]
     restic_cmd.extend(list(cfg.FilesAndFolders))
     sh.pipe_pass_cmd_to_real_cmd(cfg.RepositoryPassCmd, restic_cmd)

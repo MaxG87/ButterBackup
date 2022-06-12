@@ -99,6 +99,7 @@ class BtrfsConfig(BaseModel):
 
 
 class ResticConfig(BaseModel):
+    BackupRepositoryFolder: str
     DevicePassCmd: str
     FilesAndFolders: Set[Union[FilePath, DirectoryPath]]
     RepositoryPassCmd: str

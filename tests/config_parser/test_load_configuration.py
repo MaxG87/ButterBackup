@@ -90,22 +90,25 @@ def test_load_configuration_parses_btrfs_config(
 
 @given(
     backup_dest_dirs=st.lists(st.text(), min_size=2, max_size=2, unique=True),
+    backup_repository_folder=st.text(),
     device_pass_cmd=st.text(),
     repository_pass_cmd=st.text(),
     uuid=st.uuids(),
 )
 def test_load_configuration_parses_restic_config(
-    uuid: UUID,
+    backup_dest_dirs: list[str],
+    backup_repository_folder: str,
     device_pass_cmd: str,
     repository_pass_cmd: str,
-    backup_dest_dirs: list[str],
+    uuid: UUID,
 ) -> None:
     with TemporaryDirectory() as source:
         restic_cfg = cp.ResticConfig(
-            UUID=uuid,
+            BackupRepositoryFolder=backup_repository_folder,
             DevicePassCmd=device_pass_cmd,
-            RepositoryPassCmd=repository_pass_cmd,
             FilesAndFolders={Path(source)},
+            RepositoryPassCmd=repository_pass_cmd,
+            UUID=uuid,
         )
         with TemporaryDirectory() as td:
             file_name = Path(td, "configuration")
