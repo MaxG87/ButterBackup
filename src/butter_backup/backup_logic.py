@@ -27,8 +27,9 @@ def do_backup(config: Union[cp.BtrfsConfig, cp.ResticConfig]) -> None:
 
 
 def do_butter_backup(cfg: cp.BtrfsConfig, mount_dir: Path) -> None:
-    backup_root = mount_dir / dt.datetime.now().strftime(cfg.SubvolTimestampFmt)
-    src_snapshot = get_source_snapshot(mount_dir)
+    backup_repository = mount_dir / cfg.BackupRepositoryFolder
+    backup_root = backup_repository / dt.datetime.now().strftime(cfg.SubvolTimestampFmt)
+    src_snapshot = get_source_snapshot(backup_repository)
 
     snapshot(src=src_snapshot, dest=backup_root)
     for src, dest_name in cfg.Folders.items():
@@ -46,7 +47,7 @@ def do_restic_backup(cfg: cp.ResticConfig, mount_dir: Path) -> None:
         "restic",
         "backup",
         "--repo",
-        mount_dir,
+        mount_dir / cfg.BackupRepositoryFolder,
     ]
     restic_cmd.extend(list(cfg.FilesAndFolders))
     sh.pipe_pass_cmd_to_real_cmd(cfg.RepositoryPassCmd, restic_cmd)

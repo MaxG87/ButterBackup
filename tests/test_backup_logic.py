@@ -40,8 +40,9 @@ def test_do_backup_for_butterbackend(
         bl.do_backup(config)
         time.sleep(1)  # prevent conflicts in snapshot names
     with dm.decrypted_device(device, config.DevicePassCmd) as decrypted:
-        with dm.mounted_device(decrypted) as mount_dir:
-            latest_folder = sorted(mount_dir.iterdir())[-1]
+        with dm.mounted_device(decrypted) as mounted:
+            backup_repository = mounted / config.BackupRepositoryFolder
+            latest_folder = sorted(backup_repository.iterdir())[-1]
             content = {
                 file.relative_to(latest_folder / folder_dest_dir): file.read_bytes()
                 for file in list_files_recursively(latest_folder)
@@ -80,7 +81,7 @@ def test_do_backup_for_resticbackend(
                         "sudo",
                         "restic",
                         "-r",
-                        mount_dir,
+                        mount_dir / config.BackupRepositoryFolder,
                         "restore",
                         "latest",
                         "--target",

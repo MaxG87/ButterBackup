@@ -185,19 +185,21 @@ def test_symbolic_link_removes_link_in_case_of_exception() -> None:
     assert not os.path.lexists(dest_p)
 
 
-def test_generate_password_is_not_static():
+def test_generate_passcmd_is_not_static():
     N = 128
-    passwords = Counter(dm.generate_password() for _ in range(N))
+    passwords = Counter(dm.generate_passcmd() for _ in range(N))
     assert set(passwords.values()) == {1}
 
 
-def test_generate_password_samples_uniformly():
+def test_generate_passcmd_samples_uniformly():
     # TODO: The bounds should be tightened. Finally, the test should have a
     # probability to fail one in ~100 runs or so.
     N = 128
     chars: Counter[str] = Counter()
     for _ in range(N):
-        chars.update(dm.generate_password())
+        passcmd = dm.generate_passcmd()
+        passphrase = passcmd.split()[-1]
+        chars.update(passphrase)
 
     nof_chars = sum(chars.values())
     expected_frequency = 1 / (26 + 26 + 10)
