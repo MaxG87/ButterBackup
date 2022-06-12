@@ -4,9 +4,9 @@ import datetime as dt
 from pathlib import Path
 from typing import Union
 
-from butter_backup import config_parser as cp
-from butter_backup import device_managers as dm
-from butter_backup import shell_interface as sh
+from . import config_parser as cp
+from . import device_managers as dm
+from . import shell_interface as sh
 
 
 def do_backup(config: Union[cp.BtrfsConfig, cp.ResticConfig]) -> None:
@@ -27,7 +27,7 @@ def do_backup(config: Union[cp.BtrfsConfig, cp.ResticConfig]) -> None:
 
 
 def do_butter_backup(cfg: cp.BtrfsConfig, mount_dir: Path) -> None:
-    backup_root = mount_dir / dt.datetime.now().strftime("%F_%H:%M:%S")
+    backup_root = mount_dir / dt.datetime.now().strftime(cfg.SubvolTimestampFmt)
     src_snapshot = get_source_snapshot(mount_dir)
 
     snapshot(src=src_snapshot, dest=backup_root)

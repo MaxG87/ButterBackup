@@ -8,7 +8,7 @@ RUN pacman-key --populate archlinux
 
 # Provide relevant binaries
 RUN pacman -Syu --noconfirm
-RUN pacman -S --noconfirm btrfs-progs cryptsetup curl make python python-pip sudo
+RUN pacman -S --noconfirm btrfs-progs cryptsetup curl make python python-pip restic rsync sudo
 
 # Setup Poetry
 ENV POETRY_VERSION=1.1.13
@@ -28,4 +28,6 @@ RUN poetry install
 # Include test files
 COPY setup.cfg .
 
-CMD poetry run pytest --no-cov .
+# Create /dev/disk/by-uuid/. It is required by the test suite but not available
+# in Docker containers by default.
+CMD mkdir -p /dev/disk/by-uuid/ && poetry run pytest --no-cov .

@@ -4,7 +4,7 @@ FROM python@sha256:514ea9ba9eea6cc26bd64b7fd19b413578536c875a70db19289da2a0f0c58
 # Provide excecutables
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update && \
-    apt install -y btrfs-progs cryptsetup curl make sudo && \
+    apt install -y btrfs-progs cryptsetup curl make restic rsync sudo && \
     apt autoclean
 
 # Setup Poetry
@@ -25,4 +25,6 @@ RUN poetry install
 # Include test files
 COPY setup.cfg .
 
-CMD poetry run pytest --no-cov .
+# Create /dev/disk/by-uuid/. It is required by the test suite but not available
+# in Docker containers by default.
+CMD mkdir -p /dev/disk/by-uuid/ && poetry run pytest --no-cov .

@@ -5,10 +5,13 @@ import secrets
 import string
 import subprocess
 from collections import defaultdict
+from datetime import date
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from uuid import UUID
 
-from butter_backup import shell_interface as sh
+from . import config_parser as cp
+from . import shell_interface as sh
 
 
 class InvalidDecryptedDevice(ValueError):
@@ -125,15 +128,40 @@ def encrypt_device(device: Path, passphrase: str) -> None:
     sh.pipe_pass_cmd_to_real_cmd(pass_cmd=password_cmd, command=format_cmd)
 
 
-def prepare_device_for_butterbackend(device: Path) -> str:
+def prepare_device_for_butterbackend(uuid: UUID) -> cp.BtrfsConfig:
     passphrase = generate_password()
+    device = Path("/dev/disk/by-uuid") / str(uuid)
     encrypt_device(device, passphrase)
     with decrypted_device(device, f"echo {passphrase}") as decrypted:
         mkfs_btrfs(decrypted)
         with mounted_device(decrypted) as mounted:
-            initial_subvol = mounted / "1970-01-01_00:00:00"
+            initial_subvol = mounted / date.today().strftime(
+                cp.BtrfsConfig.SubvolTimestampFmt
+            )
             sh.run_cmd(cmd=["sudo", "btrfs", "subvolume", "create", initial_subvol])
-    return passphrase
+    config = cp.BtrfsConfig.from_uuid_and_passphrase(uuid, passphrase)
+    return config
+
+
+def prepare_device_for_resticbackend(uuid: UUID) -> cp.ResticConfig:
+    device_passphrase = generate_password()
+    repository_passphrase = generate_password()
+    # repository = "restic-repository"
+    device = Path("/dev/disk/by-uuid") / str(uuid)
+    encrypt_device(device, device_passphrase)
+    with decrypted_device(device, f"echo {device_passphrase}") as decrypted:
+        mkfs_btrfs(decrypted)
+        with mounted_device(decrypted) as mounted:
+            backup_repo = mounted  # / repository
+            # sh.run_cmd(cmd=["sudo", "mkdir", backup_repo])
+            sh.pipe_pass_cmd_to_real_cmd(
+                f"echo {repository_passphrase}",
+                ["sudo", "restic", "init", "-r", backup_repo],
+            )
+    config = cp.ResticConfig.from_uuid_and_passphrases(
+        uuid, device_passphrase, repository_passphrase
+    )
+    return config
 
 
 def mkfs_btrfs(file: Path) -> None:
