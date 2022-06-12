@@ -92,9 +92,11 @@ class BtrfsConfig(BaseModel):
         raise ValueError(f"{errmsg_begin} {errmsg_body}")
 
     @classmethod
-    def from_uuid_and_passphrase(cls, uuid: uuid.UUID, passphrase: str) -> BtrfsConfig:
+    def from_uuid_and_passphrase(
+        cls, uuid: uuid.UUID, device_password_command: str
+    ) -> BtrfsConfig:
         return cls(
-            DevicePassCmd=f"echo {passphrase}",
+            DevicePassCmd=device_password_command,
             Files=set(),
             FilesDest="Einzeldateien",
             Folders={},
@@ -126,12 +128,12 @@ class ResticConfig(BaseModel):
 
     @classmethod
     def from_uuid_and_passphrases(
-        cls, uuid: uuid.UUID, device_passphrase: str, repository_passphrase
+        cls, uuid: uuid.UUID, device_password_command: str, repository_password_command
     ) -> ResticConfig:
         return cls(
-            DevicePassCmd=f"echo {device_passphrase}",
+            DevicePassCmd=device_password_command,
             FilesAndFolders=set(),
-            RepositoryPassCmd=f"echo {repository_passphrase}",
+            RepositoryPassCmd=repository_password_command,
             UUID=uuid,
         )
 
