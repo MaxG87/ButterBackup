@@ -130,6 +130,7 @@ def encrypt_device(device: Path, password_cmd: str) -> None:
 def prepare_device_for_butterbackend(uuid: UUID) -> cp.BtrfsConfig:
     password_cmd = generate_passcmd()
     config = cp.BtrfsConfig(
+        BackupRepositoryFolder="BackupRepository",
         DevicePassCmd=password_cmd,
         Files=set(),
         FilesDest="Einzeldateien",
@@ -141,7 +142,9 @@ def prepare_device_for_butterbackend(uuid: UUID) -> cp.BtrfsConfig:
     with decrypted_device(device, password_cmd) as decrypted:
         mkfs_btrfs(decrypted)
         with mounted_device(decrypted) as mounted:
-            initial_subvol = mounted / date.today().strftime(
+            backup_repository = mounted / config.BackupRepositoryFolder
+            sh.run_cmd(cmd=["sudo", "mkdir", backup_repository])
+            initial_subvol = backup_repository / date.today().strftime(
                 cp.BtrfsConfig.SubvolTimestampFmt
             )
             sh.run_cmd(cmd=["sudo", "btrfs", "subvolume", "create", initial_subvol])

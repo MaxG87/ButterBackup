@@ -18,6 +18,7 @@ def valid_unparsed_empty_btrfs_config(draw):
     config = draw(
         st.fixed_dictionaries(
             {
+                "BackupRepositoryFolder": st.text(),
                 "DevicePassCmd": st.text(),
                 "Files": st.just([]),
                 "FilesDest": st.text(),

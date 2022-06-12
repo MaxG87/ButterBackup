@@ -31,6 +31,7 @@ def path_aware_restic_json_decoding(v, *, default) -> str:
 
 
 class BtrfsConfig(BaseModel):
+    BackupRepositoryFolder: str
     DevicePassCmd: str
     Files: Set[FilePath]
     FilesDest: str

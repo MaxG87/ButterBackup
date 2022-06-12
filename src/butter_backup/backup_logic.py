@@ -27,8 +27,9 @@ def do_backup(config: Union[cp.BtrfsConfig, cp.ResticConfig]) -> None:
 
 
 def do_butter_backup(cfg: cp.BtrfsConfig, mount_dir: Path) -> None:
-    backup_root = mount_dir / dt.datetime.now().strftime(cfg.SubvolTimestampFmt)
-    src_snapshot = get_source_snapshot(mount_dir)
+    backup_repository = mount_dir / cfg.BackupRepositoryFolder
+    backup_root = backup_repository / dt.datetime.now().strftime(cfg.SubvolTimestampFmt)
+    src_snapshot = get_source_snapshot(backup_repository)
 
     snapshot(src=src_snapshot, dest=backup_root)
     for src, dest_name in cfg.Folders.items():

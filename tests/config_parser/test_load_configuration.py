@@ -66,15 +66,20 @@ def test_load_configuration_warns_on_non_dict_item() -> None:
 
 
 @given(
-    uuid=st.uuids(),
-    pass_cmd=st.text(),
     backup_dest_dirs=st.lists(st.text(), min_size=2, max_size=2, unique=True),
+    backup_repository_folder=st.text(),
+    pass_cmd=st.text(),
+    uuid=st.uuids(),
 )
 def test_load_configuration_parses_btrfs_config(
-    uuid: UUID, pass_cmd: str, backup_dest_dirs: list[str]
+    backup_dest_dirs: list[str],
+    backup_repository_folder: str,
+    pass_cmd: str,
+    uuid: UUID,
 ) -> None:
     with TemporaryDirectory() as source:
         btrfs_cfg = cp.BtrfsConfig(
+            BackupRepositoryFolder=backup_repository_folder,
             DevicePassCmd=pass_cmd,
             Files=set(),
             FilesDest=backup_dest_dirs[1],
