@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-from uuid import UUID
 
 import pytest
 from hypothesis import given
@@ -26,53 +25,6 @@ def valid_unparsed_empty_restic_config(draw):
         )
     )
     return config
-
-
-@given(uuid=st.uuids(), device_passphrase=st.text(), repository_passphrase=st.text())
-def test_restic_from_uuid_and_pashphrase(
-    uuid: UUID, device_passphrase: str, repository_passphrase: str
-) -> None:
-    config = cp.ResticConfig.from_uuid_and_passphrases(
-        uuid, device_passphrase, repository_passphrase
-    )
-    assert config.FilesAndFolders == set()
-    assert config.UUID == uuid
-    assert device_passphrase in config.DevicePassCmd
-    assert repository_passphrase in config.RepositoryPassCmd
-
-
-@pytest.mark.xfail(reason="safety checks not yet implemented")
-@given(
-    uuid=st.uuids(),
-    passphrase=st.sampled_from(
-        ["contains_'quote", "contains;_semicolon", "contains&ampersand"]
-    ),
-)
-def test_restic_from_uuid_and_passphrase_rejects_unsafe_device_passphrase(
-    uuid: UUID,
-    passphrase: str,
-) -> None:
-    with pytest.raises(ValueError):
-        cp.ResticConfig.from_uuid_and_passphrases(
-            uuid, device_passphrase=passphrase, repository_passphrase="safe-passphrase"
-        )
-
-
-@pytest.mark.xfail(reason="safety checks not yet implemented")
-@given(
-    uuid=st.uuids(),
-    passphrase=st.sampled_from(
-        ["contains_'quote", "contains;_semicolon", "contains&ampersand"]
-    ),
-)
-def test_restic_from_uuid_and_passphrase_rejects_unsafe_repository_passphrase(
-    uuid: UUID,
-    passphrase: str,
-) -> None:
-    with pytest.raises(ValueError):
-        cp.ResticConfig.from_uuid_and_passphrases(
-            uuid, device_passphrase="safe-passphrase", repository_passphrase=passphrase
-        )
 
 
 @given(base_config=valid_unparsed_empty_restic_config())

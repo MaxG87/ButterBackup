@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-from uuid import UUID
 
 import pytest
 from hypothesis import assume, given
@@ -28,30 +27,6 @@ def valid_unparsed_empty_btrfs_config(draw):
         )
     )
     return config
-
-
-@given(uuid=st.uuids(), passphrase=st.text())
-def test_btrfs_from_uuid_and_pashphrase(uuid: UUID, passphrase: str) -> None:
-    config = cp.BtrfsConfig.from_uuid_and_passphrase(uuid, passphrase)
-    assert config.Folders == {}
-    assert config.Files == set()
-    assert config.UUID == uuid
-    assert passphrase in config.DevicePassCmd
-
-
-@pytest.mark.xfail(reason="safety checks not yet implemented")
-@given(
-    uuid=st.uuids(),
-    passphrase=st.sampled_from(
-        ["contains_'quote", "contains;_semicolon", "contains&ampersand"]
-    ),
-)
-def test_btrfs_from_uuid_and_passphrase_rejects_unsafe_passphrases(
-    uuid: UUID,
-    passphrase: str,
-) -> None:
-    with pytest.raises(ValueError):
-        cp.BtrfsConfig.from_uuid_and_passphrase(uuid, passphrase)
 
 
 @given(base_config=valid_unparsed_empty_btrfs_config(), dest_dir=hu.filenames())

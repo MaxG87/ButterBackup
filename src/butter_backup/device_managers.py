@@ -129,7 +129,14 @@ def encrypt_device(device: Path, password_cmd: str) -> None:
 
 def prepare_device_for_butterbackend(uuid: UUID) -> cp.BtrfsConfig:
     password_cmd = generate_passcmd()
-    device = Path("/dev/disk/by-uuid") / str(uuid)
+    config = cp.BtrfsConfig(
+        DevicePassCmd=password_cmd,
+        Files=set(),
+        FilesDest="Einzeldateien",
+        Folders={},
+        UUID=uuid,
+    )
+    device = config.device()
     encrypt_device(device, password_cmd)
     with decrypted_device(device, password_cmd) as decrypted:
         mkfs_btrfs(decrypted)
@@ -138,7 +145,6 @@ def prepare_device_for_butterbackend(uuid: UUID) -> cp.BtrfsConfig:
                 cp.BtrfsConfig.SubvolTimestampFmt
             )
             sh.run_cmd(cmd=["sudo", "btrfs", "subvolume", "create", initial_subvol])
-    config = cp.BtrfsConfig.from_uuid_and_passphrase(uuid, password_cmd)
     return config
 
 
@@ -146,7 +152,13 @@ def prepare_device_for_resticbackend(uuid: UUID) -> cp.ResticConfig:
     device_passcmd = generate_passcmd()
     repository_passcmd = generate_passcmd()
     # repository = "restic-repository"
-    device = Path("/dev/disk/by-uuid") / str(uuid)
+    config = cp.ResticConfig(
+        DevicePassCmd=device_passcmd,
+        FilesAndFolders=set(),
+        RepositoryPassCmd=repository_passcmd,
+        UUID=uuid,
+    )
+    device = config.device()
     encrypt_device(device, device_passcmd)
     with decrypted_device(device, device_passcmd) as decrypted:
         mkfs_btrfs(decrypted)
@@ -157,9 +169,6 @@ def prepare_device_for_resticbackend(uuid: UUID) -> cp.ResticConfig:
                 repository_passcmd,
                 ["sudo", "restic", "init", "-r", backup_repo],
             )
-    config = cp.ResticConfig.from_uuid_and_passphrases(
-        uuid, device_passcmd, repository_passcmd
-    )
     return config
 
 

@@ -91,18 +91,6 @@ class BtrfsConfig(BaseModel):
         )
         raise ValueError(f"{errmsg_begin} {errmsg_body}")
 
-    @classmethod
-    def from_uuid_and_passphrase(
-        cls, uuid: uuid.UUID, device_password_command: str
-    ) -> BtrfsConfig:
-        return cls(
-            DevicePassCmd=device_password_command,
-            Files=set(),
-            FilesDest="Einzeldateien",
-            Folders={},
-            UUID=uuid,
-        )
-
     def device(self) -> Path:
         return Path(f"/dev/disk/by-uuid/{self.UUID}")
 
@@ -125,17 +113,6 @@ class ResticConfig(BaseModel):
     def expand_tilde_in_sources(cls, files_and_folders):
         new = {Path(src).expanduser() for src in files_and_folders}
         return new
-
-    @classmethod
-    def from_uuid_and_passphrases(
-        cls, uuid: uuid.UUID, device_password_command: str, repository_password_command
-    ) -> ResticConfig:
-        return cls(
-            DevicePassCmd=device_password_command,
-            FilesAndFolders=set(),
-            RepositoryPassCmd=repository_password_command,
-            UUID=uuid,
-        )
 
     def device(self) -> Path:
         return Path(f"/dev/disk/by-uuid/{self.UUID}")
