@@ -57,9 +57,15 @@ würden nicht mehr gelistete Ziele aus der Sicherungskopie entfernt.
 
 - README schreiben und übersetzen
 - Logo erstellen
-- Tests der Backup-Logik
 - Struktur umgestalten hin zu `BackupDirective`, die von Datei- oder
   Ordnersicherungen abstrahieren.
 - `format-device` implementieren
 - Testsuite umstellen von Docker auf virtuelle Maschinen
-- Testsuite parallelisiert ausführen lassen
+- RequiresRoot als globales Flag
+- IgnoreFile als Pfadangabe
+- Alias für Einzelkonfigurationen?
+- Verbosity-Flag einführen
+- butter-backup exec / run
+  * nimmt Befehl als Zeichenkette und führt diesen im BackupRootDir aus
+  * butter-backup exec [<uuid>] <cmd>  --> open; cd; cmd; cd -; close
+  * sollte Mapping auf Umgebungsvariablen unterstützen, z.B. RepoPassCmd -> RESTIC_PASSWORD_COMMAND
