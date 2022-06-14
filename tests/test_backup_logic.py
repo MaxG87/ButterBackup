@@ -1,3 +1,4 @@
+import datetime as dt
 import os
 import time
 from collections import Counter
@@ -134,3 +135,18 @@ def test_do_backup(source_directories, encrypted_device) -> None:
     result_content = get_result_content(config)
     expected_content = get_expected_content(config)
     assert result_content == expected_content
+
+
+def test_do_backup_for_btrfs_creates_snapshots_with_timestamp_names(
+    encrypted_btrfs_device,
+) -> None:
+    empty_config, device = encrypted_btrfs_device
+    folder_dest_dir = "some-folder-name"
+    config = empty_config.copy(update={"Folders": {FIRST_BACKUP: folder_dest_dir}})
+    bl.do_backup(config)
+    with dm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted:
+        with dm.mounted_device(decrypted) as mounted:
+            backup_repository = mounted / config.BackupRepositoryFolder
+            latest_folder = sorted(backup_repository.iterdir())[-1]
+    expected_date = dt.date.today().isoformat()
+    assert expected_date in str(latest_folder)
