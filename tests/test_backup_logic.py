@@ -1,4 +1,3 @@
-import datetime as dt
 import os
 import time
 from collections import Counter
@@ -117,75 +116,21 @@ def get_result_content_for_restic(
     "source_directories",
     [[FIRST_BACKUP], [SECOND_BACKUP], [FIRST_BACKUP, SECOND_BACKUP]],
 )
-def test_do_backup_for_butterbackend(
-    source_directories, encrypted_btrfs_device
-) -> None:
-    # Due to testing a timestamp, this test has a small chance to fail around
-    # midnight. Since this is a hobby project, paying attention if the test
-    # executes around midnight is a viable solution.
-    empty_config, device = encrypted_btrfs_device
-    folder_dest_dir = "some-folder-name"
+def test_do_backup(source_directories, encrypted_device) -> None:
+    empty_config, device = encrypted_device
+    config: Union[cp.BtrfsConfig, cp.ResticConfig]
     for source_dir in source_directories:
-        config = empty_config.copy(update={"Folders": {source_dir: folder_dest_dir}})
+        if isinstance(empty_config, cp.BtrfsConfig):
+            folder_dest_dir = "some-folder-name"
+            config = empty_config.copy(
+                update={"Folders": {source_dir: folder_dest_dir}}
+            )
+        elif isinstance(empty_config, cp.ResticConfig):
+            config = empty_config.copy(update={"FilesAndFolders": {source_dir}})
+        else:
+            raise TypeError("Unsupported configuration encountered.")
         bl.do_backup(config)
         time.sleep(1)  # prevent conflicts in snapshot names
-    with dm.decrypted_device(device, config.DevicePassCmd) as decrypted:
-        with dm.mounted_device(decrypted) as mounted:
-            backup_repository = mounted / config.BackupRepositoryFolder
-            latest_folder = sorted(backup_repository.iterdir())[-1]
-            content = {
-                file.relative_to(latest_folder / folder_dest_dir): file.read_bytes()
-                for file in list_files_recursively(latest_folder)
-            }
-    latest_source_dir = source_directories[-1]
-    expected_date = dt.date.today().isoformat()
-    expected_content = {
-        file.relative_to(latest_source_dir): file.read_bytes()
-        for file in list_files_recursively(latest_source_dir)
-    }
-    assert expected_date in str(latest_folder)
-    assert content == expected_content
-
-
-@pytest.mark.parametrize(
-    "source_directories",
-    [[FIRST_BACKUP], [SECOND_BACKUP], [FIRST_BACKUP, SECOND_BACKUP]],
-)
-def test_do_backup_for_resticbackend(
-    source_directories, encrypted_restic_device
-) -> None:
-    # Restic keeps track of the absolute path that was backed up. This makes it
-    # quite hard to construct apporpriate file names for a dictionary
-    # comparison. It seems to be a viable tradeoff to just test the file
-    # contents, without file names here.
-    empty_config, device = encrypted_restic_device
-    for source_dir in source_directories:
-        config = empty_config.copy(update={"FilesAndFolders": {source_dir}})
-        bl.do_backup(config)
-    with dm.decrypted_device(device, config.DevicePassCmd) as decrypted:
-        with dm.mounted_device(decrypted) as mount_dir:
-            with TemporaryDirectory() as restore_dir:
-                sh.pipe_pass_cmd_to_real_cmd(
-                    config.RepositoryPassCmd,
-                    [
-                        "sudo",
-                        "restic",
-                        "-r",
-                        mount_dir / config.BackupRepositoryFolder,
-                        "restore",
-                        "latest",
-                        "--target",
-                        restore_dir,
-                    ],
-                )
-                # Fix permissions to be able to list directory without sudo-helpers.
-                sh.run_cmd(cmd=["sudo", "chown", "-R", USER, restore_dir])
-                content = {
-                    file.read_bytes()
-                    for file in list_files_recursively(Path(restore_dir))
-                }
-    latest_source_dir = source_directories[-1]
-    expected_content = {
-        file.read_bytes() for file in list_files_recursively(latest_source_dir)
-    }
-    assert content == expected_content
+    result_content = get_result_content(config)
+    expected_content = get_expected_content(config)
+    assert result_content == expected_content
