@@ -17,6 +17,7 @@ from pydantic import (
     validator,
 )
 
+Configuration = Union["BtrfsConfig", "ResticConfig"]
 FoldersT = Dict[DirectoryPath, str]
 
 
