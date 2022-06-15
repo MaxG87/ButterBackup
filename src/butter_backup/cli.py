@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import os
+import sys
 from pathlib import Path
 from tempfile import mkdtemp
 
 import typer
+from loguru import logger
 
 from . import backup_logic as bl
 from . import config_parser as cp
@@ -20,16 +22,31 @@ def get_default_config_path() -> str:
     return str(config_file)
 
 
+def setup_logging(verbosity: int) -> None:
+    # If no `-v/--verbose` is given (verbosity == 0 in this case), errors and
+    # warnings shall appear. The first flag shall let successes appear, so that
+    # the user can trace the progress of the program.
+    logger.remove()
+    available_levels = [
+        # "CRITICAL",
+        # "ERROR",
+        "WARNING",
+        "SUCCESS",
+        "INFO",
+        "DEBUG",
+        "TRACE",
+    ]
+    level = min(verbosity, len(available_levels) - 1)
+    logger.add(sys.stderr, level=available_levels[level])
+
+
 CONFIG_OPTION = typer.Option(get_default_config_path(), exists=True)
+VERBOSITY_OPTION = typer.Option(0, "--verbose", "-v", count=True)
 
 
 @app.command()
-def hilfe():
-    typer.echo("Hilfe!")
-
-
-@app.command()
-def open(config: Path = CONFIG_OPTION):
+def open(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
+    setup_logging(verbose)
     configurations = list(cp.load_configuration(config))
     for cfg in configurations:
         if cfg.device().exists():
@@ -40,7 +57,8 @@ def open(config: Path = CONFIG_OPTION):
 
 
 @app.command()
-def close(config: Path = CONFIG_OPTION):
+def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
+    setup_logging(verbose)
     configurations = list(cp.load_configuration(config))
     mounted_devices = dm.get_mounted_devices()
     for cfg in configurations:
@@ -59,7 +77,8 @@ def close(config: Path = CONFIG_OPTION):
 
 
 @app.command()
-def backup(config: Path = CONFIG_OPTION):
+def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
+    setup_logging(verbose)
     configurations = list(cp.load_configuration(config))
     for cfg in configurations:
         bl.do_backup(cfg)

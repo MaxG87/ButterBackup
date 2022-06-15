@@ -4,29 +4,36 @@ import datetime as dt
 from pathlib import Path
 from typing import Optional, Union
 
+from loguru import logger
+
 from . import config_parser as cp
 from . import device_managers as dm
 from . import shell_interface as sh
 
 
 def do_backup(config: Union[cp.BtrfsConfig, cp.ResticConfig]) -> None:
-    if config.device().exists():
-        with dm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted:
-            with dm.mounted_device(decrypted) as mount_dir:
-                if isinstance(config, cp.BtrfsConfig):
-                    do_butter_backup(config, mount_dir)
-                elif isinstance(config, cp.ResticConfig):
-                    do_restic_backup(config, mount_dir)
-                else:
-                    # Should be unreachable!
-                    btrfs_name = str(cp.BtrfsConfig)  # type: ignore[unreachable]
-                    restic_name = str(cp.ResticConfig)
-                    raise ValueError(
-                        f"Nur {btrfs_name} und {restic_name} erlaubt, aber {type(config)} erhalten!"
-                    )
+    if not config.device().exists():
+        logger.info(
+            f"Gerät {config.UUID} existiert nicht. Es wird kein Backup angelegt."
+        )
+        return
+    with dm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted:
+        with dm.mounted_device(decrypted) as mount_dir:
+            if isinstance(config, cp.BtrfsConfig):
+                do_butter_backup(config, mount_dir)
+            elif isinstance(config, cp.ResticConfig):
+                do_restic_backup(config, mount_dir)
+            else:
+                # Should be unreachable!
+                btrfs_name = str(cp.BtrfsConfig)  # type: ignore[unreachable]
+                restic_name = str(cp.ResticConfig)
+                raise ValueError(
+                    f"Nur {btrfs_name} und {restic_name} erlaubt, aber {type(config)} erhalten!"
+                )
 
 
 def do_butter_backup(cfg: cp.BtrfsConfig, mount_dir: Path) -> None:
+    logger.info(f"Beginne mit BtrFS-Backup für Gerät {cfg.UUID}.")
     backup_repository = mount_dir / cfg.BackupRepositoryFolder
     backup_root = backup_repository / dt.datetime.now().strftime(cfg.SubvolTimestampFmt)
     src_snapshot = get_source_snapshot(backup_repository)
@@ -42,6 +49,7 @@ def do_butter_backup(cfg: cp.BtrfsConfig, mount_dir: Path) -> None:
 
 
 def do_restic_backup(cfg: cp.ResticConfig, mount_dir: Path) -> None:
+    logger.info(f"Beginne mit Restic-Backup für Gerät {cfg.UUID}.")
     restic_cmd: sh.StrPathList = [
         "sudo",
         "restic",

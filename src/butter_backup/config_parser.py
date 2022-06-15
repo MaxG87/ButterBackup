@@ -5,9 +5,11 @@ import sys
 import uuid
 from collections import Counter
 from pathlib import Path
+from typing import ClassVar
 from typing import Counter as CounterT
-from typing import ClassVar, Dict, Iterable, Optional, Set, Union
+from typing import Dict, Iterable, Optional, Set, Union
 
+from loguru import logger
 from pydantic import (
     BaseModel,
     DirectoryPath,
@@ -148,16 +150,25 @@ def load_configuration(cfg_file: Path) -> Iterable[Union[BtrfsConfig, ResticConf
 
     config_lst = json.loads(cfg_file.read_text())
     ensure_valid_config_json_list(config_lst)
+    logger.success(f"Konfigurationsdatei {cfg_file} erfolgreich eingelesen.")
+    logger.info(f"Konfigurationsdatei {cfg_file} enthält {len(config_lst)} Einträge.")
 
     for raw_cfg in config_lst:
         # TODO Einige Validierungsfehler dürfen nicht zum Programmabbruch
         # führen. Ein Beispiel wären fehlende Dateien. Dadurch würde es
         # möglich, einen gemeinsaman Satz Konfigurationen für verschiedene
         # Rechner zu nutzen.
+        config: Configuration
         try:
-            yield BtrfsConfig.parse_obj(raw_cfg)
+            type_ = "BtrFS"
+            config = BtrfsConfig.parse_obj(raw_cfg)
         except ValidationError:
-            yield ResticConfig.parse_obj(raw_cfg)
+            type_ = "Restic"
+            config = ResticConfig.parse_obj(raw_cfg)
+        logger.success(
+            f"{type_}-Konfiguration für UUID {config.UUID} erfolgreich geparst."
+        )
+        yield config
 
 
 def ensure_valid_config_json_list(config_lst):

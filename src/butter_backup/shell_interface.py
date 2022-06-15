@@ -5,6 +5,8 @@ import subprocess
 from pathlib import Path
 from typing import List, Optional, Union
 
+from loguru import logger
+
 _CMD_LIST = Union[List[str], List[Path], List[Union[str, Path]]]
 _LISTS_OF_CMD_LIST = Union[
     List[List[str]], List[List[Path]], List[List[Union[str, Path]]]
@@ -24,6 +26,7 @@ def run_cmd(
 ) -> subprocess.CompletedProcess[bytes]:
     if env is None:
         env = dict(os.environ)
+    logger.debug(f"Shell-Befehl ist `{cmd}`.")
     result = subprocess.run(cmd, capture_output=capture_output, check=True, env=env)
     return result
 
@@ -31,6 +34,7 @@ def run_cmd(
 def pipe_pass_cmd_to_real_cmd(
     pass_cmd: str, command: StrPathList
 ) -> subprocess.CompletedProcess[bytes]:
+    logger.debug(f"Shell-Befehl ist `{command}`.")
     pwd_proc = subprocess.run(pass_cmd, stdout=subprocess.PIPE, shell=True, check=True)
     completed_process = subprocess.run(command, input=pwd_proc.stdout, check=True)
     return completed_process
