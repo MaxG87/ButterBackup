@@ -14,6 +14,7 @@ from butter_backup import device_managers as dm
 from butter_backup import shell_interface as sh
 
 TEST_RESOURCES = Path(__file__).parent / "resources"
+EXCLUDE_FILE = TEST_RESOURCES / "exclude-file"
 FIRST_BACKUP = TEST_RESOURCES / "first-backup"
 SECOND_BACKUP = TEST_RESOURCES / "second-backup"
 USER = os.environ.get("USER", "root")
@@ -156,6 +157,23 @@ def test_do_backup(source_directories, encrypted_device) -> None:
         bl.do_backup(config)
     result_content = get_result_content(config)
     expected_content = get_expected_content(config, exclude_to_ignore_file=False)
+    assert result_content == expected_content
+
+
+@pytest.mark.parametrize(
+    "source_directories",
+    [[FIRST_BACKUP], [SECOND_BACKUP], [FIRST_BACKUP, SECOND_BACKUP]],
+)
+def test_do_backup_handles_exclude_list(source_directories, encrypted_device) -> None:
+    empty_config, device = encrypted_device
+    for source_dir in source_directories:
+        time.sleep(1)  # prevent conflicts in snapshot names
+        config = complement_configuration(empty_config, source_dir).copy(
+            update={"ExcludePatternsFile": EXCLUDE_FILE}
+        )
+        bl.do_backup(config)
+    result_content = get_result_content(config)
+    expected_content = get_expected_content(config, exclude_to_ignore_file=True)
     assert result_content == expected_content
 
 
