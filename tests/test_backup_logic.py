@@ -51,17 +51,22 @@ def complement_configuration(
 
 
 @overload
-def get_expected_content(config: cp.BtrfsConfig) -> Dict[Path, bytes]:
+def get_expected_content(
+    config: cp.BtrfsConfig, exclude_to_ignore_file: bool
+) -> Dict[Path, bytes]:
     ...
 
 
 @overload
-def get_expected_content(config: cp.ResticConfig) -> Counter[bytes]:
+def get_expected_content(
+    config: cp.ResticConfig, exclude_to_ignore_file: bool
+) -> Counter[bytes]:
     ...
 
 
 def get_expected_content(
     config: cp.Configuration,
+    exclude_to_ignore_file: bool,
 ) -> Union[Counter[bytes], Dict[Path, bytes]]:
     source_dir: Path
     if isinstance(config, cp.BtrfsConfig):
@@ -73,6 +78,7 @@ def get_expected_content(
     expected_content = {
         file.relative_to(source_dir): file.read_bytes()
         for file in list_files_recursively(source_dir)
+        if exclude_to_ignore_file is False or "ignore" not in file.name
     }
     if isinstance(config, cp.ResticConfig):
         return Counter(expected_content.values())
@@ -149,7 +155,7 @@ def test_do_backup(source_directories, encrypted_device) -> None:
         config = complement_configuration(empty_config, source_dir)
         bl.do_backup(config)
     result_content = get_result_content(config)
-    expected_content = get_expected_content(config)
+    expected_content = get_expected_content(config, exclude_to_ignore_file=False)
     assert result_content == expected_content
 
 
