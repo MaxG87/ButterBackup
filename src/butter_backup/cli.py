@@ -45,11 +45,6 @@ VERBOSITY_OPTION = typer.Option(0, "--verbose", "-v", count=True)
 
 
 @app.command()
-def hilfe():
-    typer.echo("Hilfe!")
-
-
-@app.command()
 def open(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
     setup_logging(verbose)
     configurations = list(cp.load_configuration(config))

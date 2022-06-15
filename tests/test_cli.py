@@ -92,13 +92,6 @@ def test_backup_refuses_missing_config(runner) -> None:
     assert result.exit_code != 0
 
 
-def test_start_click_cli() -> None:
-    runner = CliRunner()
-    result = runner.invoke(app, ["hilfe"])
-    assert "Hilfe!" in result.stdout
-    assert result.exit_code == 0
-
-
 def test_open_refuses_missing_config(runner) -> None:
     with NamedTemporaryFile() as file:
         config_file = Path(file.name)
