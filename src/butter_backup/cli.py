@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import os
+import sys
 from pathlib import Path
 from tempfile import mkdtemp
 
 import typer
+from loguru import logger
 
 from . import backup_logic as bl
 from . import config_parser as cp
@@ -20,7 +22,26 @@ def get_default_config_path() -> str:
     return str(config_file)
 
 
+def setup_logging(verbosity: int) -> None:
+    # If no `-v/--verbose` is given (verbosity == 0 in this case), errors and
+    # warnings shall appear. The first flag shall let successes appear, so that
+    # the user can trace the progress of the program.
+    logger.remove()
+    available_levels = [
+        # "CRITICAL",
+        # "ERROR",
+        "WARNING",
+        "SUCCESS",
+        "INFO",
+        "DEBUG",
+        "TRACE",
+    ]
+    level = min(verbosity, len(available_levels) - 1)
+    logger.add(sys.stderr, level=available_levels[level])
+
+
 CONFIG_OPTION = typer.Option(get_default_config_path(), exists=True)
+VERBOSITY_OPTION = typer.Option(0, "--verbose", "-v", count=True)
 
 
 @app.command()
