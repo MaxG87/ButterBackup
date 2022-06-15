@@ -26,6 +26,31 @@ def list_files_recursively(path: Path) -> Iterable[Path]:
 
 
 @overload
+def complement_configuration(
+    config: cp.BtrfsConfig, source_dir: Path
+) -> cp.BtrfsConfig:
+    ...
+
+
+@overload
+def complement_configuration(
+    config: cp.ResticConfig, source_dir: Path
+) -> cp.ResticConfig:
+    ...
+
+
+def complement_configuration(
+    config: cp.Configuration, source_dir: Path
+) -> cp.Configuration:
+    if isinstance(config, cp.BtrfsConfig):
+        folder_dest_dir = "some-folder-name"
+        return config.copy(update={"Folders": {source_dir: folder_dest_dir}})
+    if isinstance(config, cp.ResticConfig):
+        return config.copy(update={"FilesAndFolders": {source_dir}})
+    raise TypeError("Unsupported configuration encountered.")
+
+
+@overload
 def get_expected_content(config: cp.BtrfsConfig) -> Dict[Path, bytes]:
     ...
 
@@ -119,19 +144,10 @@ def get_result_content_for_restic(
 )
 def test_do_backup(source_directories, encrypted_device) -> None:
     empty_config, device = encrypted_device
-    config: Union[cp.BtrfsConfig, cp.ResticConfig]
     for source_dir in source_directories:
-        if isinstance(empty_config, cp.BtrfsConfig):
-            folder_dest_dir = "some-folder-name"
-            config = empty_config.copy(
-                update={"Folders": {source_dir: folder_dest_dir}}
-            )
-        elif isinstance(empty_config, cp.ResticConfig):
-            config = empty_config.copy(update={"FilesAndFolders": {source_dir}})
-        else:
-            raise TypeError("Unsupported configuration encountered.")
-        bl.do_backup(config)
         time.sleep(1)  # prevent conflicts in snapshot names
+        config = complement_configuration(empty_config, source_dir)
+        bl.do_backup(config)
     result_content = get_result_content(config)
     expected_content = get_expected_content(config)
     assert result_content == expected_content
