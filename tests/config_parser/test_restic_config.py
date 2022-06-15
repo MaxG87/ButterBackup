@@ -9,7 +9,6 @@ from hypothesis import strategies as st
 from pydantic import ValidationError
 
 from butter_backup import config_parser as cp
-from tests import hypothesis_utils as hu
 
 
 @st.composite
@@ -60,8 +59,8 @@ def test_restic_config_device_ends_in_uuid(base_config) -> None:
     assert cfg.device() == Path(f"/dev/disk/by-uuid/{uuid}")
 
 
-@given(base_config=valid_unparsed_empty_restic_config(), folder_dest=hu.filenames())
-def test_restic_config_json_roundtrip(base_config, folder_dest: str):
+@given(base_config=valid_unparsed_empty_restic_config())
+def test_restic_config_json_roundtrip(base_config):
     with TemporaryDirectory() as src_folder:
         with NamedTemporaryFile() as src_file:
             base_config["FilesAndFolders"] = {src_folder, src_file.name}
