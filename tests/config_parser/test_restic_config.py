@@ -45,9 +45,13 @@ def test_restic_config_expands_user(base_config):
     with NamedTemporaryFile(dir=Path.home()) as src_file:
         fname = f"~/{Path(src_file.name).name}"
         base_config["FilesAndFolders"] = {"~", fname}
-        cfg = cp.ResticConfig.parse_obj(base_config)
+        with NamedTemporaryFile(dir=Path.home()) as exclude_file:
+            exclude_file_relative = f"~/{Path(exclude_file.name).name}"
+            base_config["ExcludePatternsFile"] = exclude_file_relative
+            cfg = cp.ResticConfig.parse_obj(base_config)
     expected = {Path("~").expanduser(), Path(src_file.name).expanduser()}
     assert cfg.FilesAndFolders == expected
+    assert cfg.ExcludePatternsFile == Path(exclude_file.name).expanduser()
 
 
 @given(base_config=valid_unparsed_empty_restic_config())

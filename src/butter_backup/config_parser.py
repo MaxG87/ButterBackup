@@ -120,6 +120,12 @@ class ResticConfig(BaseModel):
         frozen = True
         json_dumps = path_aware_restic_json_decoding
 
+    @validator("ExcludePatternsFile", pre=True)
+    def expand_tilde_in_exclude_patterns_file_name(cls, maybe_exclude_patterns):
+        if maybe_exclude_patterns is None:
+            return None
+        return Path(maybe_exclude_patterns).expanduser()
+
     @validator("FilesAndFolders", pre=True)
     def expand_tilde_in_sources(cls, files_and_folders):
         new = {Path(src).expanduser() for src in files_and_folders}
