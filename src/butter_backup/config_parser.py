@@ -5,7 +5,7 @@ import sys
 import uuid
 from collections import Counter
 from pathlib import Path
-from typing import ClassVar, Dict, Iterable, Set, Union
+from typing import ClassVar, Dict, Iterable, Optional, Set, Union
 
 from pydantic import (
     BaseModel,
@@ -17,6 +17,7 @@ from pydantic import (
     validator,
 )
 
+Configuration = Union["BtrfsConfig", "ResticConfig"]
 FoldersT = Dict[DirectoryPath, str]
 
 
@@ -33,6 +34,7 @@ def path_aware_restic_json_decoding(v, *, default) -> str:
 class BtrfsConfig(BaseModel):
     BackupRepositoryFolder: str
     DevicePassCmd: str
+    ExcludePatternsFile: Optional[FilePath] = None
     Files: Set[FilePath]
     FilesDest: str
     Folders: FoldersT
@@ -58,14 +60,20 @@ class BtrfsConfig(BaseModel):
         )
         return folders
 
-    @validator("Folders", pre=True)
-    def expand_tilde_in_folder_sources(cls, folders):
-        new = {Path(src).expanduser(): dest for src, dest in folders.items()}
-        return new
+    @validator("ExcludePatternsFile", pre=True)
+    def expand_tilde_in_exclude_patterns_file_name(cls, maybe_exclude_patterns):
+        if maybe_exclude_patterns is None:
+            return None
+        return Path(maybe_exclude_patterns).expanduser()
 
     @validator("Files", pre=True)
     def expand_tilde_in_file_sources(cls, files):
         new = [Path(cur).expanduser() for cur in files]
+        return new
+
+    @validator("Folders", pre=True)
+    def expand_tilde_in_folder_sources(cls, folders):
+        new = {Path(src).expanduser(): dest for src, dest in folders.items()}
         return new
 
     @root_validator(skip_on_failure=True)
@@ -102,6 +110,7 @@ class BtrfsConfig(BaseModel):
 class ResticConfig(BaseModel):
     BackupRepositoryFolder: str
     DevicePassCmd: str
+    ExcludePatternsFile: Optional[FilePath] = None
     FilesAndFolders: Set[Union[FilePath, DirectoryPath]]
     RepositoryPassCmd: str
     UUID: uuid.UUID
@@ -110,6 +119,12 @@ class ResticConfig(BaseModel):
         extra = Extra.forbid
         frozen = True
         json_dumps = path_aware_restic_json_decoding
+
+    @validator("ExcludePatternsFile", pre=True)
+    def expand_tilde_in_exclude_patterns_file_name(cls, maybe_exclude_patterns):
+        if maybe_exclude_patterns is None:
+            return None
+        return Path(maybe_exclude_patterns).expanduser()
 
     @validator("FilesAndFolders", pre=True)
     def expand_tilde_in_sources(cls, files_and_folders):

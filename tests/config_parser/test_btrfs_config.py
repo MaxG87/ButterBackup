@@ -12,6 +12,9 @@ from pydantic import ValidationError
 from butter_backup import config_parser as cp
 from tests import hypothesis_utils as hu
 
+TEST_RESOURCES = Path(__file__).parent.parent / "resources"
+EXCLUDE_FILE = TEST_RESOURCES / "exclude-file"
+
 
 @st.composite
 def valid_unparsed_empty_btrfs_config(draw):
@@ -19,6 +22,7 @@ def valid_unparsed_empty_btrfs_config(draw):
         st.fixed_dictionaries(
             {
                 "BackupRepositoryFolder": st.text(),
+                "ExcludePatternsFile": st.just(str(EXCLUDE_FILE)) | st.none(),
                 "DevicePassCmd": st.text(),
                 "Files": st.just([]),
                 "FilesDest": st.text(),
@@ -71,9 +75,13 @@ def test_btrfs_config_expands_user(base_config):
     with NamedTemporaryFile(dir=Path.home()) as src_file:
         fname = f"~/{Path(src_file.name).name}"
         base_config["Files"] = ["/bin/bash", fname]
-        cfg = cp.BtrfsConfig.parse_obj(base_config)
+        with NamedTemporaryFile(dir=Path.home()) as exclude_file:
+            exclude_file_relative = f"~/{Path(exclude_file.name).name}"
+            base_config["ExcludePatternsFile"] = exclude_file_relative
+            cfg = cp.BtrfsConfig.parse_obj(base_config)
     assert Path("~").expanduser() in cfg.Folders
     assert Path(src_file.name).expanduser() in cfg.Files
+    assert cfg.ExcludePatternsFile == Path(exclude_file.name).expanduser()
 
 
 @given(

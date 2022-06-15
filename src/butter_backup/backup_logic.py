@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime as dt
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 from . import config_parser as cp
 from . import device_managers as dm
@@ -34,7 +34,7 @@ def do_butter_backup(cfg: cp.BtrfsConfig, mount_dir: Path) -> None:
     snapshot(src=src_snapshot, dest=backup_root)
     for src, dest_name in cfg.Folders.items():
         dest = backup_root / dest_name
-        rsync_folder(src, dest)
+        rsync_folder(src, dest, cfg.ExcludePatternsFile)
 
     files_dest = backup_root / cfg.FilesDest
     for src in cfg.Files:
@@ -49,6 +49,8 @@ def do_restic_backup(cfg: cp.ResticConfig, mount_dir: Path) -> None:
         "--repo",
         mount_dir / cfg.BackupRepositoryFolder,
     ]
+    if cfg.ExcludePatternsFile is not None:
+        restic_cmd.extend(["--exclude-file", cfg.ExcludePatternsFile])
     restic_cmd.extend(list(cfg.FilesAndFolders))
     sh.pipe_pass_cmd_to_real_cmd(cfg.RepositoryPassCmd, restic_cmd)
 
@@ -67,14 +69,15 @@ def rsync_file(src: Path, dest: Path) -> None:
     sh.run_cmd(cmd=cmd)
 
 
-def rsync_folder(src: Path, dest: Path) -> None:
+def rsync_folder(src: Path, dest: Path, maybe_exclude_patterns: Optional[Path]) -> None:
     cmd: sh.StrPathList = [
         "sudo",
         "rsync",
         "-ax",
         "--delete",
         "--inplace",
-        f"{src}/",
-        dest,
     ]
+    if maybe_exclude_patterns is not None:
+        cmd.extend(["--exclude-from", maybe_exclude_patterns])
+    cmd.extend([f"{src}/", dest])
     sh.run_cmd(cmd=cmd)

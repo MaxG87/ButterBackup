@@ -1,20 +1,23 @@
 import datetime as dt
 import os
 import time
+from collections import Counter
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Iterable
+from typing import Dict, Iterable, Union, overload
 
 import pytest
 
 from butter_backup import backup_logic as bl
+from butter_backup import config_parser as cp
 from butter_backup import device_managers as dm
 from butter_backup import shell_interface as sh
 
-USER = os.environ.get("USER", "root")
 TEST_RESOURCES = Path(__file__).parent / "resources"
+EXCLUDE_FILE = TEST_RESOURCES / "exclude-file"
 FIRST_BACKUP = TEST_RESOURCES / "first-backup"
 SECOND_BACKUP = TEST_RESOURCES / "second-backup"
+USER = os.environ.get("USER", "root")
 
 
 def list_files_recursively(path: Path) -> Iterable[Path]:
@@ -23,79 +26,167 @@ def list_files_recursively(path: Path) -> Iterable[Path]:
             yield file_or_folder
 
 
+@overload
+def complement_configuration(
+    config: cp.BtrfsConfig, source_dir: Path
+) -> cp.BtrfsConfig:
+    ...
+
+
+@overload
+def complement_configuration(
+    config: cp.ResticConfig, source_dir: Path
+) -> cp.ResticConfig:
+    ...
+
+
+def complement_configuration(
+    config: cp.Configuration, source_dir: Path
+) -> cp.Configuration:
+    if isinstance(config, cp.BtrfsConfig):
+        folder_dest_dir = "some-folder-name"
+        return config.copy(update={"Folders": {source_dir: folder_dest_dir}})
+    if isinstance(config, cp.ResticConfig):
+        return config.copy(update={"FilesAndFolders": {source_dir}})
+    raise TypeError("Unsupported configuration encountered.")
+
+
+@overload
+def get_expected_content(
+    config: cp.BtrfsConfig, exclude_to_ignore_file: bool
+) -> Dict[Path, bytes]:
+    ...
+
+
+@overload
+def get_expected_content(
+    config: cp.ResticConfig, exclude_to_ignore_file: bool
+) -> Counter[bytes]:
+    ...
+
+
+def get_expected_content(
+    config: cp.Configuration,
+    exclude_to_ignore_file: bool,
+) -> Union[Counter[bytes], Dict[Path, bytes]]:
+    source_dir: Path
+    if isinstance(config, cp.BtrfsConfig):
+        source_dir = list(config.Folders.keys())[0]
+    elif isinstance(config, cp.ResticConfig):
+        source_dir = list(config.FilesAndFolders)[0]
+    else:
+        raise TypeError("Unsupported configuration encountered.")
+    expected_content = {
+        file.relative_to(source_dir): file.read_bytes()
+        for file in list_files_recursively(source_dir)
+        if exclude_to_ignore_file is False or "ignore" not in file.name
+    }
+    if isinstance(config, cp.ResticConfig):
+        return Counter(expected_content.values())
+    return expected_content
+
+
+@overload
+def get_result_content(config: cp.BtrfsConfig) -> Dict[Path, bytes]:
+    ...
+
+
+@overload
+def get_result_content(config: cp.ResticConfig) -> Counter[bytes]:
+    ...
+
+
+def get_result_content(
+    config: cp.Configuration,
+) -> Union[Counter[bytes], Dict[Path, bytes]]:
+    with dm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted:
+        with dm.mounted_device(decrypted) as mounted:
+            if isinstance(config, cp.BtrfsConfig):
+                return get_result_content_for_btrfs(config, mounted)
+            elif isinstance(config, cp.ResticConfig):
+                return get_result_content_for_restic(config, mounted)
+            else:
+                raise TypeError("Unsupported configuration encountered.")
+
+
+def get_result_content_for_btrfs(
+    config: cp.BtrfsConfig, mounted: Path
+) -> Dict[Path, bytes]:
+    folder_dest_dir = list(config.Folders.values())[0]
+    backup_repository = mounted / config.BackupRepositoryFolder
+    latest_folder = sorted(backup_repository.iterdir())[-1]
+    return {
+        file.relative_to(latest_folder / folder_dest_dir): file.read_bytes()
+        for file in list_files_recursively(latest_folder)
+    }
+
+
+def get_result_content_for_restic(
+    config: cp.ResticConfig, mounted: Path
+) -> Counter[bytes]:
+    with TemporaryDirectory() as restore_dir:
+        sh.pipe_pass_cmd_to_real_cmd(
+            config.RepositoryPassCmd,
+            [
+                "sudo",
+                "restic",
+                "-r",
+                mounted / config.BackupRepositoryFolder,
+                "restore",
+                "latest",
+                "--target",
+                restore_dir,
+            ],
+        )
+        # Fix permissions to be able to list directory without sudo-helpers.
+        sh.run_cmd(cmd=["sudo", "chown", "-R", USER, restore_dir])
+        return Counter(
+            file.read_bytes() for file in list_files_recursively(Path(restore_dir))
+        )
+
+
 @pytest.mark.parametrize(
     "source_directories",
     [[FIRST_BACKUP], [SECOND_BACKUP], [FIRST_BACKUP, SECOND_BACKUP]],
 )
-def test_do_backup_for_butterbackend(
-    source_directories, encrypted_btrfs_device
+def test_do_backup(source_directories, encrypted_device) -> None:
+    empty_config, device = encrypted_device
+    for source_dir in source_directories:
+        time.sleep(1)  # prevent conflicts in snapshot names
+        config = complement_configuration(empty_config, source_dir)
+        bl.do_backup(config)
+    result_content = get_result_content(config)
+    expected_content = get_expected_content(config, exclude_to_ignore_file=False)
+    assert result_content == expected_content
+
+
+@pytest.mark.parametrize(
+    "source_directories",
+    [[FIRST_BACKUP], [SECOND_BACKUP], [FIRST_BACKUP, SECOND_BACKUP]],
+)
+def test_do_backup_handles_exclude_list(source_directories, encrypted_device) -> None:
+    empty_config, device = encrypted_device
+    for source_dir in source_directories:
+        time.sleep(1)  # prevent conflicts in snapshot names
+        config = complement_configuration(empty_config, source_dir).copy(
+            update={"ExcludePatternsFile": EXCLUDE_FILE}
+        )
+        bl.do_backup(config)
+    result_content = get_result_content(config)
+    expected_content = get_expected_content(config, exclude_to_ignore_file=True)
+    assert result_content == expected_content
+
+
+def test_do_backup_for_btrfs_creates_snapshots_with_timestamp_names(
+    encrypted_btrfs_device,
 ) -> None:
-    # Due to testing a timestamp, this test has a small chance to fail around
-    # midnight. Since this is a hobby project, paying attention if the test
-    # executes around midnight is a viable solution.
     empty_config, device = encrypted_btrfs_device
     folder_dest_dir = "some-folder-name"
-    for source_dir in source_directories:
-        config = empty_config.copy(update={"Folders": {source_dir: folder_dest_dir}})
-        bl.do_backup(config)
-        time.sleep(1)  # prevent conflicts in snapshot names
-    with dm.decrypted_device(device, config.DevicePassCmd) as decrypted:
+    config = empty_config.copy(update={"Folders": {FIRST_BACKUP: folder_dest_dir}})
+    bl.do_backup(config)
+    with dm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted:
         with dm.mounted_device(decrypted) as mounted:
             backup_repository = mounted / config.BackupRepositoryFolder
             latest_folder = sorted(backup_repository.iterdir())[-1]
-            content = {
-                file.relative_to(latest_folder / folder_dest_dir): file.read_bytes()
-                for file in list_files_recursively(latest_folder)
-            }
-    latest_source_dir = source_directories[-1]
     expected_date = dt.date.today().isoformat()
-    expected_content = {
-        file.relative_to(latest_source_dir): file.read_bytes()
-        for file in list_files_recursively(latest_source_dir)
-    }
     assert expected_date in str(latest_folder)
-    assert content == expected_content
-
-
-@pytest.mark.parametrize(
-    "source_directories",
-    [[FIRST_BACKUP], [SECOND_BACKUP], [FIRST_BACKUP, SECOND_BACKUP]],
-)
-def test_do_backup_for_resticbackend(
-    source_directories, encrypted_restic_device
-) -> None:
-    # Restic keeps track of the absolute path that was backed up. This makes it
-    # quite hard to construct apporpriate file names for a dictionary
-    # comparison. It seems to be a viable tradeoff to just test the file
-    # contents, without file names here.
-    empty_config, device = encrypted_restic_device
-    for source_dir in source_directories:
-        config = empty_config.copy(update={"FilesAndFolders": {source_dir}})
-        bl.do_backup(config)
-    with dm.decrypted_device(device, config.DevicePassCmd) as decrypted:
-        with dm.mounted_device(decrypted) as mount_dir:
-            with TemporaryDirectory() as restore_dir:
-                sh.pipe_pass_cmd_to_real_cmd(
-                    config.RepositoryPassCmd,
-                    [
-                        "sudo",
-                        "restic",
-                        "-r",
-                        mount_dir / config.BackupRepositoryFolder,
-                        "restore",
-                        "latest",
-                        "--target",
-                        restore_dir,
-                    ],
-                )
-                # Fix permissions to be able to list directory without sudo-helpers.
-                sh.run_cmd(cmd=["sudo", "chown", "-R", USER, restore_dir])
-                content = {
-                    file.read_bytes()
-                    for file in list_files_recursively(Path(restore_dir))
-                }
-    latest_source_dir = source_directories[-1]
-    expected_content = {
-        file.read_bytes() for file in list_files_recursively(latest_source_dir)
-    }
-    assert content == expected_content

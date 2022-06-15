@@ -9,7 +9,9 @@ from hypothesis import strategies as st
 from pydantic import ValidationError
 
 from butter_backup import config_parser as cp
-from tests import hypothesis_utils as hu
+
+TEST_RESOURCES = Path(__file__).parent.parent / "resources"
+EXCLUDE_FILE = TEST_RESOURCES / "exclude-file"
 
 
 @st.composite
@@ -18,6 +20,7 @@ def valid_unparsed_empty_restic_config(draw):
         st.fixed_dictionaries(
             {
                 "BackupRepositoryFolder": st.text(),
+                "ExcludePatternsFile": st.just(str(EXCLUDE_FILE)) | st.none(),
                 "DevicePassCmd": st.text(),
                 "FilesAndFolders": st.just([]),
                 "RepositoryPassCmd": st.text(),
@@ -42,9 +45,13 @@ def test_restic_config_expands_user(base_config):
     with NamedTemporaryFile(dir=Path.home()) as src_file:
         fname = f"~/{Path(src_file.name).name}"
         base_config["FilesAndFolders"] = {"~", fname}
-        cfg = cp.ResticConfig.parse_obj(base_config)
+        with NamedTemporaryFile(dir=Path.home()) as exclude_file:
+            exclude_file_relative = f"~/{Path(exclude_file.name).name}"
+            base_config["ExcludePatternsFile"] = exclude_file_relative
+            cfg = cp.ResticConfig.parse_obj(base_config)
     expected = {Path("~").expanduser(), Path(src_file.name).expanduser()}
     assert cfg.FilesAndFolders == expected
+    assert cfg.ExcludePatternsFile == Path(exclude_file.name).expanduser()
 
 
 @given(base_config=valid_unparsed_empty_restic_config())
@@ -60,8 +67,8 @@ def test_restic_config_device_ends_in_uuid(base_config) -> None:
     assert cfg.device() == Path(f"/dev/disk/by-uuid/{uuid}")
 
 
-@given(base_config=valid_unparsed_empty_restic_config(), folder_dest=hu.filenames())
-def test_restic_config_json_roundtrip(base_config, folder_dest: str):
+@given(base_config=valid_unparsed_empty_restic_config())
+def test_restic_config_json_roundtrip(base_config):
     with TemporaryDirectory() as src_folder:
         with NamedTemporaryFile() as src_file:
             base_config["FilesAndFolders"] = {src_folder, src_file.name}
