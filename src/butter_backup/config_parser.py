@@ -60,14 +60,20 @@ class BtrfsConfig(BaseModel):
         )
         return folders
 
-    @validator("Folders", pre=True)
-    def expand_tilde_in_folder_sources(cls, folders):
-        new = {Path(src).expanduser(): dest for src, dest in folders.items()}
-        return new
+    @validator("ExcludePatternsFile", pre=True)
+    def expand_tilde_in_exclude_patterns_file_name(cls, maybe_exclude_patterns):
+        if maybe_exclude_patterns is None:
+            return None
+        return Path(maybe_exclude_patterns).expanduser()
 
     @validator("Files", pre=True)
     def expand_tilde_in_file_sources(cls, files):
         new = [Path(cur).expanduser() for cur in files]
+        return new
+
+    @validator("Folders", pre=True)
+    def expand_tilde_in_folder_sources(cls, folders):
+        new = {Path(src).expanduser(): dest for src, dest in folders.items()}
         return new
 
     @root_validator(skip_on_failure=True)
