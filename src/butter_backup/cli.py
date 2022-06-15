@@ -50,7 +50,8 @@ def hilfe():
 
 
 @app.command()
-def open(config: Path = CONFIG_OPTION):
+def open(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
+    setup_logging(verbose)
     configurations = list(cp.load_configuration(config))
     for cfg in configurations:
         if cfg.device().exists():
@@ -61,7 +62,8 @@ def open(config: Path = CONFIG_OPTION):
 
 
 @app.command()
-def close(config: Path = CONFIG_OPTION):
+def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
+    setup_logging(verbose)
     configurations = list(cp.load_configuration(config))
     mounted_devices = dm.get_mounted_devices()
     for cfg in configurations:
@@ -80,7 +82,8 @@ def close(config: Path = CONFIG_OPTION):
 
 
 @app.command()
-def backup(config: Path = CONFIG_OPTION):
+def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
+    setup_logging(verbose)
     configurations = list(cp.load_configuration(config))
     for cfg in configurations:
         bl.do_backup(cfg)
