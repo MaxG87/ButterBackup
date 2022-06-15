@@ -68,7 +68,6 @@ würden nicht mehr gelistete Ziele aus der Sicherungskopie entfernt.
 - Testsuite umstellen von Docker auf virtuelle Maschinen
 - RequiresRoot als globales Flag
 - Alias für Einzelkonfigurationen?
-- Verbosity-Flag einführen
 - butter-backup exec / run
   * nimmt Befehl als Zeichenkette und führt diesen im BackupRootDir aus
   * butter-backup exec [<uuid>] <cmd>  --> open; cd; cmd; cd -; close
