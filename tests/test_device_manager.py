@@ -3,6 +3,7 @@ import subprocess
 from collections import Counter
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
+from typing import Counter as CounterT
 
 import pytest
 from hypothesis import given
@@ -195,7 +196,7 @@ def test_generate_passcmd_samples_uniformly():
     # TODO: The bounds should be tightened. Finally, the test should have a
     # probability to fail one in ~100 runs or so.
     N = 128
-    chars: Counter[str] = Counter()
+    chars: CounterT[str] = Counter()
     for _ in range(N):
         passcmd = dm.generate_passcmd()
         passphrase = passcmd.split()[-1]
