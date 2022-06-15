@@ -12,6 +12,9 @@ from pydantic import ValidationError
 from butter_backup import config_parser as cp
 from tests import hypothesis_utils as hu
 
+TEST_RESOURCES = Path(__file__).parent.parent / "resources"
+EXCLUDE_FILE = TEST_RESOURCES / "exclude-file"
+
 
 @st.composite
 def valid_unparsed_empty_btrfs_config(draw):
@@ -19,6 +22,7 @@ def valid_unparsed_empty_btrfs_config(draw):
         st.fixed_dictionaries(
             {
                 "BackupRepositoryFolder": st.text(),
+                "ExcludePatternsFile": st.just(str(EXCLUDE_FILE)) | st.none(),
                 "DevicePassCmd": st.text(),
                 "Files": st.just([]),
                 "FilesDest": st.text(),
