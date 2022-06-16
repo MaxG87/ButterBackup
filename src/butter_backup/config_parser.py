@@ -5,9 +5,7 @@ import sys
 import uuid
 from collections import Counter
 from pathlib import Path
-from typing import ClassVar
-from typing import Counter as CounterT
-from typing import Dict, Iterable, Optional, Set, Union
+from typing import ClassVar, Dict, Iterable, Optional, Set, Union
 
 from loguru import logger
 from pydantic import (
@@ -91,7 +89,7 @@ class BtrfsConfig(BaseModel):
 
     @staticmethod
     def raise_with_message_upon_duplicate(
-        counts: Union[CounterT[Path], CounterT[str]], token: tuple[str, str]
+        counts: Union[Counter[Path], Counter[str]], token: tuple[str, str]
     ) -> None:
         if all(val == 1 for val in counts.values()):
             return

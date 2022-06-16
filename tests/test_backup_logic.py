@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import datetime as dt
 import os
 import time
 from collections import Counter
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Counter as CounterT
 from typing import Dict, Iterable, Union, overload
 
 import pytest
@@ -62,14 +63,14 @@ def get_expected_content(
 @overload
 def get_expected_content(
     config: cp.ResticConfig, exclude_to_ignore_file: bool
-) -> CounterT[bytes]:
+) -> Counter[bytes]:
     ...
 
 
 def get_expected_content(
     config: cp.Configuration,
     exclude_to_ignore_file: bool,
-) -> Union[CounterT[bytes], Dict[Path, bytes]]:
+) -> Union[Counter[bytes], Dict[Path, bytes]]:
     source_dir: Path
     if isinstance(config, cp.BtrfsConfig):
         source_dir = list(config.Folders.keys())[0]
@@ -93,13 +94,13 @@ def get_result_content(config: cp.BtrfsConfig) -> Dict[Path, bytes]:
 
 
 @overload
-def get_result_content(config: cp.ResticConfig) -> CounterT[bytes]:
+def get_result_content(config: cp.ResticConfig) -> Counter[bytes]:
     ...
 
 
 def get_result_content(
     config: cp.Configuration,
-) -> Union[CounterT[bytes], Dict[Path, bytes]]:
+) -> Union[Counter[bytes], Dict[Path, bytes]]:
     with dm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted:
         with dm.mounted_device(decrypted) as mounted:
             if isinstance(config, cp.BtrfsConfig):
@@ -124,7 +125,7 @@ def get_result_content_for_btrfs(
 
 def get_result_content_for_restic(
     config: cp.ResticConfig, mounted: Path
-) -> CounterT[bytes]:
+) -> Counter[bytes]:
     with TemporaryDirectory() as restore_dir:
         sh.pipe_pass_cmd_to_real_cmd(
             config.RepositoryPassCmd,
