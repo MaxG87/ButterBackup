@@ -95,7 +95,14 @@ def mount_btrfs_device(device: Path, mount_dir: Path) -> None:
 
 
 def is_mounted(dest: Path) -> bool:
-    return str(dest) in get_mounted_devices()
+    dest_as_str = str(dest)
+    try:
+        mount_dest = get_mounted_devices()[dest_as_str]
+        logger.info(f"Mount des Gerät {dest} in {mount_dest} gefunden.")
+    except KeyError:
+        logger.info(f"Kein Mountpunkt für Gerät {dest} gefunden.")
+        return False
+    return True
 
 
 def get_mounted_devices() -> dict[str, set[Path]]:
