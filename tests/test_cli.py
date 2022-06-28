@@ -122,7 +122,7 @@ def test_open_refuses_missing_xdg_config(runner) -> None:
     in_docker_container(), reason="Test is known to fail in Docker container"
 )
 def test_close_does_not_close_unopened_device(runner, encrypted_btrfs_device) -> None:
-    config, device = encrypted_btrfs_device
+    config = encrypted_btrfs_device
     with NamedTemporaryFile() as tempf:
         config_file = Path(tempf.name)
         config_file.write_text(f"[{config.json()}]")
@@ -135,7 +135,7 @@ def test_close_does_not_close_unopened_device(runner, encrypted_btrfs_device) ->
     in_docker_container(), reason="Test is known to fail in Docker container"
 )
 def test_open_close_roundtrip(runner, encrypted_device) -> None:
-    config, device = encrypted_device
+    config = encrypted_device
     expected_cryptsetup_map = Path(f"/dev/mapper/{config.UUID}")
     with NamedTemporaryFile() as tempf:
         config_file = Path(tempf.name)

@@ -58,7 +58,7 @@ def encrypted_btrfs_device(virgin_device):
     """
     device_uuid, device = virgin_device
     config = dm.prepare_device_for_butterbackend(device_uuid)
-    yield config, device
+    yield config
 
 
 @pytest.fixture
@@ -75,17 +75,17 @@ def encrypted_restic_device(virgin_device):
     """
     device_uuid, device = virgin_device
     config = dm.prepare_device_for_resticbackend(device_uuid)
-    yield config, device
+    yield config
 
 
 @pytest.fixture(params=["encrypted_btrfs_device", "encrypted_restic_device"])
 def encrypted_device(request):
-    config, device = request.getfixturevalue(request.param)
-    yield config, device
+    config = request.getfixturevalue(request.param)
+    yield config
 
 
 @pytest.fixture
 def btrfs_device(encrypted_btrfs_device):
-    config, device = encrypted_btrfs_device
-    with dm.decrypted_device(device, config.DevicePassCmd) as decrypted:
+    config = encrypted_btrfs_device
+    with dm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted:
         yield decrypted
