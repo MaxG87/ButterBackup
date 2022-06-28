@@ -7,7 +7,7 @@ from collections import defaultdict
 from datetime import date
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from loguru import logger
 
@@ -139,9 +139,18 @@ def close_decrypted_device(device: Path) -> None:
     sh.run_cmd(cmd=close_cmd)
 
 
-def encrypt_device(device: Path, password_cmd: str) -> None:
-    format_cmd: sh.StrPathList = ["sudo", "cryptsetup", "luksFormat", device]
+def encrypt_device(device: Path, password_cmd: str) -> UUID:
+    new_uuid = uuid4()
+    format_cmd: sh.StrPathList = [
+        "sudo",
+        "cryptsetup",
+        "luksFormat",
+        "--uuid",
+        str(new_uuid),
+        device,
+    ]
     sh.pipe_pass_cmd_to_real_cmd(pass_cmd=password_cmd, command=format_cmd)
+    return new_uuid
 
 
 def prepare_device_for_butterbackend(uuid: UUID) -> cp.BtrfsConfig:
