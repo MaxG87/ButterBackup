@@ -45,7 +45,7 @@ def virgin_device(big_file):
 
 
 @pytest.fixture
-def encrypted_btrfs_device(virgin_device):
+def encrypted_btrfs_device(big_file):
     """
     Prepare device for ButterBackup and return its config
 
@@ -53,12 +53,10 @@ def encrypted_btrfs_device(virgin_device):
     -------
     config: BtrfsConfig
         configuration allowing to interact with the returned device
-    device: Path
-        temporary file prepared as encrypted BtrFS device
     """
-    device_uuid, device = virgin_device
-    config = dm.prepare_device_for_butterbackend(device_uuid)
-    yield config
+    config = dm.prepare_device_for_butterbackend(big_file)
+    with dm.symbolic_link(big_file, config.device()):
+        yield config
 
 
 @pytest.fixture
