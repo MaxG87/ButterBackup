@@ -3,7 +3,6 @@ from __future__ import annotations
 import contextlib
 import secrets
 import string
-import subprocess
 from collections import defaultdict
 from datetime import date
 from pathlib import Path
@@ -128,8 +127,7 @@ def unmount_device(device: Path) -> None:
 def open_encrypted_device(device: Path, pass_cmd: str) -> Path:
     map_name = device.name
     decrypt_cmd: sh.StrPathList = ["sudo", "cryptsetup", "open", device, map_name]
-    pwd_proc = subprocess.run(pass_cmd, stdout=subprocess.PIPE, shell=True, check=True)
-    subprocess.run(decrypt_cmd, input=pwd_proc.stdout, check=True)
+    sh.pipe_pass_cmd_to_real_cmd(pass_cmd, decrypt_cmd)
     return Path("/dev/mapper/") / map_name
 
 
