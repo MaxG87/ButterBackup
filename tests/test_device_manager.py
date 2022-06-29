@@ -13,6 +13,11 @@ from hypothesis import strategies as st
 from butter_backup import device_managers as dm
 
 
+def get_random_filename() -> str:
+    with NamedTemporaryFile() as named_file:
+        return named_file.name
+
+
 class MyCustomTestException(Exception):
     pass
 
@@ -151,10 +156,8 @@ def test_symbolic_link_rejects_existing_dest(tmp_path: Path) -> None:
 
 
 def test_symbolic_link_rejects_missing_src() -> None:
-    with NamedTemporaryFile() as named_file:
-        src = Path(named_file.name)
-    with NamedTemporaryFile() as named_file:
-        dest = Path(named_file.name)
+    src = Path(get_random_filename())
+    dest = Path(get_random_filename())
     with pytest.raises(FileNotFoundError):
         with dm.symbolic_link(src=src, dest=dest):
             pass
@@ -165,8 +168,7 @@ def test_symbolic_link() -> None:
     with NamedTemporaryFile() as named_file:
         source = Path(named_file.name)
         source.write_text(content)
-        with NamedTemporaryFile() as named_file:
-            in_dest = Path(named_file.name)
+        in_dest = Path(get_random_filename())
         with dm.symbolic_link(src=source, dest=in_dest) as out_dest:
             assert in_dest == out_dest
             assert out_dest.is_symlink()
@@ -178,8 +180,7 @@ def test_symbolic_link_removes_link_in_case_of_exception() -> None:
     with pytest.raises(MyCustomTestException):
         with NamedTemporaryFile() as src_f:
             source = Path(src_f.name)
-            with NamedTemporaryFile() as dest_f:
-                dest_p = Path(dest_f.name)
+            dest_p = Path(get_random_filename())
             assert not os.path.lexists(dest_p)
             with dm.symbolic_link(src=source, dest=dest_p):
                 assert os.path.lexists(dest_p)
