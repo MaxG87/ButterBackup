@@ -11,6 +11,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from butter_backup import device_managers as dm
+from butter_backup import shell_interface as sh
 
 
 def get_random_filename() -> str:
@@ -186,6 +187,16 @@ def test_symbolic_link_removes_link_in_case_of_exception() -> None:
                 assert os.path.lexists(dest_p)
                 raise MyCustomTestException
     assert not os.path.lexists(dest_p)
+
+
+def test_symbolic_link_does_not_crash_in_case_of_vanished_link() -> None:
+    content = "some arbitrary content"
+    with NamedTemporaryFile() as named_file:
+        source = Path(named_file.name)
+        source.write_text(content)
+        in_dest = Path(get_random_filename())
+        with dm.symbolic_link(src=source, dest=in_dest) as out_dest:
+            sh.run_cmd(cmd=["sudo", "rm", out_dest])
 
 
 def test_generate_passcmd_is_not_static():

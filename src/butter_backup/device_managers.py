@@ -78,7 +78,10 @@ def symbolic_link(src: Path, dest: Path):
     try:
         yield absolute_dest
     finally:
-        sh.run_cmd(cmd=["sudo", "rm", f"{absolute_dest}"])
+        # In case the link destination vanished, the program must not crash. After
+        # all, the aimed for state has been reached.
+        rm_cmd: sh.StrPathList = ["sudo", "rm", "-f", absolute_dest]
+        sh.run_cmd(cmd=rm_cmd)
         logger.success(f"Symlink von {src} nach {dest} erfolgreich entfernt.")
 
 
