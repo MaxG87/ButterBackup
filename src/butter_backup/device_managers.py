@@ -73,7 +73,8 @@ def symbolic_link(src: Path, dest: Path):
     if dest.exists():
         raise FileExistsError
     absolute_dest = dest.absolute()
-    sh.run_cmd(cmd=["sudo", "ln", "-s", f"{src.absolute()}", f"{absolute_dest}"])
+    ln_cmd: sh.StrPathList = ["sudo", "ln", "-s", src.absolute(), absolute_dest]
+    sh.run_cmd(cmd=ln_cmd)
     logger.success(f"Symlink von {src} nach {dest} erfolgreich erstellt.")
     try:
         yield absolute_dest
