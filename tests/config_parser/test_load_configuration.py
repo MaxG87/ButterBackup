@@ -14,9 +14,13 @@ from butter_backup import config_parser as cp
 SUCCESS_CODES = {0, None}
 
 
+def get_random_filename() -> str:
+    with NamedTemporaryFile() as named_file:
+        return named_file.name
+
+
 def test_useful_error_on_missing_file_name() -> None:
-    with NamedTemporaryFile() as named_tmp:
-        missing_cfg = Path(named_tmp.name)
+    missing_cfg = Path(get_random_filename())
     with pytest.raises(SystemExit) as sysexit:
         list(cp.load_configuration(missing_cfg))
     assert str(missing_cfg) in str(sysexit.value)
@@ -24,8 +28,7 @@ def test_useful_error_on_missing_file_name() -> None:
 
 
 def test_load_configuration_rejects_missing_cfg() -> None:
-    with NamedTemporaryFile() as named_tmp:
-        file_name = Path(named_tmp.name)
+    file_name = Path(get_random_filename())
     with pytest.raises(SystemExit) as sysexit:
         list(cp.load_configuration(file_name))
     assert sysexit.value.code not in SUCCESS_CODES

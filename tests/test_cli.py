@@ -12,6 +12,11 @@ from butter_backup import device_managers as dm
 from butter_backup.cli import app
 
 
+def get_random_filename() -> str:
+    with NamedTemporaryFile() as named_file:
+        return named_file.name
+
+
 def in_docker_container() -> bool:
     return Path("/.dockerenv").exists()
 
@@ -85,16 +90,14 @@ def test_setup_logging_clamps_level(capsys) -> None:
 
 
 def test_backup_refuses_missing_config(runner) -> None:
-    with NamedTemporaryFile() as file:
-        config_file = Path(file.name)
+    config_file = Path(get_random_filename())
     result = runner.invoke(app, ["backup", "--config", str(config_file)])
     assert f"{config_file}" in result.stderr
     assert result.exit_code != 0
 
 
 def test_open_refuses_missing_config(runner) -> None:
-    with NamedTemporaryFile() as file:
-        config_file = Path(file.name)
+    config_file = Path(get_random_filename())
     result = runner.invoke(app, ["open", "--config", str(config_file)])
     assert f"{config_file}" in result.stderr
     assert result.exit_code != 0
