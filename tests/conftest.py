@@ -10,6 +10,12 @@ from butter_backup import device_managers as dm
 from butter_backup import shell_interface as sh
 
 
+def get_random_filename(dir_: str) -> str:
+    with NamedTemporaryFile(dir=dir_) as ntf:
+        pass
+    return ntf.name
+
+
 @pytest.fixture
 def mounted_directories():
     with TemporaryDirectory() as src:
@@ -21,11 +27,6 @@ def mounted_directories():
 
 @pytest.fixture
 def big_file():
-    def get_random_filename(dir_: str) -> str:
-        with NamedTemporaryFile(dir=dir_) as ntf:
-            pass
-        return ntf.name
-
     min_size = 128 * 1024**2  # ~109MiB is the minimum size for BtrFS
     with TemporaryDirectory() as tempdir:
         filename = get_random_filename(dir_=tempdir)
@@ -57,7 +58,7 @@ def encrypted_btrfs_device(virgin_device):
     """
     device_uuid, device = virgin_device
     config = dm.prepare_device_for_butterbackend(device_uuid)
-    yield config, device
+    yield config
 
 
 @pytest.fixture
@@ -74,17 +75,17 @@ def encrypted_restic_device(virgin_device):
     """
     device_uuid, device = virgin_device
     config = dm.prepare_device_for_resticbackend(device_uuid)
-    yield config, device
+    yield config
 
 
 @pytest.fixture(params=["encrypted_btrfs_device", "encrypted_restic_device"])
 def encrypted_device(request):
-    config, device = request.getfixturevalue(request.param)
-    yield config, device
+    config = request.getfixturevalue(request.param)
+    yield config
 
 
 @pytest.fixture
 def btrfs_device(encrypted_btrfs_device):
-    config, device = encrypted_btrfs_device
-    with dm.decrypted_device(device, config.DevicePassCmd) as decrypted:
+    config = encrypted_btrfs_device
+    with dm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted:
         yield decrypted

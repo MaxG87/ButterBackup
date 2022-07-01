@@ -3,7 +3,6 @@ from __future__ import annotations
 import contextlib
 import secrets
 import string
-import subprocess
 from collections import defaultdict
 from datetime import date
 from pathlib import Path
@@ -73,12 +72,16 @@ def symbolic_link(src: Path, dest: Path):
     if dest.exists():
         raise FileExistsError
     absolute_dest = dest.absolute()
-    sh.run_cmd(cmd=["sudo", "ln", "-s", f"{src.absolute()}", f"{absolute_dest}"])
+    ln_cmd: sh.StrPathList = ["sudo", "ln", "-s", src.absolute(), absolute_dest]
+    sh.run_cmd(cmd=ln_cmd)
     logger.success(f"Symlink von {src} nach {dest} erfolgreich erstellt.")
     try:
         yield absolute_dest
     finally:
-        sh.run_cmd(cmd=["sudo", "rm", f"{absolute_dest}"])
+        # In case the link destination vanished, the program must not crash. After
+        # all, the aimed for state has been reached.
+        rm_cmd: sh.StrPathList = ["sudo", "rm", "-f", absolute_dest]
+        sh.run_cmd(cmd=rm_cmd)
         logger.success(f"Symlink von {src} nach {dest} erfolgreich entfernt.")
 
 
@@ -124,8 +127,7 @@ def unmount_device(device: Path) -> None:
 def open_encrypted_device(device: Path, pass_cmd: str) -> Path:
     map_name = device.name
     decrypt_cmd: sh.StrPathList = ["sudo", "cryptsetup", "open", device, map_name]
-    pwd_proc = subprocess.run(pass_cmd, stdout=subprocess.PIPE, shell=True, check=True)
-    subprocess.run(decrypt_cmd, input=pwd_proc.stdout, check=True)
+    sh.pipe_pass_cmd_to_real_cmd(pass_cmd, decrypt_cmd)
     return Path("/dev/mapper/") / map_name
 
 

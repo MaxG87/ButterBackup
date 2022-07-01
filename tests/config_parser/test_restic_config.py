@@ -14,6 +14,11 @@ TEST_RESOURCES = Path(__file__).parent.parent / "resources"
 EXCLUDE_FILE = TEST_RESOURCES / "exclude-file"
 
 
+def get_random_filename() -> str:
+    with NamedTemporaryFile() as named_file:
+        return named_file.name
+
+
 @st.composite
 def valid_unparsed_empty_restic_config(draw):
     config = draw(
@@ -33,8 +38,7 @@ def valid_unparsed_empty_restic_config(draw):
 
 @given(base_config=valid_unparsed_empty_restic_config())
 def test_restic_config_rejects_missing_source(base_config):
-    with NamedTemporaryFile() as src_file:
-        fname = src_file.name
+    fname = get_random_filename()
     base_config["FilesAndFolders"] = {fname}
     with pytest.raises(ValidationError):
         cp.ResticConfig.parse_obj(base_config)

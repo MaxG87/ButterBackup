@@ -12,6 +12,11 @@ from butter_backup import device_managers as dm
 from butter_backup.cli import app
 
 
+def get_random_filename() -> str:
+    with NamedTemporaryFile() as named_file:
+        return named_file.name
+
+
 def in_docker_container() -> bool:
     return Path("/.dockerenv").exists()
 
@@ -85,16 +90,14 @@ def test_setup_logging_clamps_level(capsys) -> None:
 
 
 def test_backup_refuses_missing_config(runner) -> None:
-    with NamedTemporaryFile() as file:
-        config_file = Path(file.name)
+    config_file = Path(get_random_filename())
     result = runner.invoke(app, ["backup", "--config", str(config_file)])
     assert f"{config_file}" in result.stderr
     assert result.exit_code != 0
 
 
 def test_open_refuses_missing_config(runner) -> None:
-    with NamedTemporaryFile() as file:
-        config_file = Path(file.name)
+    config_file = Path(get_random_filename())
     result = runner.invoke(app, ["open", "--config", str(config_file)])
     assert f"{config_file}" in result.stderr
     assert result.exit_code != 0
@@ -119,7 +122,7 @@ def test_open_refuses_missing_xdg_config(runner) -> None:
     in_docker_container(), reason="Test is known to fail in Docker container"
 )
 def test_close_does_not_close_unopened_device(runner, encrypted_btrfs_device) -> None:
-    config, device = encrypted_btrfs_device
+    config = encrypted_btrfs_device
     with NamedTemporaryFile() as tempf:
         config_file = Path(tempf.name)
         config_file.write_text(f"[{config.json()}]")
@@ -132,7 +135,7 @@ def test_close_does_not_close_unopened_device(runner, encrypted_btrfs_device) ->
     in_docker_container(), reason="Test is known to fail in Docker container"
 )
 def test_open_close_roundtrip(runner, encrypted_device) -> None:
-    config, device = encrypted_device
+    config = encrypted_device
     expected_cryptsetup_map = Path(f"/dev/mapper/{config.UUID}")
     with NamedTemporaryFile() as tempf:
         config_file = Path(tempf.name)

@@ -11,6 +11,12 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from butter_backup import device_managers as dm
+from butter_backup import shell_interface as sh
+
+
+def get_random_filename() -> str:
+    with NamedTemporaryFile() as named_file:
+        return named_file.name
 
 
 class MyCustomTestException(Exception):
@@ -94,10 +100,12 @@ def test_unmount_device(btrfs_device) -> None:
 
 
 def test_decrypt_device_roundtrip(encrypted_device) -> None:
-    config, device = encrypted_device
-    decrypted = dm.open_encrypted_device(device=device, pass_cmd=config.DevicePassCmd)
+    config = encrypted_device
+    decrypted = dm.open_encrypted_device(
+        device=config.device(), pass_cmd=config.DevicePassCmd
+    )
     assert decrypted.exists()
-    assert decrypted.name == device.name
+    assert decrypted.name == config.device().name
     dm.close_decrypted_device(device=decrypted)
     assert not decrypted.exists()
 
@@ -111,16 +119,20 @@ def test_close_decrypted_device_rejects_invalid_device_name(uuid) -> None:
 
 
 def test_decrypted_device(encrypted_device) -> None:
-    config, device = encrypted_device
-    with dm.decrypted_device(device=device, pass_cmd=config.DevicePassCmd) as dd:
+    config = encrypted_device
+    with dm.decrypted_device(
+        device=config.device(), pass_cmd=config.DevicePassCmd
+    ) as dd:
         assert dd.exists()
     assert not dd.exists()
 
 
 def test_decrypted_device_closes_in_case_of_exception(encrypted_device) -> None:
-    config, device = encrypted_device
+    config = encrypted_device
     with pytest.raises(MyCustomTestException):
-        with dm.decrypted_device(device=device, pass_cmd=config.DevicePassCmd) as dd:
+        with dm.decrypted_device(
+            device=config.device(), pass_cmd=config.DevicePassCmd
+        ) as dd:
             raise MyCustomTestException
     assert not dd.exists()
 
@@ -130,14 +142,16 @@ def test_decrypted_device_can_use_home_for_passcmd(encrypted_device) -> None:
     # Test if `decrypted_device` can use a program that is located in PATH. For
     # some reason, when passing `{}` as environment, `echo` works, but `pass`
     # did not. This test ensures that the necessary fix is not reverted again.
-    config, device = encrypted_device
+    config = encrypted_device
     passphrase = config.DevicePassCmd.split()[-1]
     relative_home = Path("~")  # must be relative to trigger regression
     with NamedTemporaryFile(dir=relative_home.expanduser()) as pwd_f:
         absolute_pwd_f = Path(pwd_f.name)
         relative_pwd_f = relative_home / absolute_pwd_f.name
         absolute_pwd_f.write_text(passphrase)
-        with dm.decrypted_device(device=device, pass_cmd=f"cat {relative_pwd_f}") as dd:
+        with dm.decrypted_device(
+            device=config.device(), pass_cmd=f"cat {relative_pwd_f}"
+        ) as dd:
             assert dd.exists()
         assert not dd.exists()
 
@@ -151,10 +165,8 @@ def test_symbolic_link_rejects_existing_dest(tmp_path: Path) -> None:
 
 
 def test_symbolic_link_rejects_missing_src() -> None:
-    with NamedTemporaryFile() as named_file:
-        src = Path(named_file.name)
-    with NamedTemporaryFile() as named_file:
-        dest = Path(named_file.name)
+    src = Path(get_random_filename())
+    dest = Path(get_random_filename())
     with pytest.raises(FileNotFoundError):
         with dm.symbolic_link(src=src, dest=dest):
             pass
@@ -165,8 +177,7 @@ def test_symbolic_link() -> None:
     with NamedTemporaryFile() as named_file:
         source = Path(named_file.name)
         source.write_text(content)
-        with NamedTemporaryFile() as named_file:
-            in_dest = Path(named_file.name)
+        in_dest = Path(get_random_filename())
         with dm.symbolic_link(src=source, dest=in_dest) as out_dest:
             assert in_dest == out_dest
             assert out_dest.is_symlink()
@@ -178,13 +189,22 @@ def test_symbolic_link_removes_link_in_case_of_exception() -> None:
     with pytest.raises(MyCustomTestException):
         with NamedTemporaryFile() as src_f:
             source = Path(src_f.name)
-            with NamedTemporaryFile() as dest_f:
-                dest_p = Path(dest_f.name)
+            dest_p = Path(get_random_filename())
             assert not os.path.lexists(dest_p)
             with dm.symbolic_link(src=source, dest=dest_p):
                 assert os.path.lexists(dest_p)
                 raise MyCustomTestException
     assert not os.path.lexists(dest_p)
+
+
+def test_symbolic_link_does_not_crash_in_case_of_vanished_link() -> None:
+    content = "some arbitrary content"
+    with NamedTemporaryFile() as named_file:
+        source = Path(named_file.name)
+        source.write_text(content)
+        in_dest = Path(get_random_filename())
+        with dm.symbolic_link(src=source, dest=in_dest) as out_dest:
+            sh.run_cmd(cmd=["sudo", "rm", out_dest])
 
 
 def test_generate_passcmd_is_not_static():

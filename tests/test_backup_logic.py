@@ -152,7 +152,7 @@ def get_result_content_for_restic(
     [[FIRST_BACKUP], [SECOND_BACKUP], [FIRST_BACKUP, SECOND_BACKUP]],
 )
 def test_do_backup(source_directories, encrypted_device) -> None:
-    empty_config, device = encrypted_device
+    empty_config = encrypted_device
     for source_dir in source_directories:
         time.sleep(1)  # prevent conflicts in snapshot names
         config = complement_configuration(empty_config, source_dir)
@@ -167,7 +167,7 @@ def test_do_backup(source_directories, encrypted_device) -> None:
     [[FIRST_BACKUP], [SECOND_BACKUP], [FIRST_BACKUP, SECOND_BACKUP]],
 )
 def test_do_backup_handles_exclude_list(source_directories, encrypted_device) -> None:
-    empty_config, device = encrypted_device
+    empty_config = encrypted_device
     for source_dir in source_directories:
         time.sleep(1)  # prevent conflicts in snapshot names
         config = complement_configuration(empty_config, source_dir).copy(
@@ -182,7 +182,7 @@ def test_do_backup_handles_exclude_list(source_directories, encrypted_device) ->
 def test_do_backup_for_btrfs_creates_snapshots_with_timestamp_names(
     encrypted_btrfs_device,
 ) -> None:
-    empty_config, device = encrypted_btrfs_device
+    empty_config = encrypted_btrfs_device
     folder_dest_dir = "some-folder-name"
     config = empty_config.copy(update={"Folders": {FIRST_BACKUP: folder_dest_dir}})
     bl.do_backup(config)
