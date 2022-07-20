@@ -81,7 +81,14 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
     setup_logging(verbose)
     configurations = list(cp.load_configuration(config))
     for cfg in configurations:
-        bl.do_backup(cfg)
+        if not cfg.device().exists():
+            logger.info(
+                f"Gerät {cfg.UUID} existiert nicht. Es wird kein Backup angelegt."
+            )
+            continue
+        with dm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted:
+            with dm.mounted_device(decrypted) as mount_dir:
+                bl.do_backup(cfg, mount_dir)
 
 
 def cli() -> None:
