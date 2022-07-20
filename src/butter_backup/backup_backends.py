@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import abc
 import datetime as dt
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union, overload
 
 from loguru import logger
 
@@ -14,6 +16,25 @@ class BackupBackend(abc.ABC):
     @abc.abstractmethod
     def do_backup(self, mount_dir: Path) -> None:
         ...
+
+    @overload
+    @staticmethod
+    def from_config(config: cp.BtrfsConfig) -> ButterBackend:
+        ...
+
+    @overload
+    @staticmethod
+    def from_config(config: cp.ResticConfig) -> ResticBackend:
+        ...
+
+    @staticmethod
+    def from_config(
+        config: Union[cp.BtrfsConfig, cp.ResticConfig]
+    ) -> Union[ButterBackend, ResticBackend]:
+        # Getestet durch Tests der Backuplogik
+        if isinstance(config, cp.BtrfsConfig):
+            return ButterBackend(config=config)
+        return ResticBackend(config=config)
 
 
 @dataclass(frozen=True)

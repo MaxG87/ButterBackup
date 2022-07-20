@@ -153,11 +153,7 @@ def test_do_backup(source_directories, mounted_btrfs_device) -> None:
     for source_dir in source_directories:
         time.sleep(1)  # prevent conflicts in snapshot names
         config = complement_configuration(empty_config, source_dir)
-        backend = (
-            bb.ButterBackend(config)
-            if isinstance(config, cp.BtrfsConfig)
-            else bb.ResticBackend(config)
-        )
+        backend = bb.BackupBackend.from_config(config)
         backend.do_backup(device)
     result_content = get_result_content(config, device)
     expected_content = get_expected_content(config, exclude_to_ignore_file=False)
@@ -177,11 +173,7 @@ def test_do_backup_handles_exclude_list(
         config = complement_configuration(empty_config, source_dir).copy(
             update={"ExcludePatternsFile": EXCLUDE_FILE}
         )
-        backend = (
-            bb.ButterBackend(config)
-            if isinstance(config, cp.BtrfsConfig)
-            else bb.ResticBackend(config)
-        )
+        backend = bb.BackupBackend.from_config(config)
         backend.do_backup(device)
     result_content = get_result_content(config, device)
     expected_content = get_expected_content(config, exclude_to_ignore_file=True)
