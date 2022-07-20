@@ -75,13 +75,13 @@ def encrypted_restic_device(virgin_device):
     """
     device_uuid, device = virgin_device
     config = dm.prepare_device_for_resticbackend(device_uuid)
-    yield config
+    return config
 
 
 @pytest.fixture(params=["encrypted_btrfs_device", "encrypted_restic_device"])
 def encrypted_device(request):
     config = request.getfixturevalue(request.param)
-    yield config
+    return config
 
 
 @pytest.fixture
