@@ -8,7 +8,7 @@ from tempfile import mkdtemp
 import typer
 from loguru import logger
 
-from . import backup_logic as bl
+from . import backup_backends as bb
 from . import config_parser as cp
 from . import device_managers as dm
 
@@ -94,9 +94,10 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
                 f"Gerät {cfg.UUID} existiert nicht. Es wird kein Backup angelegt."
             )
             continue
+        backend = bb.BackupBackend.from_config(cfg)
         with dm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted:
             with dm.mounted_device(decrypted) as mount_dir:
-                bl.do_backup(cfg, mount_dir)
+                backend.do_backup(mount_dir)
 
 
 @app.command()
