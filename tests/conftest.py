@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import uuid
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
@@ -34,14 +33,6 @@ def big_file():
         with file.open("wb") as fh:
             fh.write(bytes(min_size))
         yield file
-
-
-@pytest.fixture
-def virgin_device(big_file):
-    device_uuid = uuid.uuid4()
-    device = Path("/dev/disk/by-uuid/") / str(device_uuid)
-    with dm.symbolic_link(big_file, device):
-        yield device_uuid, device
 
 
 @pytest.fixture
