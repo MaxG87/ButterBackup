@@ -89,9 +89,17 @@ def test_setup_logging_clamps_level(capsys) -> None:
     assert tracemsg in err
 
 
-def test_backup_refuses_missing_config(runner) -> None:
+@pytest.mark.parametrize(
+    "subprogram",
+    [
+        cur.callback.__name__
+        for cur in app.registered_commands
+        if cur.callback is not None
+    ],
+)
+def test_subprograms_refuse_missing_config(subprogram, runner) -> None:
     config_file = Path(get_random_filename())
-    result = runner.invoke(app, ["backup", "--config", str(config_file)])
+    result = runner.invoke(app, [subprogram, "--config", str(config_file)])
     assert f"{config_file}" in result.stderr
     assert result.exit_code != 0
 
