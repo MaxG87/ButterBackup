@@ -154,3 +154,22 @@ def test_open_close_roundtrip(runner, encrypted_device) -> None:
         assert not expected_cryptsetup_map.exists()
         assert not dm.is_mounted(mount_dest)
         assert not mount_dest.exists()
+
+
+@pytest.mark.parametrize("backend", ["restic", "butter-backup"])
+def test_format_device_accepts_correct_backend(
+    runner, backend: str, big_file: Path
+) -> None:
+    result = runner.invoke(app, ["format-device", str(big_file), backend])
+    assert result.exit_code == 0
+    # expected_msg = f"Gerät {config.UUID} wurde in (?P<mount_dest>/[^ ]+) geöffnet."
+
+
+@pytest.mark.parametrize(
+    "backend", ["BackupBackend", "fvglxvleaeb", "NotYetImplementedBackend"]
+)
+def test_format_device_refuses_incorrect_backend(runner, backend: str) -> None:
+    with NamedTemporaryFile() as tempf:
+        result = runner.invoke(app, ["format-device", tempf.name, backend])
+        assert result.exit_code != 0
+        # expected_msg = f"Gerät {config.UUID} wurde in (?P<mount_dest>/[^ ]+) geöffnet."
