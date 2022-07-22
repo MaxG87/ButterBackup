@@ -104,6 +104,24 @@ def test_subprograms_refuse_missing_config(subprogram, runner) -> None:
     assert result.exit_code != 0
 
 
+@pytest.mark.skipif(in_docker_container(), reason="All files are readable for root")
+@pytest.mark.parametrize(
+    "subprogram",
+    [
+        cur.callback.__name__
+        for cur in app.registered_commands
+        if cur.callback is not None
+    ],
+)
+def test_subprograms_refuse_unreadable_file(subprogram, runner) -> None:
+    with NamedTemporaryFile() as fh:
+        config_file = Path(fh.name)
+        config_file.chmod(0)
+        result = runner.invoke(app, [subprogram, "--config", str(config_file)])
+        assert f"{config_file}" in result.stderr
+        assert result.exit_code != 0
+
+
 @pytest.mark.parametrize(
     "subprogram",
     [
