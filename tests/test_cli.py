@@ -104,6 +104,21 @@ def test_subprograms_refuse_missing_config(subprogram, runner) -> None:
     assert result.exit_code != 0
 
 
+@pytest.mark.parametrize(
+    "subprogram",
+    [
+        cur.callback.__name__
+        for cur in app.registered_commands
+        if cur.callback is not None
+    ],
+)
+def test_subprograms_refuse_directories(subprogram, runner) -> None:
+    with TemporaryDirectory() as tmp_dir:
+        result = runner.invoke(app, [subprogram, "--config", tmp_dir])
+        assert tmp_dir in result.stderr
+        assert result.exit_code != 0
+
+
 def test_open_refuses_missing_config(runner) -> None:
     config_file = Path(get_random_filename())
     result = runner.invoke(app, ["open", "--config", str(config_file)])

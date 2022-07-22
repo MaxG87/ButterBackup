@@ -40,7 +40,7 @@ def setup_logging(verbosity: int) -> None:
     logger.add(sys.stderr, level=available_levels[level])
 
 
-CONFIG_OPTION = typer.Option(get_default_config_path(), exists=True)
+CONFIG_OPTION = typer.Option(get_default_config_path(), exists=True, dir_okay=False)
 VERBOSITY_OPTION = typer.Option(0, "--verbose", "-v", count=True)
 
 
