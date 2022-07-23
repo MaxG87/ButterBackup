@@ -171,7 +171,9 @@ def test_open_close_roundtrip(runner, encrypted_device) -> None:
         config_file = Path(tempf.name)
         config_file.write_text(f"[{config.json()}]")
         open_result = runner.invoke(app, ["open", "--config", str(config_file)])
-        expected_msg = f"Speichermedium {config.UUID} wurde in (?P<mount_dest>/[^ ]+) geöffnet."
+        expected_msg = (
+            f"Speichermedium {config.UUID} wurde in (?P<mount_dest>/[^ ]+) geöffnet."
+        )
         match = re.fullmatch(expected_msg, open_result.stdout.strip())
         assert match is not None
         mount_dest = Path(match.group("mount_dest"))
@@ -212,3 +214,11 @@ def test_format_device(runner, backend: str, big_file: Path) -> None:
     assert open_result.exit_code == 0
     assert close_result.exit_code == 0
     assert str(device_uuid) in open_result.stdout
+
+
+def test_version(runner) -> None:
+    result = runner.invoke(app, ["version"])
+    lines = result.stdout.splitlines()
+    assert len(lines) == 1
+    parts = lines[0].split(".")
+    assert len(parts) == 3

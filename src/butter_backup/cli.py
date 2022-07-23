@@ -8,6 +8,7 @@ from tempfile import mkdtemp
 import typer
 from loguru import logger
 
+from . import __version__
 from . import backup_backends as bb
 from . import config_parser as cp
 from . import device_managers as dm
@@ -168,6 +169,12 @@ def format_device(
     )
     config = formatter(device)
     typer.echo(f"[{config.json()}]")
+
+
+@app.command()
+def version():
+    """Gibt butter-backups aktuelle Version an"""
+    typer.echo(__version__)
 
 
 def cli() -> None:
