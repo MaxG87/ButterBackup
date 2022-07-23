@@ -10,7 +10,7 @@ from typing import Dict, Iterable, Union, overload
 
 import pytest
 
-from butter_backup import backup_logic as bl
+from butter_backup import backup_backends as bb
 from butter_backup import config_parser as cp
 from butter_backup import shell_interface as sh
 
@@ -153,7 +153,8 @@ def test_do_backup(source_directories, mounted_btrfs_device) -> None:
     for source_dir in source_directories:
         time.sleep(1)  # prevent conflicts in snapshot names
         config = complement_configuration(empty_config, source_dir)
-        bl.do_backup(config, device)
+        backend = bb.BackupBackend.from_config(config)
+        backend.do_backup(device)
     result_content = get_result_content(config, device)
     expected_content = get_expected_content(config, exclude_to_ignore_file=False)
     assert result_content == expected_content
@@ -172,7 +173,8 @@ def test_do_backup_handles_exclude_list(
         config = complement_configuration(empty_config, source_dir).copy(
             update={"ExcludePatternsFile": EXCLUDE_FILE}
         )
-        bl.do_backup(config, device)
+        backend = bb.BackupBackend.from_config(config)
+        backend.do_backup(device)
     result_content = get_result_content(config, device)
     expected_content = get_expected_content(config, exclude_to_ignore_file=True)
     assert result_content == expected_content
@@ -190,7 +192,8 @@ def test_do_backup_for_btrfs_creates_snapshots_with_timestamp_names(
         return
     folder_dest_dir = "some-folder-name"
     config = empty_config.copy(update={"Folders": {FIRST_BACKUP: folder_dest_dir}})
-    bl.do_backup(config, device)
+    backend = bb.ButterBackend(config)
+    backend.do_backup(device)
     backup_repository = device / config.BackupRepositoryFolder
     latest_folder = sorted(backup_repository.iterdir())[-1]
     expected_date = dt.date.today().isoformat()
