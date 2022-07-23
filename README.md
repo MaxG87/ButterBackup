@@ -64,7 +64,6 @@ würden nicht mehr gelistete Ziele aus der Sicherungskopie entfernt.
 - Logo erstellen
 - Struktur umgestalten hin zu `BackupDirective`, die von Datei- oder
   Ordnersicherungen abstrahieren.
-- `format-device` implementieren
 - Testsuite umstellen von Docker auf virtuelle Maschinen
 - RequiresRoot als globales Flag
 - Alias für Einzelkonfigurationen?
