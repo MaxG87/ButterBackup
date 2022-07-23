@@ -54,6 +54,20 @@ VERBOSITY_OPTION = typer.Option(0, "--verbose", "-v", count=True)
 
 @app.command()
 def open(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
+    """
+    Öffne alle in der Konfiguration gelisteten Speichermedien
+
+    Das Kommando `open` öffnet alle Speichermedien, deren UUID in der
+    Konfiguration erwähnt wird.  Für jedes geöffnete Speichermedium wird die
+    UUID und der Mount-Zielordner angegeben.
+
+    Dies Kommando ist besonders nützlich um Sicherheitskopien
+    wiederherzustellen. Dafür wird das Speichermedium, auf dem sich die
+    Sicherheitskopien befinden, mittels `butter-backup open` geöffnet. Dann
+    kann mit den Daten interagiert werden, z.B. durch Öffnen im Dateibrowser
+    oder durch Verwendung von `restic`. Nach erfolgreicher Wiederherstellung
+    kann das Speichermedium mit `butter-backup close` wieder entfernt werden.
+    """
     setup_logging(verbose)
     configurations = cp.parse_configuration(config.read_text())
     for cfg in configurations:
@@ -66,6 +80,13 @@ def open(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
 
 @app.command()
 def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
+    """
+    Schließe alle geöffneten Speichermedien
+
+    Das Kommando `close` schließt alle gemounteten Speichermedien, deren UUIDs
+    in der Konfiguration erwähnt werden. Es ist das Gegenstück des Kommandos
+    `open`. Weitere Erklärungen finden sich dort.
+    """
     setup_logging(verbose)
     configurations = cp.parse_configuration(config.read_text())
     mounted_devices = dm.get_mounted_devices()
@@ -86,6 +107,24 @@ def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
 
 @app.command()
 def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
+    """
+    Führe Sicherheitskopien durch
+
+    Für jedes angeschlossene Speichermedium wird eine Sicherheitskopie gemäß
+    der Konfiguration durchgeführt. Das Speichermedium wird hierfür
+    entschlüsselt und gemountet. Nachdem die Sicherungskopie durchgeführt
+    wurde, wird es wieder vollständig geschlossen.
+
+    Die Sicherheitskopien werden sequentiell durchgeführt. Dadurch wird
+    sichergestellt, dass auch auf HDDs brauchbare Lesegeschwindigkeiten erzielt
+    werden können.
+
+    Direkt nach Beendigung der Durchführung der Sicherheitskopien, d.h. nachdem
+    `butter-backup backup` zurückgekehrt ist oder nachdem die Durchführung der
+    Sicherheitskopien des nächsten Speichermediums begonnen wurde, kann das
+    entsprechende Speichermedium physisch entfernt werden. Eine Wartezeit oder
+    weitere manuelle Schritte sind nicht nötig.
+    """
     setup_logging(verbose)
     configurations = cp.parse_configuration(config.read_text())
     for cfg in configurations:
@@ -106,6 +145,21 @@ def format_device(
     backend: ValidBackends = typer.Argument(...),  # noqa: B008
     verbose: int = VERBOSITY_OPTION,
 ):
+    """
+    Richtet Speichermedium für butter-backup ein
+
+    Das angegebene Speichermedium wird vollständig zur Erstellung von
+    Sicherheitskopien mit `butter-backup` vorbereitet. Es wird eine
+    Konfiguration ausgegeben, die nur noch um die zu sichernden Ordner bzw.
+    Dateien ergänzt werden muss.
+
+    Die in der ausgegebenen Konfiguration enthaltenen Passwörter werden mittels
+    kryptographisch sicheren Methoden erstellt.
+
+    Es wird dringend angeraten, die Passwörter nicht in der Konfiguration zu
+    belassen, sondern in einen Passwortmanager zu tun. Der Autor verwendet
+    `butter-backup` zusammen mit dem Passwortmanager `pass`.
+    """
     setup_logging(verbose)
     formatter = (
         dm.prepare_device_for_butterbackend
