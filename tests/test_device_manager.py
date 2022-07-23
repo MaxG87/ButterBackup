@@ -5,6 +5,7 @@ import subprocess
 from collections import Counter
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
+from uuid import UUID
 
 import pytest
 from hypothesis import given
@@ -229,3 +230,12 @@ def test_generate_passcmd_samples_uniformly():
     upper_bound = 1.75 * expected_frequency
     assert all(len(char) == 1 for char in chars)
     assert all(lower_bound < (cur / nof_chars) < upper_bound for cur in chars.values())
+
+
+def test_encrypt_device(big_file) -> None:
+    pass_cmd = dm.generate_passcmd()
+    result_uuid = dm.encrypt_device(big_file, pass_cmd)
+    uuid_check_cmd = ["sudo", "cryptsetup", "luksUUID", big_file]
+    uuid_check_proc = sh.run_cmd(cmd=uuid_check_cmd, capture_output=True)
+    reported_uuid = UUID(uuid_check_proc.stdout.decode().strip())
+    assert result_uuid == reported_uuid

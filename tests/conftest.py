@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import uuid
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
@@ -37,15 +36,7 @@ def big_file():
 
 
 @pytest.fixture
-def virgin_device(big_file):
-    device_uuid = uuid.uuid4()
-    device = Path("/dev/disk/by-uuid/") / str(device_uuid)
-    with dm.symbolic_link(big_file, device):
-        yield device_uuid, device
-
-
-@pytest.fixture
-def encrypted_btrfs_device(virgin_device):
+def encrypted_btrfs_device(big_file):
     """
     Prepare device for ButterBackup and return its config
 
@@ -53,16 +44,14 @@ def encrypted_btrfs_device(virgin_device):
     -------
     config: BtrfsConfig
         configuration allowing to interact with the returned device
-    device: Path
-        temporary file prepared as encrypted BtrFS device
     """
-    device_uuid, device = virgin_device
-    config = dm.prepare_device_for_butterbackend(device_uuid)
-    yield config
+    config = dm.prepare_device_for_butterbackend(big_file)
+    with dm.symbolic_link(big_file, config.device()):
+        yield config
 
 
 @pytest.fixture
-def encrypted_restic_device(virgin_device):
+def encrypted_restic_device(big_file):
     """
     Prepare device for Restic on BtrFS and return its config
 
@@ -70,18 +59,16 @@ def encrypted_restic_device(virgin_device):
     -------
     config: ResticConfig
         configuration allowing to interact with the returned device
-    device: Path
-        temporary file prepared as encrypted BtrFS device
     """
-    device_uuid, device = virgin_device
-    config = dm.prepare_device_for_resticbackend(device_uuid)
-    yield config
+    config = dm.prepare_device_for_resticbackend(big_file)
+    with dm.symbolic_link(big_file, config.device()):
+        yield config
 
 
 @pytest.fixture(params=["encrypted_btrfs_device", "encrypted_restic_device"])
 def encrypted_device(request):
     config = request.getfixturevalue(request.param)
-    yield config
+    return config
 
 
 @pytest.fixture
@@ -89,3 +76,11 @@ def btrfs_device(encrypted_btrfs_device):
     config = encrypted_btrfs_device
     with dm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted:
         yield decrypted
+
+
+@pytest.fixture
+def mounted_btrfs_device(encrypted_device):
+    config = encrypted_device
+    with dm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted:
+        with dm.mounted_device(decrypted) as mounted_device:
+            yield config, mounted_device

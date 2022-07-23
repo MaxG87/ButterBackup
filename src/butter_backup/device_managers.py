@@ -7,7 +7,7 @@ from collections import defaultdict
 from datetime import date
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from loguru import logger
 
@@ -139,56 +139,65 @@ def close_decrypted_device(device: Path) -> None:
     sh.run_cmd(cmd=close_cmd)
 
 
-def encrypt_device(device: Path, password_cmd: str) -> None:
-    format_cmd: sh.StrPathList = ["sudo", "cryptsetup", "luksFormat", device]
+def encrypt_device(device: Path, password_cmd: str) -> UUID:
+    new_uuid = uuid4()
+    format_cmd: sh.StrPathList = [
+        "sudo",
+        "cryptsetup",
+        "luksFormat",
+        "--uuid",
+        str(new_uuid),
+        device,
+    ]
     sh.pipe_pass_cmd_to_real_cmd(pass_cmd=password_cmd, command=format_cmd)
+    return new_uuid
 
 
-def prepare_device_for_butterbackend(uuid: UUID) -> cp.BtrfsConfig:
+def prepare_device_for_butterbackend(device: Path) -> cp.BtrfsConfig:
     password_cmd = generate_passcmd()
-    config = cp.BtrfsConfig(
-        BackupRepositoryFolder="ButterBackupRepository",
-        DevicePassCmd=password_cmd,
-        Files=set(),
-        FilesDest="Einzeldateien",
-        Folders={},
-        UUID=uuid,
-    )
-    device = config.device()
-    encrypt_device(device, password_cmd)
+    backup_repository_folder = "ButterBackupRepository"
+    volume_uuid = encrypt_device(device, password_cmd)
     with decrypted_device(device, password_cmd) as decrypted:
         mkfs_btrfs(decrypted)
         with mounted_device(decrypted) as mounted:
-            backup_repository = mounted / config.BackupRepositoryFolder
+            backup_repository = mounted / backup_repository_folder
             sh.run_cmd(cmd=["sudo", "mkdir", backup_repository])
             initial_subvol = backup_repository / date.today().strftime(
                 cp.BtrfsConfig.SubvolTimestampFmt
             )
             sh.run_cmd(cmd=["sudo", "btrfs", "subvolume", "create", initial_subvol])
+    config = cp.BtrfsConfig(
+        BackupRepositoryFolder=backup_repository_folder,
+        DevicePassCmd=password_cmd,
+        Files=set(),
+        FilesDest="Einzeldateien",
+        Folders={},
+        UUID=volume_uuid,
+    )
     return config
 
 
-def prepare_device_for_resticbackend(uuid: UUID) -> cp.ResticConfig:
+def prepare_device_for_resticbackend(device: Path) -> cp.ResticConfig:
     device_passcmd = generate_passcmd()
     repository_passcmd = generate_passcmd()
-    config = cp.ResticConfig(
-        BackupRepositoryFolder="ResticBackupRepository",
-        DevicePassCmd=device_passcmd,
-        FilesAndFolders=set(),
-        RepositoryPassCmd=repository_passcmd,
-        UUID=uuid,
-    )
-    device = config.device()
-    encrypt_device(device, device_passcmd)
+    backup_repository_folder = "ResticBackupRepository"
+    volume_uuid = encrypt_device(device, device_passcmd)
     with decrypted_device(device, device_passcmd) as decrypted:
         mkfs_btrfs(decrypted)
         with mounted_device(decrypted) as mounted:
-            backup_repo = mounted / config.BackupRepositoryFolder
+            backup_repo = mounted / backup_repository_folder
             sh.run_cmd(cmd=["sudo", "mkdir", backup_repo])
             sh.pipe_pass_cmd_to_real_cmd(
                 repository_passcmd,
                 ["sudo", "restic", "init", "-r", backup_repo],
             )
+    config = cp.ResticConfig(
+        BackupRepositoryFolder=backup_repository_folder,
+        DevicePassCmd=device_passcmd,
+        FilesAndFolders=set(),
+        RepositoryPassCmd=repository_passcmd,
+        UUID=volume_uuid,
+    )
     return config
 
 

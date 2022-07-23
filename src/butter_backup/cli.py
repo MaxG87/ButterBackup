@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import enum
 import os
 import sys
 from pathlib import Path
@@ -14,6 +15,11 @@ from . import device_managers as dm
 app = typer.Typer()
 DEFAULT_CONFIG_DIR = Path("~/.config/").expanduser()
 DEFAULT_CONFIG_NAME = "butter-backup.cfg"
+
+
+class ValidBackends(enum.Enum):
+    restic = "restic"
+    butter_backup = "butter-backup"
 
 
 def get_default_config_path() -> str:
@@ -83,7 +89,30 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
     setup_logging(verbose)
     configurations = list(cp.load_configuration(config))
     for cfg in configurations:
-        bl.do_backup(cfg)
+        if not cfg.device().exists():
+            logger.info(
+                f"Gerät {cfg.UUID} existiert nicht. Es wird kein Backup angelegt."
+            )
+            continue
+        with dm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted:
+            with dm.mounted_device(decrypted) as mount_dir:
+                bl.do_backup(cfg, mount_dir)
+
+
+@app.command()
+def format_device(
+    device: Path = typer.Argument(..., exists=True, dir_okay=False),  # noqa: B008
+    backend: ValidBackends = typer.Argument(...),  # noqa: B008
+    verbose: int = VERBOSITY_OPTION,
+):
+    setup_logging(verbose)
+    formatter = (
+        dm.prepare_device_for_butterbackend
+        if backend == ValidBackends.butter_backup
+        else dm.prepare_device_for_resticbackend
+    )
+    config = formatter(device)
+    typer.echo(f"[{config.json()}]")
 
 
 def cli() -> None:

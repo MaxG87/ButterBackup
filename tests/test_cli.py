@@ -8,6 +8,7 @@ from loguru import logger
 from typer.testing import CliRunner
 
 from butter_backup import cli
+from butter_backup import config_parser as cp
 from butter_backup import device_managers as dm
 from butter_backup.cli import app
 
@@ -91,11 +92,7 @@ def test_setup_logging_clamps_level(capsys) -> None:
 
 @pytest.mark.parametrize(
     "subprogram",
-    [
-        cur.callback.__name__
-        for cur in app.registered_commands
-        if cur.callback is not None
-    ],
+    ["backup", "close", "open"],
 )
 def test_subprograms_refuse_missing_config(subprogram, runner) -> None:
     config_file = Path(get_random_filename())
@@ -107,11 +104,7 @@ def test_subprograms_refuse_missing_config(subprogram, runner) -> None:
 @pytest.mark.skipif(in_docker_container(), reason="All files are readable for root")
 @pytest.mark.parametrize(
     "subprogram",
-    [
-        cur.callback.__name__
-        for cur in app.registered_commands
-        if cur.callback is not None
-    ],
+    ["backup", "close", "open"],
 )
 def test_subprograms_refuse_unreadable_file(subprogram, runner) -> None:
     with NamedTemporaryFile() as fh:
@@ -124,11 +117,7 @@ def test_subprograms_refuse_unreadable_file(subprogram, runner) -> None:
 
 @pytest.mark.parametrize(
     "subprogram",
-    [
-        cur.callback.__name__
-        for cur in app.registered_commands
-        if cur.callback is not None
-    ],
+    ["backup", "close", "open"],
 )
 def test_subprograms_refuse_directories(subprogram, runner) -> None:
     with TemporaryDirectory() as tmp_dir:
@@ -195,3 +184,32 @@ def test_open_close_roundtrip(runner, encrypted_device) -> None:
         assert not expected_cryptsetup_map.exists()
         assert not dm.is_mounted(mount_dest)
         assert not mount_dest.exists()
+
+
+@pytest.mark.parametrize(
+    "backend", ["BackupBackend", "fvglxvleaeb", "NotYetImplementedBackend"]
+)
+def test_format_device_refuses_incorrect_backend(runner, backend: str) -> None:
+    with NamedTemporaryFile() as tempf:
+        result = runner.invoke(app, ["format-device", tempf.name, backend])
+        assert result.exit_code != 0
+        # expected_msg = f"Gerät {config.UUID} wurde in (?P<mount_dest>/[^ ]+) geöffnet."
+
+
+@pytest.mark.parametrize("backend", ["restic", "butter-backup"])
+def test_format_device(runner, backend: str, big_file: Path) -> None:
+    format_result = runner.invoke(app, ["format-device", str(big_file), backend])
+    serialised_config = format_result.stdout
+    with NamedTemporaryFile("w") as fh:
+        fh.write(serialised_config)
+        fh.seek(0)
+        config_lst = list(cp.load_configuration(Path(fh.name)))
+        assert len(config_lst) == 1
+        config = config_lst[0]
+        with dm.symbolic_link(big_file, Path(f"/dev/disk/by-uuid/{config.UUID}")):
+            open_result = runner.invoke(app, ["open", "--config", fh.name])
+            close_result = runner.invoke(app, ["close", "--config", fh.name])
+    assert format_result.exit_code == 0
+    assert open_result.exit_code == 0
+    assert close_result.exit_code == 0
+    assert str(config.UUID) in open_result.stdout

@@ -12,7 +12,6 @@ import pytest
 
 from butter_backup import backup_logic as bl
 from butter_backup import config_parser as cp
-from butter_backup import device_managers as dm
 from butter_backup import shell_interface as sh
 
 TEST_RESOURCES = Path(__file__).parent / "resources"
@@ -89,26 +88,24 @@ def get_expected_content(
 
 
 @overload
-def get_result_content(config: cp.BtrfsConfig) -> Dict[Path, bytes]:
+def get_result_content(config: cp.BtrfsConfig, mounted: Path) -> Dict[Path, bytes]:
     ...
 
 
 @overload
-def get_result_content(config: cp.ResticConfig) -> Counter[bytes]:
+def get_result_content(config: cp.ResticConfig, mounted: Path) -> Counter[bytes]:
     ...
 
 
 def get_result_content(
-    config: cp.Configuration,
+    config: cp.Configuration, mounted: Path
 ) -> Union[Counter[bytes], Dict[Path, bytes]]:
-    with dm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted:
-        with dm.mounted_device(decrypted) as mounted:
-            if isinstance(config, cp.BtrfsConfig):
-                return get_result_content_for_btrfs(config, mounted)
-            elif isinstance(config, cp.ResticConfig):
-                return get_result_content_for_restic(config, mounted)
-            else:
-                raise TypeError("Unsupported configuration encountered.")
+    if isinstance(config, cp.BtrfsConfig):
+        return get_result_content_for_btrfs(config, mounted)
+    elif isinstance(config, cp.ResticConfig):
+        return get_result_content_for_restic(config, mounted)
+    else:
+        raise TypeError("Unsupported configuration encountered.")
 
 
 def get_result_content_for_btrfs(
@@ -151,13 +148,13 @@ def get_result_content_for_restic(
     "source_directories",
     [[FIRST_BACKUP], [SECOND_BACKUP], [FIRST_BACKUP, SECOND_BACKUP]],
 )
-def test_do_backup(source_directories, encrypted_device) -> None:
-    empty_config = encrypted_device
+def test_do_backup(source_directories, mounted_btrfs_device) -> None:
+    empty_config, device = mounted_btrfs_device
     for source_dir in source_directories:
         time.sleep(1)  # prevent conflicts in snapshot names
         config = complement_configuration(empty_config, source_dir)
-        bl.do_backup(config)
-    result_content = get_result_content(config)
+        bl.do_backup(config, device)
+    result_content = get_result_content(config, device)
     expected_content = get_expected_content(config, exclude_to_ignore_file=False)
     assert result_content == expected_content
 
@@ -166,29 +163,35 @@ def test_do_backup(source_directories, encrypted_device) -> None:
     "source_directories",
     [[FIRST_BACKUP], [SECOND_BACKUP], [FIRST_BACKUP, SECOND_BACKUP]],
 )
-def test_do_backup_handles_exclude_list(source_directories, encrypted_device) -> None:
-    empty_config = encrypted_device
+def test_do_backup_handles_exclude_list(
+    source_directories, mounted_btrfs_device
+) -> None:
+    empty_config, device = mounted_btrfs_device
     for source_dir in source_directories:
         time.sleep(1)  # prevent conflicts in snapshot names
         config = complement_configuration(empty_config, source_dir).copy(
             update={"ExcludePatternsFile": EXCLUDE_FILE}
         )
-        bl.do_backup(config)
-    result_content = get_result_content(config)
+        bl.do_backup(config, device)
+    result_content = get_result_content(config, device)
     expected_content = get_expected_content(config, exclude_to_ignore_file=True)
     assert result_content == expected_content
 
 
 def test_do_backup_for_btrfs_creates_snapshots_with_timestamp_names(
-    encrypted_btrfs_device,
+    mounted_btrfs_device,
 ) -> None:
-    empty_config = encrypted_btrfs_device
+    empty_config, device = mounted_btrfs_device
+    if not isinstance(empty_config, cp.BtrfsConfig):
+        # This test works for BtrfsConfig only. However, encrypted_device on
+        # which mounted_btrfs_device depends on, is parameterised over all
+        # backends. Since this simplifies many other tests seemed to be an
+        # acceptable tradeoff to short-circuit the test here.
+        return
     folder_dest_dir = "some-folder-name"
     config = empty_config.copy(update={"Folders": {FIRST_BACKUP: folder_dest_dir}})
-    bl.do_backup(config)
-    with dm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted:
-        with dm.mounted_device(decrypted) as mounted:
-            backup_repository = mounted / config.BackupRepositoryFolder
-            latest_folder = sorted(backup_repository.iterdir())[-1]
+    bl.do_backup(config, device)
+    backup_repository = device / config.BackupRepositoryFolder
+    latest_folder = sorted(backup_repository.iterdir())[-1]
     expected_date = dt.date.today().isoformat()
     assert expected_date in str(latest_folder)
