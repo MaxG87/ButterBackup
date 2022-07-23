@@ -12,9 +12,9 @@
 
 ## Ausführung der Tests
 
-**ACHTUNG**: Aus unerfindlichen Gründen schlägt bei der ersten Ausführung der Tests
-genau ein Test fehl. Ab der zweiten Ausführung ist die Test-Suite aber robust
-und zuverlässig.
+**ACHTUNG**: Es gibt einen Konflikt mit Docker, der dazu führt, dass genau ein
+Test der Testsuite bei der ersten Ausführung fehlschlägt. Ab der zweiten
+Ausführung ist die Test-Suite aber robust und zuverlässig.
 
 ### Schnell
 
