@@ -200,16 +200,16 @@ def test_format_device_refuses_incorrect_backend(runner, backend: str) -> None:
 def test_format_device(runner, backend: str, big_file: Path) -> None:
     format_result = runner.invoke(app, ["format-device", str(big_file), backend])
     serialised_config = format_result.stdout
+    config_lst = list(cp.parse_configuration(serialised_config))
+    assert len(config_lst) == 1
+    device_uuid = config_lst[0].UUID
     with NamedTemporaryFile("w") as fh:
         fh.write(serialised_config)
         fh.seek(0)
-        config_lst = list(cp.load_configuration(Path(fh.name)))
-        assert len(config_lst) == 1
-        config = config_lst[0]
-        with dm.symbolic_link(big_file, Path(f"/dev/disk/by-uuid/{config.UUID}")):
+        with dm.symbolic_link(big_file, Path(f"/dev/disk/by-uuid/{device_uuid}")):
             open_result = runner.invoke(app, ["open", "--config", fh.name])
             close_result = runner.invoke(app, ["close", "--config", fh.name])
     assert format_result.exit_code == 0
     assert open_result.exit_code == 0
     assert close_result.exit_code == 0
-    assert str(config.UUID) in open_result.stdout
+    assert str(device_uuid) in open_result.stdout

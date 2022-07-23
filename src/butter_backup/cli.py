@@ -55,7 +55,7 @@ VERBOSITY_OPTION = typer.Option(0, "--verbose", "-v", count=True)
 @app.command()
 def open(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
     setup_logging(verbose)
-    configurations = list(cp.load_configuration(config))
+    configurations = cp.parse_configuration(config.read_text())
     for cfg in configurations:
         if cfg.device().exists():
             mount_dir = Path(mkdtemp())
@@ -67,7 +67,7 @@ def open(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
 @app.command()
 def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
     setup_logging(verbose)
-    configurations = list(cp.load_configuration(config))
+    configurations = cp.parse_configuration(config.read_text())
     mounted_devices = dm.get_mounted_devices()
     for cfg in configurations:
         mapped_device = f"/dev/mapper/{cfg.UUID}"
@@ -87,7 +87,7 @@ def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
 @app.command()
 def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
     setup_logging(verbose)
-    configurations = list(cp.load_configuration(config))
+    configurations = cp.parse_configuration(config.read_text())
     for cfg in configurations:
         if not cfg.device().exists():
             logger.info(

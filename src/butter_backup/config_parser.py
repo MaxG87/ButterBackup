@@ -5,20 +5,18 @@ import sys
 import uuid
 from collections import Counter
 from pathlib import Path
-from typing import ClassVar, Dict, Iterable, Optional, Set, Union
+from typing import ClassVar, Dict, List, Optional, Set, Union
 
-from loguru import logger
 from pydantic import (
     BaseModel,
     DirectoryPath,
     Extra,
     FilePath,
-    ValidationError,
+    parse_raw_as,
     root_validator,
     validator,
 )
 
-Configuration = Union["BtrfsConfig", "ResticConfig"]
 FoldersT = Dict[DirectoryPath, str]
 
 
@@ -139,41 +137,11 @@ class ResticConfig(BaseModel):
         return str(self.UUID)
 
 
-def load_configuration(cfg_file: Path) -> Iterable[Union[BtrfsConfig, ResticConfig]]:
-    """Lade, parse und validiere die Konfigurationsdatei"""
-    if not cfg_file.exists():
-        err_msg = f"Konfigurationsdatei {cfg_file} existiert nicht."
-        help_hint = "Nutzen Sie `--help` um zu erfahren, wie eine Konfigurationsdatei explizit angegeben werden kann."
-        sys.exit(f"{err_msg} {help_hint}\n")
-
-    config_lst = json.loads(cfg_file.read_text())
-    ensure_valid_config_json_list(config_lst)
-    logger.success(f"Konfigurationsdatei {cfg_file} erfolgreich eingelesen.")
-    logger.info(f"Konfigurationsdatei {cfg_file} enthält {len(config_lst)} Einträge.")
-
-    for raw_cfg in config_lst:
-        # TODO Einige Validierungsfehler dürfen nicht zum Programmabbruch
-        # führen. Ein Beispiel wären fehlende Dateien. Dadurch würde es
-        # möglich, einen gemeinsaman Satz Konfigurationen für verschiedene
-        # Rechner zu nutzen.
-        config: Configuration
-        try:
-            type_ = "BtrFS"
-            config = BtrfsConfig.parse_obj(raw_cfg)
-        except ValidationError:
-            type_ = "Restic"
-            config = ResticConfig.parse_obj(raw_cfg)
-        logger.success(
-            f"{type_}-Konfiguration für UUID {config.UUID} erfolgreich geparst."
-        )
-        yield config
+Configuration = Union[BtrfsConfig, ResticConfig]
 
 
-def ensure_valid_config_json_list(config_lst):
-    # Getestet durch Tests für `load_configuration`.
+def parse_configuration(content: str) -> list[Configuration]:
+    config_lst = parse_raw_as(List[Configuration], content)
     if len(config_lst) == 0:
         sys.exit("Leere Konfigurationsdateien sind nicht erlaubt.\n")
-    if not isinstance(config_lst, list):
-        sys.exit("Die Konfiguration muss eine JSON-Liste sein!")
-    if not all(isinstance(elem, dict) for elem in config_lst):
-        sys.exit("Alle Einträge müssen ein JSON-Dictionary sein.")
+    return config_lst
