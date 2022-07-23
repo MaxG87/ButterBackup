@@ -8,6 +8,7 @@ from loguru import logger
 from typer.testing import CliRunner
 
 from butter_backup import cli
+from butter_backup import config_parser as cp
 from butter_backup import device_managers as dm
 from butter_backup.cli import app
 
@@ -156,15 +157,6 @@ def test_open_close_roundtrip(runner, encrypted_device) -> None:
         assert not mount_dest.exists()
 
 
-@pytest.mark.parametrize("backend", ["restic", "butter-backup"])
-def test_format_device_accepts_correct_backend(
-    runner, backend: str, big_file: Path
-) -> None:
-    result = runner.invoke(app, ["format-device", str(big_file), backend])
-    assert result.exit_code == 0
-    # expected_msg = f"Gerät {config.UUID} wurde in (?P<mount_dest>/[^ ]+) geöffnet."
-
-
 @pytest.mark.parametrize(
     "backend", ["BackupBackend", "fvglxvleaeb", "NotYetImplementedBackend"]
 )
@@ -173,3 +165,14 @@ def test_format_device_refuses_incorrect_backend(runner, backend: str) -> None:
         result = runner.invoke(app, ["format-device", tempf.name, backend])
         assert result.exit_code != 0
         # expected_msg = f"Gerät {config.UUID} wurde in (?P<mount_dest>/[^ ]+) geöffnet."
+
+
+@pytest.mark.parametrize("backend", ["restic", "butter-backup"])
+def test_format_device(runner, backend: str, big_file: Path) -> None:
+    format_result = runner.invoke(app, ["format-device", str(big_file), backend])
+    serialised_config = format_result.stdout
+    with NamedTemporaryFile("w") as fh:
+        fh.write(serialised_config)
+        fh.seek(0)
+        config_lst = list(cp.load_configuration(Path(fh.name)))
+        assert len(config_lst) == 1

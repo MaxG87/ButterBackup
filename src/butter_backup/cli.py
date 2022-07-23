@@ -104,6 +104,13 @@ def format_device(
     verbose: int = VERBOSITY_OPTION,
 ):
     setup_logging(verbose)
+    formatter = (
+        dm.prepare_device_for_butterbackend
+        if backend == ValidBackends.butter_backup
+        else dm.prepare_device_for_resticbackend
+    )
+    config = formatter(device)
+    typer.echo(f"[{config.json()}]")
 
 
 def cli() -> None:
