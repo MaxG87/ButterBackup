@@ -193,7 +193,6 @@ def test_format_device_refuses_incorrect_backend(runner, backend: str) -> None:
     with NamedTemporaryFile() as tempf:
         result = runner.invoke(app, ["format-device", tempf.name, backend])
         assert result.exit_code != 0
-        # expected_msg = f"Gerät {config.UUID} wurde in (?P<mount_dest>/[^ ]+) geöffnet."
 
 
 @pytest.mark.parametrize("backend", ["restic", "butter-backup"])
