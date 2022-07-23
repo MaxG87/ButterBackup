@@ -42,7 +42,7 @@ class ButterBackend(BackupBackend):
     config: cp.BtrfsConfig
 
     def do_backup(self, mount_dir: Path) -> None:
-        logger.info(f"Beginne mit BtrFS-Backup für Gerät {self.config.UUID}.")
+        logger.info(f"Beginne mit BtrFS-Backup für Speichermedium {self.config.UUID}.")
         backup_repository = mount_dir / self.config.BackupRepositoryFolder
         backup_root = backup_repository / dt.datetime.now().strftime(
             self.config.SubvolTimestampFmt
@@ -94,7 +94,7 @@ class ResticBackend(BackupBackend):
     config: cp.ResticConfig
 
     def do_backup(self, mount_dir: Path) -> None:
-        logger.info(f"Beginne mit Restic-Backup für Gerät {self.config.UUID}.")
+        logger.info(f"Beginne mit Restic-Backup für Speichermedium {self.config.UUID}.")
         restic_cmd: sh.StrPathList = [
             "sudo",
             "restic",

@@ -22,12 +22,14 @@ class InvalidDecryptedDevice(ValueError):
 @contextlib.contextmanager
 def decrypted_device(device: Path, pass_cmd: str):
     decrypted = open_encrypted_device(device, pass_cmd)
-    logger.success(f"Gerät {device} erfolgreich entschlüsselt.")
+    logger.success(f"Speichermedium {device} erfolgreich entschlüsselt.")
     try:
         yield decrypted
     finally:
         close_decrypted_device(decrypted)
-        logger.success(f"Verschlüsselung des Gerätes {device} erfolgreich geschlossen.")
+        logger.success(
+            f"Verschlüsselung des Speichermediums {device} erfolgreich geschlossen."
+        )
 
 
 @contextlib.contextmanager
@@ -37,12 +39,14 @@ def mounted_device(device: Path):
     with TemporaryDirectory() as td:
         mount_dir = Path(td)
         mount_btrfs_device(device, Path(mount_dir))
-        logger.success(f"Gerät {device} erfolgreich nach {mount_dir} gemountet.")
+        logger.success(
+            f"Speichermedium {device} erfolgreich nach {mount_dir} gemountet."
+        )
         try:
             yield Path(mount_dir)
         finally:
             unmount_device(device)
-            logger.success(f"Gerät {device} erfolgreich ausgehangen.")
+            logger.success(f"Speichermedium {device} erfolgreich ausgehangen.")
 
 
 @contextlib.contextmanager
@@ -101,9 +105,9 @@ def is_mounted(dest: Path) -> bool:
     dest_as_str = str(dest)
     try:
         mount_dest = get_mounted_devices()[dest_as_str]
-        logger.info(f"Mount des Gerät {dest} in {mount_dest} gefunden.")
+        logger.info(f"Mount des Speichermediums {dest} in {mount_dest} gefunden.")
     except KeyError:
-        logger.info(f"Kein Mountpunkt für Gerät {dest} gefunden.")
+        logger.info(f"Kein Mountpunkt für Speichermedium {dest} gefunden.")
         return False
     return True
 

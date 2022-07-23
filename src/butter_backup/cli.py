@@ -75,7 +75,7 @@ def open(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
             mount_dir = Path(mkdtemp())
             decrypted = dm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
             dm.mount_btrfs_device(decrypted, mount_dir=mount_dir)
-            typer.echo(f"Gerät {cfg.UUID} wurde in {mount_dir} geöffnet.")
+            typer.echo(f"Speichermedium {cfg.UUID} wurde in {mount_dir} geöffnet.")
 
 
 @app.command()
@@ -130,7 +130,7 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
     for cfg in configurations:
         if not cfg.device().exists():
             logger.info(
-                f"Gerät {cfg.UUID} existiert nicht. Es wird kein Backup angelegt."
+                f"Speichermedium {cfg.UUID} existiert nicht. Es wird kein Backup angelegt."
             )
             continue
         backend = bb.BackupBackend.from_config(cfg)
