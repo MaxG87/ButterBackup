@@ -47,9 +47,7 @@ def setup_logging(verbosity: int) -> None:
     logger.add(sys.stderr, level=available_levels[level])
 
 
-CONFIG_OPTION = typer.Option(
-    get_default_config_path(), exists=True, dir_okay=False, readable=True
-)
+CONFIG_OPTION = typer.Option(get_default_config_path(), exists=True, dir_okay=False)
 VERBOSITY_OPTION = typer.Option(0, "--verbose", "-v", count=True)
 
 
@@ -142,7 +140,9 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
 
 @app.command()
 def format_device(
-    device: Path = typer.Argument(..., exists=True, dir_okay=False),  # noqa: B008
+    device: Path = typer.Argument(  # noqa: B008
+        ..., exists=True, dir_okay=False, readable=False
+    ),
     backend: ValidBackends = typer.Argument(...),  # noqa: B008
     verbose: int = VERBOSITY_OPTION,
 ):
