@@ -186,9 +186,9 @@ def test_do_backup_for_btrfs_creates_snapshots_with_timestamp_names(
     empty_config, device = mounted_btrfs_device
     if not isinstance(empty_config, cp.BtrfsConfig):
         # This test works for BtrfsConfig only. However, encrypted_device on
-        # which mounted_btrfs_device depends on, is parameterised over all
-        # backends. Since this simplifies many other tests seemed to be an
-        # acceptable tradeoff to short-circuit the test here.
+        # which mounted_device depends on, is parameterised over all backends.
+        # Since this simplifies many other tests it seemed to be an acceptable
+        # tradeoff to short-circuit the test here.
         return
     folder_dest_dir = "some-folder-name"
     config = empty_config.copy(update={"Folders": {FIRST_BACKUP: folder_dest_dir}})
