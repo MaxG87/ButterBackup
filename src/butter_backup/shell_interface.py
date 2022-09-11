@@ -38,3 +38,19 @@ def pipe_pass_cmd_to_real_cmd(
     pwd_proc = subprocess.run(pass_cmd, stdout=subprocess.PIPE, shell=True, check=True)
     completed_process = subprocess.run(command, input=pwd_proc.stdout, check=True)
     return completed_process
+
+
+def get_user() -> str:
+    """Get user who started ButterBackup
+
+    This function will determine the user who is running ButterBackup. It does
+    so by reading out the USER environment variable. In cases where this
+    variable does not exist, e.g. in Docker containers, it assumes that the
+    user is root.
+
+    Returns:
+    --------
+    str
+        user name of user who started ButterBackup
+    """
+    return os.environ.get("USER", default="root")

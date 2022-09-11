@@ -95,12 +95,29 @@ class ResticBackend(BackupBackend):
 
     def do_backup(self, mount_dir: Path) -> None:
         logger.info(f"Beginne mit Restic-Backup für Speichermedium {self.config.UUID}.")
+        backup_repository = mount_dir / self.config.BackupRepositoryFolder
+        self.copy_files(backup_repository)
+        self.adapt_ownership(backup_repository)
+
+    @staticmethod
+    def adapt_ownership(backup_repository: Path) -> None:
+        user = sh.get_user()
+        chown_cmd: sh.StrPathList = [
+            "sudo",
+            "chown",
+            "-R",
+            f"{user}:{user}",
+            backup_repository,
+        ]
+        sh.run_cmd(cmd=chown_cmd)
+
+    def copy_files(self, backup_repository: Path) -> None:
         restic_cmd: sh.StrPathList = [
             "sudo",
             "restic",
             "backup",
             "--repo",
-            mount_dir / self.config.BackupRepositoryFolder,
+            backup_repository,
         ]
         if self.config.ExcludePatternsFile is not None:
             restic_cmd.extend(["--exclude-file", self.config.ExcludePatternsFile])

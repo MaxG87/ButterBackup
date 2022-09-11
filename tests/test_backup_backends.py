@@ -196,3 +196,29 @@ def test_do_backup_for_btrfs_creates_snapshots_with_timestamp_names(
     latest_folder = sorted(backup_repository.iterdir())[-1]
     expected_date = dt.date.today().isoformat()
     assert expected_date in str(latest_folder)
+
+
+@pytest.mark.parametrize(
+    "source_directories",
+    [[FIRST_BACKUP], [SECOND_BACKUP], [FIRST_BACKUP, SECOND_BACKUP]],
+)
+def test_do_backup_for_restic_adapts_ownership(
+    source_directories, mounted_device
+) -> None:
+    empty_config, device = mounted_device
+    if not isinstance(empty_config, cp.ResticConfig):
+        # This test works for ResticConfig only. However, encrypted_device on
+        # which mounted_device depends on, is parameterised over all backends.
+        # Since this simplifies many other tests it seemed to be an acceptable
+        # tradeoff to short-circuit the test here.
+        return
+    for source_dir in source_directories:
+        config = complement_configuration(empty_config, source_dir)
+        backend = bb.BackupBackend.from_config(config)
+        backend.do_backup(device)
+
+    expected_user = sh.get_user()
+    found_user = {
+        cur_f.owner() for cur_f in (device / config.BackupRepositoryFolder).rglob("*")
+    }
+    assert found_user == {expected_user}
