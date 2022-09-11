@@ -127,7 +127,6 @@ def get_result_content_for_restic(
         sh.pipe_pass_cmd_to_real_cmd(
             config.RepositoryPassCmd,
             [
-                "sudo",
                 "restic",
                 "-r",
                 mounted / config.BackupRepositoryFolder,
@@ -137,8 +136,6 @@ def get_result_content_for_restic(
                 restore_dir,
             ],
         )
-        # Fix permissions to be able to list directory without sudo-helpers.
-        sh.run_cmd(cmd=["sudo", "chown", "-R", USER, restore_dir])
         return Counter(
             file.read_bytes() for file in list_files_recursively(Path(restore_dir))
         )
