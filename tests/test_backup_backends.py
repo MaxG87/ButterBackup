@@ -127,7 +127,6 @@ def get_result_content_for_restic(
         sh.pipe_pass_cmd_to_real_cmd(
             config.RepositoryPassCmd,
             [
-                "sudo",
                 "restic",
                 "-r",
                 mounted / config.BackupRepositoryFolder,
@@ -137,8 +136,6 @@ def get_result_content_for_restic(
                 restore_dir,
             ],
         )
-        # Fix permissions to be able to list directory without sudo-helpers.
-        sh.run_cmd(cmd=["sudo", "chown", "-R", USER, restore_dir])
         return Counter(
             file.read_bytes() for file in list_files_recursively(Path(restore_dir))
         )
@@ -148,8 +145,8 @@ def get_result_content_for_restic(
     "source_directories",
     [[FIRST_BACKUP], [SECOND_BACKUP], [FIRST_BACKUP, SECOND_BACKUP]],
 )
-def test_do_backup(source_directories, mounted_btrfs_device) -> None:
-    empty_config, device = mounted_btrfs_device
+def test_do_backup(source_directories, mounted_device) -> None:
+    empty_config, device = mounted_device
     for source_dir in source_directories:
         time.sleep(1)  # prevent conflicts in snapshot names
         config = complement_configuration(empty_config, source_dir)
@@ -164,10 +161,8 @@ def test_do_backup(source_directories, mounted_btrfs_device) -> None:
     "source_directories",
     [[FIRST_BACKUP], [SECOND_BACKUP], [FIRST_BACKUP, SECOND_BACKUP]],
 )
-def test_do_backup_handles_exclude_list(
-    source_directories, mounted_btrfs_device
-) -> None:
-    empty_config, device = mounted_btrfs_device
+def test_do_backup_handles_exclude_list(source_directories, mounted_device) -> None:
+    empty_config, device = mounted_device
     for source_dir in source_directories:
         time.sleep(1)  # prevent conflicts in snapshot names
         config = complement_configuration(empty_config, source_dir).copy(
@@ -181,14 +176,14 @@ def test_do_backup_handles_exclude_list(
 
 
 def test_do_backup_for_btrfs_creates_snapshots_with_timestamp_names(
-    mounted_btrfs_device,
+    mounted_device,
 ) -> None:
-    empty_config, device = mounted_btrfs_device
+    empty_config, device = mounted_device
     if not isinstance(empty_config, cp.BtrfsConfig):
         # This test works for BtrfsConfig only. However, encrypted_device on
-        # which mounted_btrfs_device depends on, is parameterised over all
-        # backends. Since this simplifies many other tests seemed to be an
-        # acceptable tradeoff to short-circuit the test here.
+        # which mounted_device depends on, is parameterised over all backends.
+        # Since this simplifies many other tests it seemed to be an acceptable
+        # tradeoff to short-circuit the test here.
         return
     folder_dest_dir = "some-folder-name"
     config = empty_config.copy(update={"Folders": {FIRST_BACKUP: folder_dest_dir}})
@@ -198,3 +193,29 @@ def test_do_backup_for_btrfs_creates_snapshots_with_timestamp_names(
     latest_folder = sorted(backup_repository.iterdir())[-1]
     expected_date = dt.date.today().isoformat()
     assert expected_date in str(latest_folder)
+
+
+@pytest.mark.parametrize(
+    "source_directories",
+    [[FIRST_BACKUP], [SECOND_BACKUP], [FIRST_BACKUP, SECOND_BACKUP]],
+)
+def test_do_backup_for_restic_adapts_ownership(
+    source_directories, mounted_device
+) -> None:
+    empty_config, device = mounted_device
+    if not isinstance(empty_config, cp.ResticConfig):
+        # This test works for ResticConfig only. However, encrypted_device on
+        # which mounted_device depends on, is parameterised over all backends.
+        # Since this simplifies many other tests it seemed to be an acceptable
+        # tradeoff to short-circuit the test here.
+        return
+    for source_dir in source_directories:
+        config = complement_configuration(empty_config, source_dir)
+        backend = bb.BackupBackend.from_config(config)
+        backend.do_backup(device)
+
+    expected_user = sh.get_user()
+    found_user = {
+        cur_f.owner() for cur_f in (device / config.BackupRepositoryFolder).rglob("*")
+    }
+    assert found_user == {expected_user}
