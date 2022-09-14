@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "butter-backup"
-version = "2.1.1"
+version = "2.2.0"
 description = "Vollverschlüsselte, pseudoinkrementelle Sicherungskopien leicht gemacht"
 authors = ["Max Görner <max@familie-goerner.eu>"]
 license = "GPL-3.0-or-later"
