@@ -148,8 +148,8 @@ def get_result_content_for_restic(
     "source_directories",
     [[FIRST_BACKUP], [SECOND_BACKUP], [FIRST_BACKUP, SECOND_BACKUP]],
 )
-def test_do_backup(source_directories, mounted_btrfs_device) -> None:
-    empty_config, device = mounted_btrfs_device
+def test_do_backup(source_directories, mounted_device) -> None:
+    empty_config, device = mounted_device
     for source_dir in source_directories:
         time.sleep(1)  # prevent conflicts in snapshot names
         config = complement_configuration(empty_config, source_dir)
@@ -164,10 +164,8 @@ def test_do_backup(source_directories, mounted_btrfs_device) -> None:
     "source_directories",
     [[FIRST_BACKUP], [SECOND_BACKUP], [FIRST_BACKUP, SECOND_BACKUP]],
 )
-def test_do_backup_handles_exclude_list(
-    source_directories, mounted_btrfs_device
-) -> None:
-    empty_config, device = mounted_btrfs_device
+def test_do_backup_handles_exclude_list(source_directories, mounted_device) -> None:
+    empty_config, device = mounted_device
     for source_dir in source_directories:
         time.sleep(1)  # prevent conflicts in snapshot names
         config = complement_configuration(empty_config, source_dir).copy(
@@ -181,9 +179,9 @@ def test_do_backup_handles_exclude_list(
 
 
 def test_do_backup_for_btrfs_creates_snapshots_with_timestamp_names(
-    mounted_btrfs_device,
+    mounted_device,
 ) -> None:
-    empty_config, device = mounted_btrfs_device
+    empty_config, device = mounted_device
     if not isinstance(empty_config, cp.BtrfsConfig):
         # This test works for BtrfsConfig only. However, encrypted_device on
         # which mounted_device depends on, is parameterised over all backends.
