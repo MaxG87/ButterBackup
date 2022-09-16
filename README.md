@@ -29,7 +29,7 @@ Plattformabhängigkeiten erkennen kann. Die Docker-Tests existieren überhaupt
 nur, weil es Probleme mit Arch gab.
 
 Die Testsuite kann mittels `make` ausgeführt werden. Es ist auch eine
-Paralellisierung mittels `make -j N` möglich, wobei N die Anzahl der Prozesse
+Parallelisierung mittels `make -j N` möglich, wobei N die Anzahl der Prozesse
 angibt.
 
 ## Ähnliche Projekte
@@ -63,7 +63,6 @@ würden nicht mehr gelistete Ziele aus der Sicherungskopie entfernt.
 - README schreiben und übersetzen
 - Logo erstellen
 - Testsuite umstellen von Docker auf virtuelle Maschinen
-- RequiresRoot als globales Flag
 - Alias für Einzelkonfigurationen?
 - butter-backup exec / run
   * nimmt Befehl als Zeichenkette und führt diesen im BackupRootDir aus
@@ -72,3 +71,4 @@ würden nicht mehr gelistete Ziele aus der Sicherungskopie entfernt.
 - Verbesserte Fehlermeldungen
   * wenn unmount nicht möglich ist
   * wenn BackupRepository nicht vorhanden ist
+- SudoPassCmd
