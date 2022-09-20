@@ -215,7 +215,12 @@ def test_do_backup_for_restic_adapts_ownership(
         backend.do_backup(device)
 
     expected_user = sh.get_user()
+    expected_group = sh.get_group(expected_user)
     found_user = {
         cur_f.owner() for cur_f in (device / config.BackupRepositoryFolder).rglob("*")
     }
+    found_group = {
+        cur_f.group() for cur_f in (device / config.BackupRepositoryFolder).rglob("*")
+    }
     assert found_user == {expected_user}
+    assert found_group == {expected_group}
