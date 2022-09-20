@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import getpass
 import os
 import subprocess
 from pathlib import Path
@@ -43,17 +44,14 @@ def pipe_pass_cmd_to_real_cmd(
 def get_user() -> str:
     """Get user who started ButterBackup
 
-    This function will determine the user who is running ButterBackup. It does
-    so by reading out the USER environment variable. In cases where this
-    variable does not exist, e.g. in Docker containers, it assumes that the
-    user is root.
+    This function will determine the user who is running ButterBackup.
 
     Returns:
     --------
     str
         user name of user who started ButterBackup
     """
-    return os.environ.get("USER", default="root")
+    return getpass.getuser()
 
 
 def get_group(user: str) -> str:
