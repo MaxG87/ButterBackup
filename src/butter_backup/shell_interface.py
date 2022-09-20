@@ -54,3 +54,19 @@ def get_user() -> str:
         user name of user who started ButterBackup
     """
     return os.environ.get("USER", default="root")
+
+
+def get_group(user: str) -> str:
+    """Get group of a given user
+
+    This function will determine the "effective" group of the specified user.
+    For this it relies on the `id` program from GNU coreutils.
+
+    Returns:
+    --------
+    str
+        name of the group of the specified user
+    """
+    raw_group = run_cmd(cmd=["id", "-gn", user], capture_output=True)
+    group = raw_group.stdout.decode().splitlines()[0]
+    return group

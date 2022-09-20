@@ -102,9 +102,7 @@ class ResticBackend(BackupBackend):
     @staticmethod
     def adapt_ownership(backup_repository: Path) -> None:
         user = sh.get_user()
-        group_cmd: sh.StrPathList = ["id", "-gn", user]
-        raw_group = sh.run_cmd(cmd=group_cmd, capture_output=True)
-        group = raw_group.stdout.decode().splitlines()[0]
+        group = sh.get_group(user)
         chown_cmd: sh.StrPathList = [
             "sudo",
             "chown",
