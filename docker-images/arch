@@ -10,10 +10,14 @@ RUN pacman-key --populate archlinux
 RUN pacman -Syu --noconfirm
 RUN pacman -S --noconfirm btrfs-progs cryptsetup curl make python python-pip restic rsync sudo
 
-# Create a new user with a group that is not the username
+# Create a new user with a group that is not the username. This is required to
+# ensure that resetting the ownership of restic's backup repository uses the
+# correct group. Using the username as group was a bug causing backups to fail
+# for some users.
 RUN groupadd testgroup
 RUN groupadd sudo
 RUN useradd -ms /bin/bash -g testgroup testuser
+
 # Ensure sudo group users are not asked for a password when using sudo command
 # by ammending sudoers file.
 # See https://dev.to/emmanuelnk/using-sudo-without-password-prompt-as-non-root-docker-user-52bg
@@ -45,4 +49,3 @@ COPY setup.cfg .
 # Create /dev/disk/by-uuid/. It is required by the test suite but not available
 # in Docker containers by default.
 CMD sudo mkdir -p /dev/disk/by-uuid/ && poetry run pytest --no-cov .
- 
