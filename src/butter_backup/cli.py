@@ -146,7 +146,12 @@ def format_device(
     device: Path = typer.Argument(  # noqa: B008
         ..., exists=True, dir_okay=False, readable=False
     ),
-    config_to: Optional[Path] = typer.Option(None),  # noqa: B008
+    config_to: Optional[Path] = typer.Option(  # noqa: B008
+        None,
+        help="Datei, in welche die generierte Konfiguration geschrieben werden"
+        " soll. Die angegebene Datei darf nicht existieren. Wenn nicht"
+        " angegeben, wird die Konfiguration auf STDOUT ausgegeben.",
+    ),
     verbose: int = VERBOSITY_OPTION,
 ):
     """
