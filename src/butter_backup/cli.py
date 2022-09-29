@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import enum
+import json
 import os
 import sys
 from pathlib import Path
@@ -168,7 +169,8 @@ def format_device(
         else dm.prepare_device_for_resticbackend
     )
     config = formatter(device)
-    typer.echo(f"[{config.json()}]")
+    json_serialisable = json.loads(config.json(exclude_none=True))
+    typer.echo(json.dumps([json_serialisable], indent=4, sort_keys=True))
 
 
 @app.command()
