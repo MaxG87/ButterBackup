@@ -5,6 +5,7 @@ import os
 import sys
 from pathlib import Path
 from tempfile import mkdtemp
+from typing import Any, Callable, Optional
 
 import typer
 from loguru import logger
@@ -145,6 +146,7 @@ def format_device(
     device: Path = typer.Argument(  # noqa: B008
         ..., exists=True, dir_okay=False, readable=False
     ),
+    config_to: Optional[Path] = typer.Option(None),  # noqa: B008
     verbose: int = VERBOSITY_OPTION,
 ):
     """
@@ -163,6 +165,15 @@ def format_device(
     `butter-backup` zusammen mit dem Passwortmanager `pass`.
     """
     setup_logging(verbose)
+    config_writer: Callable[[str], Any]
+    if config_to is None:
+        config_writer = typer.echo
+    else:
+        if config_to.exists():
+            raise ValueError(
+                "Zieldatei für ButterBackup-Konfiguration existiert schon!"
+            )
+        config_writer = config_to.write_text
     formatter = (
         dm.prepare_device_for_butterbackend
         if backend == ValidBackends.butter_backup
@@ -170,7 +181,7 @@ def format_device(
     )
     config = formatter(device)
     json_serialisable = json.loads(config.json(exclude_none=True))
-    typer.echo(json.dumps([json_serialisable], indent=4, sort_keys=True))
+    config_writer(json.dumps([json_serialisable], indent=4, sort_keys=True))
 
 
 @app.command()
