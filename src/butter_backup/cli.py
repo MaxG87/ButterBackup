@@ -140,10 +140,10 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
 
 @app.command()
 def format_device(
+    backend: ValidBackends = typer.Argument(...),  # noqa: B008
     device: Path = typer.Argument(  # noqa: B008
         ..., exists=True, dir_okay=False, readable=False
     ),
-    backend: ValidBackends = typer.Argument(...),  # noqa: B008
     verbose: int = VERBOSITY_OPTION,
 ):
     """
