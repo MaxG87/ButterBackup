@@ -117,6 +117,7 @@ class ResticBackend(BackupBackend):
             "sudo",
             "restic",
             "backup",
+            "--one-file-system",
             "--repo",
             backup_repository,
         ]
