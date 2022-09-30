@@ -18,7 +18,6 @@
 
 [![asciicast](https://asciinema.org/a/HTFzRxEWw8ltCoP6NDNo6tITP.svg)](https://asciinema.org/a/HTFzRxEWw8ltCoP6NDNo6tITP)
 
-
 ## Gefährdungsszenario
 
 ButterBackup wurde entworfen, um gegen eine Reihe spezieller
