@@ -84,10 +84,6 @@ Die Testsuite kann mittels `make` ausgeführt werden. Es ist auch eine
 Parallelisierung mittels `make -j N` möglich, wobei N die Anzahl der Prozesse
 angibt.
 
-## Ähnliche Projekte
-
-- https://digint.ch/btrbk/
-
 ## Designentscheidungen
 
 ### Beibehaltung von nicht mehr vermerkten Zielordnern und -dateien
