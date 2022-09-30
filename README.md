@@ -107,7 +107,6 @@ würden nicht mehr gelistete Ziele aus der Sicherungskopie entfernt.
 ## Ausstehende Aufgaben
 
 - README schreiben und übersetzen
-- Logo erstellen
 - Testsuite umstellen von Docker auf virtuelle Maschinen
 - Alias für Einzelkonfigurationen?
 - butter-backup exec / run
