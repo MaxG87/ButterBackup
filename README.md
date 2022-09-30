@@ -105,10 +105,10 @@ würden nicht mehr gelistete Ziele aus der Sicherungskopie entfernt.
 - Testsuite umstellen von Docker auf virtuelle Maschinen
 - Alias für Einzelkonfigurationen?
 - butter-backup exec / run
-  * nimmt Befehl als Zeichenkette und führt diesen im BackupRootDir aus
-  * butter-backup exec [<uuid>] <cmd>  --> open; cd; cmd; cd -; close
-  * sollte Mapping auf Umgebungsvariablen unterstützen, z.B. RepoPassCmd -> RESTIC_PASSWORD_COMMAND
+  - nimmt Befehl als Zeichenkette und führt diesen im BackupRootDir aus
+  - butter-backup exec [<uuid>] <cmd> --> open; cd; cmd; cd -; close
+  - sollte Mapping auf Umgebungsvariablen unterstützen, z.B. RepoPassCmd -> RESTIC_PASSWORD_COMMAND
 - Verbesserte Fehlermeldungen
-  * wenn unmount nicht möglich ist
-  * wenn BackupRepository nicht vorhanden ist
+  - wenn unmount nicht möglich ist
+  - wenn BackupRepository nicht vorhanden ist
 - SudoPassCmd
