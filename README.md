@@ -117,3 +117,4 @@ würden nicht mehr gelistete Ziele aus der Sicherungskopie entfernt.
   - wenn unmount nicht möglich ist
   - wenn BackupRepository nicht vorhanden ist
 - SudoPassCmd
+- Konfiguration der gewünschten Kompression ermöglichen (zlib, zstd, none, etc.)
