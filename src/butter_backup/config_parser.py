@@ -30,7 +30,7 @@ def path_aware_restic_json_decoding(v, *, default) -> str:
     return json.dumps(v, default=default)
 
 
-class BtrfsConfig(BaseModel):
+class BtrFSRsyncConfig(BaseModel):
     BackupRepositoryFolder: str
     DevicePassCmd: str
     ExcludePatternsFile: Optional[FilePath] = None
@@ -137,7 +137,7 @@ class ResticConfig(BaseModel):
         return str(self.UUID)
 
 
-Configuration = Union[BtrfsConfig, ResticConfig]
+Configuration = Union[BtrFSRsyncConfig, ResticConfig]
 
 
 def parse_configuration(content: str) -> list[Configuration]:

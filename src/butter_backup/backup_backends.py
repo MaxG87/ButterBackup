@@ -19,7 +19,7 @@ class BackupBackend(abc.ABC):
 
     @overload
     @staticmethod
-    def from_config(config: cp.BtrfsConfig) -> ButterBackend:
+    def from_config(config: cp.BtrFSRsyncConfig) -> BtrFSRsyncBackend:
         ...
 
     @overload
@@ -29,17 +29,17 @@ class BackupBackend(abc.ABC):
 
     @staticmethod
     def from_config(
-        config: Union[cp.BtrfsConfig, cp.ResticConfig]
-    ) -> Union[ButterBackend, ResticBackend]:
+        config: Union[cp.BtrFSRsyncConfig, cp.ResticConfig]
+    ) -> Union[BtrFSRsyncBackend, ResticBackend]:
         # Getestet durch Tests der Backuplogik
-        if isinstance(config, cp.BtrfsConfig):
-            return ButterBackend(config=config)
+        if isinstance(config, cp.BtrFSRsyncConfig):
+            return BtrFSRsyncBackend(config=config)
         return ResticBackend(config=config)
 
 
 @dataclass(frozen=True)
-class ButterBackend(BackupBackend):
-    config: cp.BtrfsConfig
+class BtrFSRsyncBackend(BackupBackend):
+    config: cp.BtrFSRsyncConfig
 
     def do_backup(self, mount_dir: Path) -> None:
         logger.info(f"Beginne mit BtrFS-Backup für Speichermedium {self.config.UUID}.")

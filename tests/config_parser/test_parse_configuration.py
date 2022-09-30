@@ -54,7 +54,7 @@ def test_parse_configuration_parses_btrfs_config(
     uuid: UUID,
 ) -> None:
     with TemporaryDirectory() as source:
-        btrfs_cfg = cp.BtrfsConfig(
+        btrfs_cfg = cp.BtrFSRsyncConfig(
             BackupRepositoryFolder=backup_repository_folder,
             DevicePassCmd=pass_cmd,
             Files=set(),

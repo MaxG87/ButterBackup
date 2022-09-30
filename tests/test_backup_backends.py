@@ -29,8 +29,8 @@ def list_files_recursively(path: Path) -> Iterable[Path]:
 
 @overload
 def complement_configuration(
-    config: cp.BtrfsConfig, source_dir: Path
-) -> cp.BtrfsConfig:
+    config: cp.BtrFSRsyncConfig, source_dir: Path
+) -> cp.BtrFSRsyncConfig:
     ...
 
 
@@ -44,7 +44,7 @@ def complement_configuration(
 def complement_configuration(
     config: cp.Configuration, source_dir: Path
 ) -> cp.Configuration:
-    if isinstance(config, cp.BtrfsConfig):
+    if isinstance(config, cp.BtrFSRsyncConfig):
         folder_dest_dir = "some-folder-name"
         return config.copy(update={"Folders": {source_dir: folder_dest_dir}})
     if isinstance(config, cp.ResticConfig):
@@ -54,7 +54,7 @@ def complement_configuration(
 
 @overload
 def get_expected_content(
-    config: cp.BtrfsConfig, exclude_to_ignore_file: bool
+    config: cp.BtrFSRsyncConfig, exclude_to_ignore_file: bool
 ) -> Dict[Path, bytes]:
     ...
 
@@ -71,7 +71,7 @@ def get_expected_content(
     exclude_to_ignore_file: bool,
 ) -> Union[Counter[bytes], Dict[Path, bytes]]:
     source_dir: Path
-    if isinstance(config, cp.BtrfsConfig):
+    if isinstance(config, cp.BtrFSRsyncConfig):
         source_dir = list(config.Folders.keys())[0]
     elif isinstance(config, cp.ResticConfig):
         source_dir = list(config.FilesAndFolders)[0]
@@ -88,7 +88,7 @@ def get_expected_content(
 
 
 @overload
-def get_result_content(config: cp.BtrfsConfig, mounted: Path) -> Dict[Path, bytes]:
+def get_result_content(config: cp.BtrFSRsyncConfig, mounted: Path) -> Dict[Path, bytes]:
     ...
 
 
@@ -100,7 +100,7 @@ def get_result_content(config: cp.ResticConfig, mounted: Path) -> Counter[bytes]
 def get_result_content(
     config: cp.Configuration, mounted: Path
 ) -> Union[Counter[bytes], Dict[Path, bytes]]:
-    if isinstance(config, cp.BtrfsConfig):
+    if isinstance(config, cp.BtrFSRsyncConfig):
         return get_result_content_for_btrfs(config, mounted)
     elif isinstance(config, cp.ResticConfig):
         return get_result_content_for_restic(config, mounted)
@@ -109,7 +109,7 @@ def get_result_content(
 
 
 def get_result_content_for_btrfs(
-    config: cp.BtrfsConfig, mounted: Path
+    config: cp.BtrFSRsyncConfig, mounted: Path
 ) -> Dict[Path, bytes]:
     folder_dest_dir = list(config.Folders.values())[0]
     backup_repository = mounted / config.BackupRepositoryFolder
@@ -179,7 +179,7 @@ def test_do_backup_for_btrfs_creates_snapshots_with_timestamp_names(
     mounted_device,
 ) -> None:
     empty_config, device = mounted_device
-    if not isinstance(empty_config, cp.BtrfsConfig):
+    if not isinstance(empty_config, cp.BtrFSRsyncConfig):
         # This test works for BtrfsConfig only. However, encrypted_device on
         # which mounted_device depends on, is parameterised over all backends.
         # Since this simplifies many other tests it seemed to be an acceptable
@@ -187,7 +187,7 @@ def test_do_backup_for_btrfs_creates_snapshots_with_timestamp_names(
         return
     folder_dest_dir = "some-folder-name"
     config = empty_config.copy(update={"Folders": {FIRST_BACKUP: folder_dest_dir}})
-    backend = bb.ButterBackend(config)
+    backend = bb.BtrFSRsyncBackend(config)
     backend.do_backup(device)
     backup_repository = device / config.BackupRepositoryFolder
     latest_folder = sorted(backup_repository.iterdir())[-1]

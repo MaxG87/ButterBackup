@@ -45,7 +45,7 @@ def test_btrfs_config_rejects_file_dest_collision(base_config, dest_dir: str):
     with NamedTemporaryFile() as src:
         base_config["Files"] = [src.name]
         with pytest.raises(ValidationError, match=re.escape(dest_dir)):
-            cp.BtrfsConfig.parse_obj(base_config)
+            cp.BtrFSRsyncConfig.parse_obj(base_config)
 
 
 @given(base_config=valid_unparsed_empty_btrfs_config(), file_name=hu.filenames())
@@ -59,7 +59,7 @@ def test_btrfs_config_rejects_filename_collision(base_config, file_name):
                 f.touch()
             base_config["Files"] = [str(f) for f in files]
             with pytest.raises(ValidationError, match=re.escape(file_name)):
-                cp.BtrfsConfig.parse_obj(base_config)
+                cp.BtrFSRsyncConfig.parse_obj(base_config)
 
 
 @given(base_config=valid_unparsed_empty_btrfs_config())
@@ -78,7 +78,7 @@ def test_btrfs_config_expands_user(base_config):
         with NamedTemporaryFile(dir=Path.home()) as exclude_file:
             exclude_file_relative = f"~/{Path(exclude_file.name).name}"
             base_config["ExcludePatternsFile"] = exclude_file_relative
-            cfg = cp.BtrfsConfig.parse_obj(base_config)
+            cfg = cp.BtrFSRsyncConfig.parse_obj(base_config)
     assert Path("~").expanduser() in cfg.Folders
     assert Path(src_file.name).expanduser() in cfg.Files
     assert cfg.ExcludePatternsFile == Path(exclude_file.name).expanduser()
@@ -100,18 +100,18 @@ def test_btrfs_config_rejects_duplicate_dest(base_config, folder_dest: str):
             base_config["Folders"] = folders
             base_config["Files"] = []
             with pytest.raises(ValidationError, match=re.escape(folder_dest)):
-                cp.BtrfsConfig.parse_obj(base_config)
+                cp.BtrFSRsyncConfig.parse_obj(base_config)
 
 
 @given(base_config=valid_unparsed_empty_btrfs_config())
 def test_btrfs_config_uuid_is_mapname(base_config) -> None:
-    cfg = cp.BtrfsConfig.parse_obj(base_config)
+    cfg = cp.BtrFSRsyncConfig.parse_obj(base_config)
     assert base_config["UUID"] == cfg.map_name()
 
 
 @given(base_config=valid_unparsed_empty_btrfs_config())
 def test_btrfs_config_device_ends_in_uuid(base_config) -> None:
-    cfg = cp.BtrfsConfig.parse_obj(base_config)
+    cfg = cp.BtrFSRsyncConfig.parse_obj(base_config)
     uuid = base_config["UUID"]
     assert cfg.device() == Path(f"/dev/disk/by-uuid/{uuid}")
 
@@ -123,7 +123,7 @@ def test_btrfs_config_json_roundtrip(base_config, folder_dest: str):
         with NamedTemporaryFile() as src_file:
             base_config["Folders"] = {src_folder: folder_dest}
             base_config["Files"] = [src_file.name]
-            cfg = cp.BtrfsConfig.parse_obj(base_config)
+            cfg = cp.BtrFSRsyncConfig.parse_obj(base_config)
             as_json = cfg.json()
-            deserialised = cp.BtrfsConfig.parse_raw(as_json)
+            deserialised = cp.BtrFSRsyncConfig.parse_raw(as_json)
     assert cfg == deserialised

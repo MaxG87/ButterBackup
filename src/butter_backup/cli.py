@@ -22,7 +22,7 @@ DEFAULT_CONFIG_NAME = "butter-backup.cfg"
 
 class ValidBackends(enum.Enum):
     restic = "restic"
-    butter_backup = "butter-backup"
+    btrfs_rsync = "btrfs-rsync"
 
 
 def get_default_config_path() -> str:
@@ -181,7 +181,7 @@ def format_device(
         config_writer = config_to.write_text
     formatter = (
         dm.prepare_device_for_butterbackend
-        if backend == ValidBackends.butter_backup
+        if backend == ValidBackends.btrfs_rsync
         else dm.prepare_device_for_resticbackend
     )
     config = formatter(device)
