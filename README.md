@@ -10,6 +10,11 @@
     poetry build
     pipx install dist/butter-backup-<version>.whl
 
+## Benutzung
+
+[![asciicast](https://asciinema.org/a/HTFzRxEWw8ltCoP6NDNo6tITP.svg)](https://asciinema.org/a/HTFzRxEWw8ltCoP6NDNo6tITP)
+
+
 ## Gefährdungsszenario
 
 ButterBackup wurde entworfen, um gegen eine Reihe spezieller
@@ -95,8 +100,6 @@ ist ohne weiteres möglich, über `butter-backup open` die Sicherungskopien zu
 Außerdem ist es vorstellbar, dass die Quelle zwar gelöscht wurde, aber im
 Backup archiviert werden soll. Dieser Anwendungsfall würde unmöglich gemacht,
 würden nicht mehr gelistete Ziele aus der Sicherungskopie entfernt.
-
-## Beispiele
 
 ## Ausstehende Aufgaben
 
