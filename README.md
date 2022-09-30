@@ -3,9 +3,9 @@
 [![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
 
-# ButterBackup - Backups so geschmeidig wie Butter!
-
 <img src="logo.png" alt="ButterBackup-Logo" height="150px" align="right">
+
+# ButterBackup - Backups so geschmeidig wie Butter!
 
 **Inkrementelle Vollbackups dank BtrFS**
 
