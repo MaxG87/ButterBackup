@@ -62,7 +62,11 @@ aufzubewahren ohne dabei zu verkomplizieren, neue Sicherungskopien anzulegen.
 
 **ACHTUNG**: Es gibt einen Konflikt mit Docker, der dazu führt, dass genau ein
 Test der Testsuite bei der ersten Ausführung fehlschlägt. Ab der zweiten
-Ausführung ist die Test-Suite aber robust und zuverlässig.
+Ausführung ist die Test-Suite aber robust und zuverlässig. Dieser erste
+Fehlschlag kann provoziert werden, in dem der entsprechende Test direkt
+ausgeführt wird, z.B. über
+
+    poetry run pytest -k test_mounted_device_fails_on_not_unmountable_device
 
 ### Schnell
 
