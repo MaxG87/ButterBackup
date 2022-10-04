@@ -30,6 +30,9 @@ Sphinx = "^5.2.3"
 [tool.poetry.scripts]
 butter-backup = "butter_backup.cli:cli"
 
+[tool.poetry.group.dev.dependencies]
+sphinx-rtd-theme = "^1.0.0"
+
 [tool.isort]
 profile = "black"
 
