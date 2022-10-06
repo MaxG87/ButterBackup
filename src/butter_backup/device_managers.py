@@ -96,11 +96,11 @@ def mount_btrfs_device(
     cmd: sh.StrPathList = [
         "sudo",
         "mount",
-        "-o",
-        "compress=zlib",
         device,
         mount_dir,
     ]
+    if compression is not None:
+        cmd.extend(["-o", f"compress={compression.value}"])
     sh.run_cmd(cmd=cmd)
 
 
