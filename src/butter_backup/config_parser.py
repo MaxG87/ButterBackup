@@ -30,14 +30,17 @@ def path_aware_restic_json_decoding(v, *, default) -> str:
     return json.dumps(v, default=default)
 
 
-class BtrFSRsyncConfig(BaseModel):
+class BaseConfig(BaseModel):
     BackupRepositoryFolder: str
     DevicePassCmd: str
     ExcludePatternsFile: Optional[FilePath] = None
+    UUID: uuid.UUID
+
+
+class BtrFSRsyncConfig(BaseConfig):
     Files: Set[FilePath]
     FilesDest: str
     Folders: FoldersT
-    UUID: uuid.UUID
     SubvolTimestampFmt: ClassVar[str] = "%F_%H:%M:%S"
 
     class Config:
@@ -106,13 +109,9 @@ class BtrFSRsyncConfig(BaseModel):
         return str(self.UUID)
 
 
-class ResticConfig(BaseModel):
-    BackupRepositoryFolder: str
-    DevicePassCmd: str
-    ExcludePatternsFile: Optional[FilePath] = None
+class ResticConfig(BaseConfig):
     FilesAndFolders: Set[Union[FilePath, DirectoryPath]]
     RepositoryPassCmd: str
-    UUID: uuid.UUID
 
     class Config:
         extra = Extra.forbid
