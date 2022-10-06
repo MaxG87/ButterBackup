@@ -82,5 +82,5 @@ def btrfs_device(encrypted_btrfs_device):
 def mounted_device(encrypted_device):
     config = encrypted_device
     with dm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted:
-        with dm.mounted_device(decrypted) as mounted_device:
+        with dm.mounted_device(decrypted, config.Compression) as mounted_device:
             yield config, mounted_device

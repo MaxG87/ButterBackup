@@ -75,7 +75,9 @@ def open(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
         if cfg.device().exists():
             mount_dir = Path(mkdtemp())
             decrypted = dm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
-            dm.mount_btrfs_device(decrypted, mount_dir=mount_dir)
+            dm.mount_btrfs_device(
+                decrypted, mount_dir=mount_dir, compression=cfg.Compression
+            )
             typer.echo(f"Speichermedium {cfg.UUID} wurde in {mount_dir} geöffnet.")
 
 
@@ -136,7 +138,7 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
             continue
         backend = bb.BackupBackend.from_config(cfg)
         with dm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted:
-            with dm.mounted_device(decrypted) as mount_dir:
+            with dm.mounted_device(decrypted, cfg.Compression) as mount_dir:
                 backend.do_backup(mount_dir)
 
 

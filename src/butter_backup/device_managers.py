@@ -7,6 +7,7 @@ from collections import defaultdict
 from datetime import date
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Optional
 from uuid import UUID, uuid4
 
 from loguru import logger
@@ -33,12 +34,12 @@ def decrypted_device(device: Path, pass_cmd: str):
 
 
 @contextlib.contextmanager
-def mounted_device(device: Path):
+def mounted_device(device: Path, compression: Optional[cp.ValidCompressions]):
     if is_mounted(device):
         unmount_device(device)
     with TemporaryDirectory() as td:
         mount_dir = Path(td)
-        mount_btrfs_device(device, Path(mount_dir))
+        mount_btrfs_device(device, Path(mount_dir), compression)
         logger.success(
             f"Speichermedium {device} erfolgreich nach {mount_dir} gemountet."
         )
@@ -89,7 +90,9 @@ def symbolic_link(src: Path, dest: Path):
         logger.success(f"Symlink von {src} nach {dest} erfolgreich entfernt.")
 
 
-def mount_btrfs_device(device: Path, mount_dir: Path) -> None:
+def mount_btrfs_device(
+    device: Path, mount_dir: Path, compression: Optional[cp.ValidCompressions]
+) -> None:
     cmd: sh.StrPathList = [
         "sudo",
         "mount",
@@ -161,9 +164,10 @@ def prepare_device_for_butterbackend(device: Path) -> cp.BtrFSRsyncConfig:
     password_cmd = generate_passcmd()
     backup_repository_folder = "ButterBackupRepository"
     volume_uuid = encrypt_device(device, password_cmd)
+    compression = cp.ValidCompressions.ZSTD
     with decrypted_device(device, password_cmd) as decrypted:
         mkfs_btrfs(decrypted)
-        with mounted_device(decrypted) as mounted:
+        with mounted_device(decrypted, compression) as mounted:
             backup_repository = mounted / backup_repository_folder
             sh.run_cmd(cmd=["sudo", "mkdir", backup_repository])
             initial_subvol = backup_repository / date.today().strftime(
@@ -172,6 +176,7 @@ def prepare_device_for_butterbackend(device: Path) -> cp.BtrFSRsyncConfig:
             sh.run_cmd(cmd=["sudo", "btrfs", "subvolume", "create", initial_subvol])
     config = cp.BtrFSRsyncConfig(
         BackupRepositoryFolder=backup_repository_folder,
+        Compression=compression,
         DevicePassCmd=password_cmd,
         Files=set(),
         FilesDest="Einzeldateien",
@@ -185,10 +190,11 @@ def prepare_device_for_resticbackend(device: Path) -> cp.ResticConfig:
     device_passcmd = generate_passcmd()
     repository_passcmd = generate_passcmd()
     backup_repository_folder = "ResticBackupRepository"
+    compression = None  # Restic encrypts and encrypted data are incompressible
     volume_uuid = encrypt_device(device, device_passcmd)
     with decrypted_device(device, device_passcmd) as decrypted:
         mkfs_btrfs(decrypted)
-        with mounted_device(decrypted) as mounted:
+        with mounted_device(decrypted, compression) as mounted:
             backup_repo = mounted / backup_repository_folder
             sh.run_cmd(cmd=["sudo", "mkdir", backup_repo])
             sh.pipe_pass_cmd_to_real_cmd(
@@ -197,6 +203,7 @@ def prepare_device_for_resticbackend(device: Path) -> cp.ResticConfig:
             )
     config = cp.ResticConfig(
         BackupRepositoryFolder=backup_repository_folder,
+        Compression=compression,
         DevicePassCmd=device_passcmd,
         FilesAndFolders=set(),
         RepositoryPassCmd=repository_passcmd,
