@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import enum
 import json
 import sys
 import uuid
@@ -30,11 +31,42 @@ def path_aware_restic_json_decoding(v, *, default) -> str:
     return json.dumps(v, default=default)
 
 
+class ValidCompressions(enum.Enum):
+    LZO = "lzo"
+    ZLIB = "zlib"
+    ZLIB1 = "zlib:1"
+    ZLIB2 = "zlib:2"
+    ZLIB3 = "zlib:3"
+    ZLIB4 = "zlib:4"
+    ZLIB5 = "zlib:5"
+    ZLIB6 = "zlib:6"
+    ZLIB7 = "zlib:7"
+    ZLIB8 = "zlib:8"
+    ZLIB9 = "zlib:9"
+    ZSTD = "zstd"
+    ZSTD1 = "zstd:1"
+    ZSTD2 = "zstd:2"
+    ZSTD3 = "zstd:3"
+    ZSTD4 = "zstd:4"
+    ZSTD5 = "zstd:5"
+    ZSTD6 = "zstd:6"
+    ZSTD7 = "zstd:7"
+    ZSTD8 = "zstd:8"
+    ZSTD9 = "zstd:9"
+    ZSTD10 = "zstd:10"
+    ZSTD11 = "zstd:11"
+    ZSTD12 = "zstd:12"
+    ZSTD13 = "zstd:13"
+    ZSTD14 = "zstd:14"
+    ZSTD15 = "zstd:15"
+
+
 class BaseConfig(BaseModel):
     BackupRepositoryFolder: str
     DevicePassCmd: str
     ExcludePatternsFile: Optional[FilePath] = None
     UUID: uuid.UUID
+    Compression: Optional[ValidCompressions] = None
 
 
 class BtrFSRsyncConfig(BaseConfig):

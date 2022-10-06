@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
+from typing import Optional
 
 import pytest
 from hypothesis import assume, given
@@ -114,6 +115,67 @@ def test_btrfs_config_device_ends_in_uuid(base_config) -> None:
     cfg = cp.BtrFSRsyncConfig.parse_obj(base_config)
     uuid = base_config["UUID"]
     assert cfg.device() == Path(f"/dev/disk/by-uuid/{uuid}")
+
+
+@given(
+    base_config=valid_unparsed_empty_btrfs_config(),
+    compression=st.sampled_from(["zsdd", "zlbi", "xkcd", "invalid-string", ""]),
+)
+def test_btrfs_config_rejects_invalid_compression(
+    base_config, compression: str
+) -> None:
+    base_config["Compression"] = compression
+    with pytest.raises(ValidationError):
+        cp.BtrFSRsyncConfig.parse_obj(base_config)
+
+
+@given(
+    base_config=valid_unparsed_empty_btrfs_config(),
+    level=st.integers(max_value=0) | st.integers(min_value=16),
+    algorithm=st.sampled_from(["lzo", "zstd", "zlib"]),
+)
+def test_btrfs_config_rejects_out_of_bounds_compression_level(
+    base_config, level: int, algorithm: str
+) -> None:
+    base_config["Compression"] = f"{algorithm}:{level}"
+    with pytest.raises(ValidationError):
+        cp.BtrFSRsyncConfig.parse_obj(base_config)
+
+
+@given(
+    base_config=valid_unparsed_empty_btrfs_config(),
+    level=st.integers(min_value=1, max_value=9) | st.none(),
+)
+def test_btrfs_config_accepts_valid_zlib(base_config, level: Optional[int]) -> None:
+    compression = "zlib"
+    if level is not None:
+        compression += f":{level}"
+    base_config["Compression"] = compression
+    cfg = cp.BtrFSRsyncConfig.parse_obj(base_config)
+    assert cfg.Compression == cp.ValidCompressions(compression)
+
+
+@given(
+    base_config=valid_unparsed_empty_btrfs_config(),
+    level=st.integers(min_value=1, max_value=15) | st.none(),
+)
+def test_btrfs_config_accepts_valid_zstd(base_config, level: Optional[int]) -> None:
+    compression = "zstd"
+    if level is not None:
+        compression += f":{level}"
+    base_config["Compression"] = compression
+    cfg = cp.BtrFSRsyncConfig.parse_obj(base_config)
+    assert cfg.Compression == cp.ValidCompressions(compression)
+
+
+@given(
+    base_config=valid_unparsed_empty_btrfs_config(),
+)
+def test_btrfs_config_accepts_valid_lzo(base_config) -> None:
+    compression = "lzo"
+    base_config["Compression"] = compression
+    cfg = cp.BtrFSRsyncConfig.parse_obj(base_config)
+    assert cfg.Compression == cp.ValidCompressions.LZO
 
 
 @given(base_config=valid_unparsed_empty_btrfs_config(), folder_dest=hu.filenames())
