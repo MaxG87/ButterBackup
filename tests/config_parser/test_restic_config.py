@@ -25,6 +25,9 @@ def valid_unparsed_empty_restic_config(draw):
         st.fixed_dictionaries(
             {
                 "BackupRepositoryFolder": st.text(),
+                "Compression": st.sampled_from(
+                    [cur.value for cur in cp.ValidCompressions]
+                ),
                 "ExcludePatternsFile": st.just(str(EXCLUDE_FILE)) | st.none(),
                 "DevicePassCmd": st.text(),
                 "FilesAndFolders": st.just([]),

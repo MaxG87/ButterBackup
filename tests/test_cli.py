@@ -197,7 +197,7 @@ def test_format_device_refuses_incorrect_backend(runner, backend: str) -> None:
         assert result.exit_code != 0
 
 
-@pytest.mark.parametrize("backend", ["restic", "butter-backup"])
+@pytest.mark.parametrize("backend", ["restic", "btrfs-rsync"])
 def test_format_device(runner, backend: str, big_file: Path) -> None:
     format_result = runner.invoke(app, ["format-device", backend, str(big_file)])
     serialised_config = format_result.stdout
