@@ -10,6 +10,8 @@ Welcome to ButterBackup's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   threat_scenario.rst
+   modules.rst
 
 
 Indices and tables
