@@ -6,13 +6,16 @@ Gefährdungsszenarien zu schützen. Die konkreten Bedrohungen und die
 entsprechenden Gegenmaßnahmen gibt die folgende Tabelle an. Auf die
 Übersichtstabelle folgt eine etwas ausführlichere Diskussion der Maßnahmen.
 
-| Bedrohung                                          | Gegenmaßnahme                        |
-| -------------------------------------------------- | ------------------------------------ |
-| Dateien verschlüsselnde Schadsoftware              | physikalisch getrennte Aufbewahrung  |
-| fehlerhafte Sicherungskopien durch Fehlbenutzung   | sehr einfache Benutzung              |
-| Verlust des Datenträgers                           | Vollverschlüsselung des Datenträgers |
-| Zerstörung des Datenträgers durch Spannungsspitzen | physikalisch getrennte Aufbewahrung  |
-| zu seltene Sicherungskopien                        | sehr einfache Benutzung              |
+================================================== ===================================
+Bedrohung                                          Gegenmaßnahme
+================================================== ===================================
+Dateien verschlüsselnde Schadsoftware              physikalisch getrennte Aufbewahrung
+fehlerhafte Sicherungskopien durch Fehlbenutzung   sehr einfache Benutzung
+Verlust des Datenträgers                           Vollverschlüsselung des Datenträgers
+Zerstörung des Datenträgers durch Spannungsspitzen physikalisch getrennte Aufbewahrung
+Zerstörung des Datenträgers durch Spannungsspitzen physikalisch getrennte Aufbewahrung
+zu seltene Sicherungskopien                        sehr einfache Benutzung
+================================================== ===================================
 
 Diese Bedrohungen werden dadurch reduziert, dass eine sehr einfache Benutzung
 die physikalisch getrennte Aufbewahrung des die Sicherungskopien enthaltenen
