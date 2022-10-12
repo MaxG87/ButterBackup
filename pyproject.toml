@@ -32,6 +32,7 @@ butter-backup = "butter_backup.cli:cli"
 
 [tool.poetry.group.dev.dependencies]
 sphinx-rtd-theme = "^1.0.0"
+numpydoc = "^1.5.0"
 
 [tool.isort]
 profile = "black"
