@@ -13,7 +13,7 @@ author = "Max Görner"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.autosummary", "numpydoc"]
+extensions = ["sphinx.ext.autodoc", "sphinx.ext.autosummary", "napoleon"]
 
 templates_path = ["_templates"]
 exclude_patterns = []
