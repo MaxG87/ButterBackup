@@ -175,6 +175,46 @@ def test_do_backup_handles_exclude_list(source_directories, mounted_device) -> N
     assert result_content == expected_content
 
 
+@pytest.mark.parametrize(
+    "first_source, second_source",
+    [(FIRST_BACKUP, SECOND_BACKUP)],
+)
+def test_do_backup_removes_existing_files_in_exclude_list(
+    first_source, second_source, mounted_device
+) -> None:
+    # This test ensures that files are removed even if they are matched by the
+    # exclude patterns.
+    # Imagine that a user has existing backups. Then she creates an
+    # ExcludePatternsFile or adds a rule to it. Anyhow, imagine that now the
+    # ExcludePatternsFile contains a rule that matches files that already exist
+    # in the existing backups.
+    # A prior version of BtrFSRsyncBackend would not delete files that would
+    # match a rule in the ExcludePatternsFile. This lead to plenty of error
+    # messages when rsync then attempted to remove the folder where the
+    # not-deleted file was contained, because that folder was not empty.
+    # However, if the folder is gone in the source, it must be removed in the
+    # backup too.
+    # This test explicitly tests this scenario.
+
+    empty_config, device = mounted_device
+
+    time.sleep(1)  # prevent conflicts in snapshot names
+    first_config = complement_configuration(empty_config, first_source)
+    first_backend = bb.BackupBackend.from_config(first_config)
+    first_backend.do_backup(device)
+
+    time.sleep(1)  # prevent conflicts in snapshot names
+    second_config = complement_configuration(empty_config, second_source).copy(
+        update={"ExcludePatternsFile": EXCLUDE_FILE}
+    )
+    second_backend = bb.BackupBackend.from_config(second_config)
+    second_backend.do_backup(device)
+
+    result_content = get_result_content(second_config, device)
+    expected_content = get_expected_content(second_config, exclude_to_ignore_file=True)
+    assert result_content == expected_content
+
+
 def test_do_backup_for_btrfs_creates_snapshots_with_timestamp_names(
     mounted_device,
 ) -> None:

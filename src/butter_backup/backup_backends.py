@@ -81,6 +81,7 @@ class BtrFSRsyncBackend(BackupBackend):
             "rsync",
             "-ax",
             "--delete",
+            "--delete-excluded",
             "--inplace",
         ]
         if maybe_exclude_patterns is not None:
