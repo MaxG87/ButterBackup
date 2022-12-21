@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import datetime as dt
 import os
-import time
 from collections import Counter
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -148,7 +147,6 @@ def get_result_content_for_restic(
 def test_do_backup(source_directories, mounted_device) -> None:
     empty_config, device = mounted_device
     for source_dir in source_directories:
-        time.sleep(1)  # prevent conflicts in snapshot names
         config = complement_configuration(empty_config, source_dir)
         backend = bb.BackupBackend.from_config(config)
         backend.do_backup(device)
@@ -164,7 +162,6 @@ def test_do_backup(source_directories, mounted_device) -> None:
 def test_do_backup_handles_exclude_list(source_directories, mounted_device) -> None:
     empty_config, device = mounted_device
     for source_dir in source_directories:
-        time.sleep(1)  # prevent conflicts in snapshot names
         config = complement_configuration(empty_config, source_dir).copy(
             update={"ExcludePatternsFile": EXCLUDE_FILE}
         )
@@ -198,12 +195,10 @@ def test_do_backup_removes_existing_files_in_exclude_list(
 
     empty_config, device = mounted_device
 
-    time.sleep(1)  # prevent conflicts in snapshot names
     first_config = complement_configuration(empty_config, first_source)
     first_backend = bb.BackupBackend.from_config(first_config)
     first_backend.do_backup(device)
 
-    time.sleep(1)  # prevent conflicts in snapshot names
     second_config = complement_configuration(empty_config, second_source).copy(
         update={"ExcludePatternsFile": EXCLUDE_FILE}
     )
