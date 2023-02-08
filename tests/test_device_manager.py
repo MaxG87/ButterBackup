@@ -47,12 +47,13 @@ def test_mounted_device_takes_over_already_mounted_device(btrfs_device) -> None:
 
 
 def test_mounted_device_fails_on_not_unmountable_device() -> None:
-    for device, mount_points in dm.get_mounted_devices().items():
-        if Path("/") in mount_points:
-            root = Path(device)
-            break
-    else:
-        assert False, "Device of / not found!"  # noqa: B011
+    def get_root_device() -> Path:
+        for device, mount_points in dm.get_mounted_devices().items():
+            if Path("/") in mount_points:
+                return Path(device)
+        raise ValueError("No device mounted on / was found.")
+
+    root = get_root_device()
     with pytest.raises(subprocess.CalledProcessError):
         with dm.mounted_device(root, None):
             pass

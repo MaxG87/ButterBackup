@@ -54,7 +54,7 @@ VERBOSITY_OPTION = typer.Option(0, "--verbose", "-v", count=True)
 
 
 @app.command()
-def open(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
+def open(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):  # noqa: A001
     """
     Öffne alle in der Konfiguration gelisteten Speichermedien
 
