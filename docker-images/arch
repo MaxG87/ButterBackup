@@ -8,7 +8,7 @@ RUN pacman-key --populate archlinux
 
 # Provide relevant binaries
 RUN pacman -Syu --noconfirm
-RUN pacman -S --noconfirm btrfs-progs cryptsetup curl make python python-pip restic rsync sudo
+RUN pacman -S --noconfirm btrfs-progs cryptsetup make python python-pip restic rsync sudo
 
 # Create a new user with a group that is not the username. This is required to
 # ensure that resetting the ownership of restic's backup repository uses the

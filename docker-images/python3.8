@@ -4,7 +4,7 @@ FROM python@sha256:b1bb7b05f2f7211240da6e9afe3a1b2c0071fbde7c2465656da39a685bc89
 # Provide excecutables
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update && \
-    apt install -y btrfs-progs cryptsetup curl make restic rsync sudo && \
+    apt install -y btrfs-progs cryptsetup make restic rsync sudo && \
     apt autoclean
 
 # Setup Poetry
