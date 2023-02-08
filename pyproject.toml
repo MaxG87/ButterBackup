@@ -6,7 +6,7 @@ authors = ["Max Görner <max@familie-goerner.eu>"]
 license = "GPL-3.0-or-later"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.11"
+python = ">=3.8,<3.12"
 typer = "^0.6.1"
 pydantic = "^1.9.1"
 loguru = "^0.6.0"
