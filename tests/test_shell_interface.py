@@ -9,8 +9,8 @@ from hypothesis import strategies as st
 from butter_backup import shell_interface as sh
 
 echoable_text = st.text(
-    st.text(alphabet=st.characters(blacklist_categories="C"), min_size=1).map(str.strip)
-)
+    alphabet=st.characters(blacklist_categories="C"), min_size=1
+).map(str.strip)
 
 
 def test_run_cmd_succeeds() -> None:
