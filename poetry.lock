@@ -243,6 +243,21 @@ flake8 = ">=3.0.0"
 dev = ["coverage", "hypothesis", "hypothesmith (>=0.2)", "pre-commit", "pytest", "tox"]
 
 [[package]]
+name = "flake8-comprehensions"
+version = "3.10.1"
+description = "A flake8 plugin to help you write better list/set/dict comprehensions."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "flake8-comprehensions-3.10.1.tar.gz", hash = "sha256:412052ac4a947f36b891143430fef4859705af11b2572fbb689f90d372cf26ab"},
+    {file = "flake8_comprehensions-3.10.1-py3-none-any.whl", hash = "sha256:d763de3c74bc18a79c039a7ec732e0a1985b0c79309ceb51e56401ad0a2cd44e"},
+]
+
+[package.dependencies]
+flake8 = ">=3.0,<3.2.0 || >3.2.0"
+
+[[package]]
 name = "flake8-simplify"
 version = "0.19.3"
 description = "flake8 plugin which checks for code that can be simplified"
@@ -950,4 +965,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12"
-content-hash = "7d96b0dcf5980710cc363c558715b1f8cfea58798dd92a6a1b1c8613c21fc0cf"
+content-hash = "c50a15d941f474e349e9609a052cd85eda8cb0baf0a8e8be3a57573270f0a3b4"
