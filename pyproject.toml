@@ -38,7 +38,6 @@ check_untyped_defs = true
 disallow_any_generics = true
 disallow_any_unimported = true
 disallow_subclassing_any = true
-ignore_missing_imports = false
 implicit_reexport = false
 strict_concatenate = true
 strict_equality = true
