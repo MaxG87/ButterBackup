@@ -1,5 +1,5 @@
-# python:3.10.4-slim-bullseye as of May 26th, 2022
-FROM python@sha256:25ff2ce39ec42521ae92cdb8622bacbe1c870ee98217914db1abc3d040773cb3
+# python:3.10.9-slim-bullseye as of Feb 8th, 2023
+FROM python@sha256:cfa3b79333c4e56fc675b6800445b6dcbb3e6cd4d52f2a9ade944ab73dadc6a1
 
 # Provide excecutables
 ENV DEBIAN_FRONTEND=noninteractive
