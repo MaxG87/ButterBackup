@@ -1,6 +1,8 @@
 # python:3.9.18-slim-bookworm as of 14 December 2023
 FROM python@sha256:65c30624fbccb71feb59df4740a4cc1db6e588aa68da8b8206a509ca5cf7d043
 
+ARG USER=testrunner
+
 # Provide excecutables
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update && \
@@ -11,6 +13,12 @@ RUN apt update && \
 ENV POETRY_VERSION=1.7.1
 RUN python3 -m pip install "poetry==$POETRY_VERSION"
 ENV PATH=$PATH:/root/.poetry/bin
+
+# Add unpriviliged user
+RUN useradd -ms /bin/bash $USER && \
+    adduser $USER sudo && \
+    echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+USER $USER
 
 # Setup production dependencies
 WORKDIR /project
@@ -23,4 +31,4 @@ RUN poetry install
 
 # Create /dev/disk/by-uuid/. It is required by the test suite but not available
 # in Docker containers by default.
-CMD mkdir -p /dev/disk/by-uuid/ && poetry run pytest --no-cov .
+CMD sudo mkdir -p /dev/disk/by-uuid/ && poetry run pytest --no-cov .
