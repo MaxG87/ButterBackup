@@ -27,6 +27,7 @@ flake8-tuple = "^0.4.1"
 flake8-simplify = "^0.19.3"
 flake8-comprehensions = "^3.10.1"
 flake8-builtins = "^2.1.0"
+ruff = "^0.0.247"
 
 [tool.poetry.scripts]
 butter-backup = "butter_backup.cli:cli"
