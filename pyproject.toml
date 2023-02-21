@@ -71,7 +71,7 @@ testpaths = ["tests"]
 
 [tool.ruff]
 src = ["src/"]
-select = ["A", "C4", "C90", "B", "F", "SIM", "W"]
+select = ["A", "C4", "C90", "B", "F", "PIE", "SIM", "W"]
 ignore = ["E", "SIM117"]
 
 [tool.ruff.mccabe]
