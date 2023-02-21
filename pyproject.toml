@@ -70,6 +70,7 @@ addopts = [
 testpaths = ["tests"]
 
 [tool.ruff]
+src = ["src/"]
 select = ["A", "C4", "C90", "B", "F", "SIM", "W"]
 ignore = ["E", "SIM117"]
 
