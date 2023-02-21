@@ -36,10 +36,10 @@ profile = "black"
 
 [tool.mypy]
 allow_untyped_decorators = true
+allow_any_generics = false
+allow_any_unimported = false
+allow_subclassing_any = false
 check_untyped_defs = true
-disallow_any_generics = true
-disallow_any_unimported = true
-disallow_subclassing_any = true
 implicit_reexport = false
 strict_concatenate = true
 strict_equality = true
