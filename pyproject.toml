@@ -43,22 +43,9 @@ warn_unreachable = true
 enable_error_code = [
     "possibly-undefined"
 ]
-
-# mypy strict mode
-allow_untyped_decorators = false
-check_untyped_defs = true
-allow_any_generics = false
+strict = true
 allow_incomplete_defs = true
-allow_subclassing_any = false
-allow_untyped_calls = false
 allow_untyped_defs = true
-implicit_reexport = false
-strict_concatenate = true
-strict_equality = true
-warn_redundant_casts = true
-warn_return_any = true
-warn_unused_configs = true
-warn_unused_ignores = true
 
 
 [[tool.mypy.overrides]]
