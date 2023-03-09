@@ -54,7 +54,9 @@ VERBOSITY_OPTION = typer.Option(0, "--verbose", "-v", count=True)
 
 
 @app.command()
-def open(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):  # noqa: A001
+def open(  # noqa: A001
+    config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION
+) -> None:
     """
     Öffne alle in der Konfiguration gelisteten Speichermedien
 
@@ -82,7 +84,7 @@ def open(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):  # noqa
 
 
 @app.command()
-def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
+def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None:
     """
     Schließe alle geöffneten Speichermedien
 
@@ -109,7 +111,7 @@ def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
 
 
 @app.command()
-def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION):
+def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None:
     """
     Führe Sicherheitskopien durch
 
@@ -155,7 +157,7 @@ def format_device(
         " angegeben, wird die Konfiguration auf STDOUT ausgegeben.",
     ),
     verbose: int = VERBOSITY_OPTION,
-):
+) -> None:
     """
     Richtet Speichermedium für butter-backup ein
 
@@ -192,7 +194,7 @@ def format_device(
 
 
 @app.command()
-def version():
+def version() -> None:
     """Gibt butter-backups aktuelle Version an"""
     typer.echo(__version__)
 

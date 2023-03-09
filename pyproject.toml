@@ -35,25 +35,18 @@ butter-backup = "butter_backup.cli:cli"
 profile = "black"
 
 [tool.mypy]
-allow_untyped_decorators = true
-check_untyped_defs = true
-disallow_any_generics = true
-disallow_any_unimported = true
-disallow_subclassing_any = true
-implicit_reexport = false
-strict_concatenate = true
-strict_equality = true
-warn_redundant_casts = true
-warn_return_any = true
-warn_unreachable = true
-warn_unused_configs = true
-warn_unused_ignores = true
-enable_error_code = [
-    "possibly-undefined"
-]
 plugins = [
   "pydantic.mypy"
 ]
+allow_any_unimported = false
+warn_unreachable = true
+enable_error_code = [
+    "possibly-undefined"
+]
+strict = true
+allow_incomplete_defs = true
+allow_untyped_defs = true
+
 
 [[tool.mypy.overrides]]
 module = "tests.*"
