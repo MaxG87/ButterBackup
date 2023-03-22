@@ -221,4 +221,4 @@ def test_version(runner) -> None:
     lines = result.stdout.splitlines()
     assert len(lines) == 1
     parts = lines[0].split(".")
-    assert len(parts) == 3
+    assert len(parts) == 3  # noqa: PLR2004
