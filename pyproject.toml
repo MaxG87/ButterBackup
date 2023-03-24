@@ -70,8 +70,8 @@ addopts = [
 testpaths = ["tests"]
 
 [tool.ruff]
-src = ["src/"]
-select = ["A", "B", "C", "F", "ISC", "PIE", "PL", "Q", "SIM", "TID", "W", "YTT"]
+src = [".", "src/"]
+select = ["A", "B", "C", "F", "I", "ISC", "PIE", "PL", "Q", "SIM", "TID", "W", "YTT"]
 ignore = ["E", "PLC1901", "SIM117"]
 
 [tool.ruff.mccabe]
