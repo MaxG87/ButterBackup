@@ -52,11 +52,11 @@ $(CACHEDIR)/%-test-image: | $(CACHEDIR)
 
 
 # STATIC ANALYSIS OF SOURCE CODE
-$(CACHEDIR)/check-linters: | $(CACHEDIR)/check-flake8 $(CACHEDIR)/check-mypy
+$(CACHEDIR)/check-linters: | $(CACHEDIR)/check-ruff $(CACHEDIR)/check-mypy
 	touch $@
 
-$(CACHEDIR)/check-flake8: | $(CACHEDIR)/check-format
-	poetry run flake8
+$(CACHEDIR)/check-ruff: | $(CACHEDIR)/check-format
+	poetry run ruff check .
 	touch $@
 
 $(CACHEDIR)/check-mypy: | $(CACHEDIR)
@@ -66,17 +66,17 @@ $(CACHEDIR)/check-mypy: | $(CACHEDIR)
 
 # CHECKING FORMAT AND REFORMATTING
 $(CACHEDIR)/apply-format: $(ALL_FILES) | $(CACHEDIR)
-	poetry run isort .
+	poetry run ruff check --select I --fix .
 	poetry run black .
 	touch $@
 
-$(CACHEDIR)/check-format: | $(CACHEDIR)/check-black $(CACHEDIR)/check-isort
+$(CACHEDIR)/check-format: | $(CACHEDIR)/check-black $(CACHEDIR)/check-import-ordering
 	touch $@
 
 $(CACHEDIR)/check-black: | $(CACHEDIR)
 	poetry run black --check .
 	touch $@
 
-$(CACHEDIR)/check-isort: | $(CACHEDIR)
-	poetry run isort --check .
+$(CACHEDIR)/check-import-ordering: | $(CACHEDIR)
+	poetry run ruff check --select I .
 	touch $@
