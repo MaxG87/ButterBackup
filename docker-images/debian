@@ -4,14 +4,8 @@ FROM debian@sha256:cb4f1877372e3b13a254fca5e7345a48a2f3e6accbd29d36f94101049ad66
 # Provide excecutables
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update && \
-    apt install -y btrfs-progs cryptsetup make python3 python3-pip restic rsync sudo && \
+    apt install -y btrfs-progs cryptsetup make python3 python3-poetry restic rsync sudo && \
     apt autoclean
-
-# Setup Poetry
-ENV POETRY_VERSION=1.3.2
-RUN python3 -m pip install "poetry==$POETRY_VERSION"
-ENV PATH=$PATH:/root/.poetry/bin
-
 
 # Setup production dependencies
 WORKDIR /project
