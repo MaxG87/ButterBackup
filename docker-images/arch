@@ -36,9 +36,6 @@ RUN python3 -m poetry install
 COPY src/ src/
 RUN python3 -m poetry install
 
-# Include test files
-COPY setup.cfg .
-
 # Create /dev/disk/by-uuid/. It is required by the test suite but not available
 # in Docker containers by default.
 CMD sudo mkdir -p /dev/disk/by-uuid/ && python3 -m poetry run pytest --no-cov .

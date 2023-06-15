@@ -16,9 +16,6 @@ RUN poetry install
 COPY src/ src/
 RUN poetry install
 
-# Include test files
-COPY setup.cfg .
-
 # Create /dev/disk/by-uuid/. It is required by the test suite but not available
 # in Docker containers by default.
 CMD mkdir -p /dev/disk/by-uuid/ && poetry run pytest --no-cov .
