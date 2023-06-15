@@ -8,12 +8,12 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 from uuid import UUID
 
 import pytest
+import shell_interface as sh
 from hypothesis import given
 from hypothesis import strategies as st
 
 from butter_backup import config_parser as cp
 from butter_backup import device_managers as dm
-from butter_backup import shell_interface as sh
 
 
 def get_random_filename() -> str:

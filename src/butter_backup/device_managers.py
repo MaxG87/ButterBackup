@@ -10,10 +10,10 @@ from tempfile import TemporaryDirectory
 from typing import Optional
 from uuid import UUID, uuid4
 
+import shell_interface as sh
 from loguru import logger
 
 from . import config_parser as cp
-from . import shell_interface as sh
 
 
 class InvalidDecryptedDevice(ValueError):
