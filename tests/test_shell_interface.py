@@ -3,10 +3,9 @@ from __future__ import annotations
 from subprocess import CalledProcessError
 
 import pytest
+import shell_interface as sh
 from hypothesis import example, given
 from hypothesis import strategies as st
-
-from butter_backup import shell_interface as sh
 
 echoable_text = st.text(
     alphabet=st.characters(blacklist_categories="C"), min_size=1

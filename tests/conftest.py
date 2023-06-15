@@ -4,9 +4,9 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
+import shell_interface as sh
 
 from butter_backup import device_managers as dm
-from butter_backup import shell_interface as sh
 
 
 def get_random_filename(dir_: str) -> str:

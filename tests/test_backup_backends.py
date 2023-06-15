@@ -8,10 +8,10 @@ from tempfile import TemporaryDirectory
 from typing import Dict, Iterable, Union, overload
 
 import pytest
+import shell_interface as sh
 
 from butter_backup import backup_backends as bb
 from butter_backup import config_parser as cp
-from butter_backup import shell_interface as sh
 
 TEST_RESOURCES = Path(__file__).parent / "resources"
 EXCLUDE_FILE = TEST_RESOURCES / "exclude-file"

@@ -6,10 +6,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Union, overload
 
+import shell_interface as sh
 from loguru import logger
 
 from . import config_parser as cp
-from . import shell_interface as sh
 
 
 class BackupBackend(abc.ABC):
