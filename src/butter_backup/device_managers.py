@@ -60,7 +60,7 @@ def symbolic_link(src: Path, dest: Path):
         * … creating the link with root privileges. This allows to limit root
           permissions to only the necessary parts of the program.
 
-        * ensuring that the link gets removed after usage.
+        * … ensuring that the link gets removed after usage.
 
     Parameters:
     -----------
