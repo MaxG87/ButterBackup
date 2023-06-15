@@ -761,6 +761,21 @@ files = [
 ]
 
 [[package]]
+name = "storage-device-managers"
+version = "0.9.0"
+description = "Helpful context managers for managing decryption and mounts of storage devices"
+optional = false
+python-versions = ">=3.8.1,<3.12"
+files = [
+    {file = "storage_device_managers-0.9.0-py3-none-any.whl", hash = "sha256:08ebd93dff92219ca4a3540799b9787524e0438ab4ad4b7876799a762b9b3c89"},
+    {file = "storage_device_managers-0.9.0.tar.gz", hash = "sha256:375061a3bc7c9525596c6ea26bfd1df148a54726a0ec7e757b0eed7aa6bb6027"},
+]
+
+[package.dependencies]
+loguru = ">=0.7.0,<0.8.0"
+shell-interface = ">=0.10.0,<0.11.0"
+
+[[package]]
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
@@ -830,4 +845,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12"
-content-hash = "eef64e2166279e221bc9f435a51499c96a3f3884d24ba047d75e1c3ac2eca377"
+content-hash = "cea11484180d9f0bf253b3daebefcf141aa362a016abf4175e7985aec69c8d84"
