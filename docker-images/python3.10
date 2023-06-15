@@ -1,5 +1,5 @@
-# python:3.10.9-slim-bullseye as of Feb 8th, 2023
-FROM python@sha256:cfa3b79333c4e56fc675b6800445b6dcbb3e6cd4d52f2a9ade944ab73dadc6a1
+# python:3.10.12-slim-bookworm as of 15 June 2023
+FROM python@sha256:c11490fd02e0cda47e577d2aca36fa6509c71308a675d18a2e881864f8798736
 
 # Provide excecutables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -8,7 +8,7 @@ RUN apt update && \
     apt autoclean
 
 # Setup Poetry
-ENV POETRY_VERSION=1.3.2
+ENV POETRY_VERSION=1.5.1
 RUN python3 -m pip install "poetry==$POETRY_VERSION"
 ENV PATH=$PATH:/root/.poetry/bin
 
