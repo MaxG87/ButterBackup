@@ -4,12 +4,12 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 from unittest import mock
 
 import pytest
+import storage_device_managers as sdm
 from loguru import logger
 from typer.testing import CliRunner
 
 from butter_backup import cli
 from butter_backup import config_parser as cp
-from butter_backup import device_managers as dm
 from butter_backup.cli import app
 
 
@@ -179,12 +179,12 @@ def test_open_close_roundtrip(runner, encrypted_device) -> None:
         mount_dest = Path(match.group("mount_dest"))
         assert any(
             mount_dest in destinations
-            for destinations in dm.get_mounted_devices().values()
+            for destinations in sdm.get_mounted_devices().values()
         )
         assert expected_cryptsetup_map.exists()
         runner.invoke(app, ["close", "--config", str(config_file)])
         assert not expected_cryptsetup_map.exists()
-        assert not dm.is_mounted(mount_dest)
+        assert not sdm.is_mounted(mount_dest)
         assert not mount_dest.exists()
 
 
@@ -207,7 +207,7 @@ def test_format_device(runner, backend: str, big_file: Path) -> None:
     with NamedTemporaryFile("w") as fh:
         fh.write(serialised_config)
         fh.seek(0)
-        with dm.symbolic_link(big_file, Path(f"/dev/disk/by-uuid/{device_uuid}")):
+        with sdm.symbolic_link(big_file, Path(f"/dev/disk/by-uuid/{device_uuid}")):
             open_result = runner.invoke(app, ["open", "--config", fh.name])
             close_result = runner.invoke(app, ["close", "--config", fh.name])
     assert format_result.exit_code == 0

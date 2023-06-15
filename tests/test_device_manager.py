@@ -9,10 +9,10 @@ from uuid import UUID
 
 import pytest
 import shell_interface as sh
+import storage_device_managers as sdm
 from hypothesis import given
 from hypothesis import strategies as st
 
-from butter_backup import config_parser as cp
 from butter_backup import device_managers as dm
 
 
@@ -26,7 +26,7 @@ class MyCustomTestException(Exception):
 
 
 def test_mounted_device(btrfs_device) -> None:
-    with dm.mounted_device(btrfs_device, cp.ValidCompressions.ZSTD9) as md:
+    with dm.mounted_device(btrfs_device, sdm.ValidCompressions.ZSTD9) as md:
         assert md.exists()
         assert md.is_dir()
         assert dm.is_mounted(btrfs_device)
@@ -37,7 +37,7 @@ def test_mounted_device(btrfs_device) -> None:
 
 
 def test_mounted_device_takes_over_already_mounted_device(btrfs_device) -> None:
-    compression = cp.ValidCompressions.LZO
+    compression = sdm.ValidCompressions.LZO
     with TemporaryDirectory() as td:
         dm.mount_btrfs_device(btrfs_device, Path(td), compression)
         with dm.mounted_device(btrfs_device, compression) as md:
@@ -61,7 +61,7 @@ def test_mounted_device_fails_on_not_unmountable_device() -> None:
 
 def test_mounted_device_unmounts_in_case_of_exception(btrfs_device) -> None:
     with pytest.raises(MyCustomTestException):
-        with dm.mounted_device(btrfs_device, cp.ValidCompressions.ZLIB1) as md:
+        with dm.mounted_device(btrfs_device, sdm.ValidCompressions.ZLIB1) as md:
             # That the device is mounted properly is guaranteed by a test
             # above.
             raise MyCustomTestException
@@ -99,7 +99,7 @@ def test_get_mounted_devices_includes_root() -> None:
 def test_unmount_device(btrfs_device) -> None:
     with TemporaryDirectory() as mountpoint:
         dm.mount_btrfs_device(
-            btrfs_device, Path(mountpoint), cp.ValidCompressions.ZSTD7
+            btrfs_device, Path(mountpoint), sdm.ValidCompressions.ZSTD7
         )
         dm.unmount_device(btrfs_device)
         assert not dm.is_mounted(btrfs_device)

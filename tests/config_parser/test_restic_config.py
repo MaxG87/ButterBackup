@@ -4,6 +4,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
+import storage_device_managers as sdm
 from hypothesis import given
 from hypothesis import strategies as st
 from pydantic import ValidationError
@@ -26,7 +27,7 @@ def valid_unparsed_empty_restic_config(draw):
             {
                 "BackupRepositoryFolder": st.text(),
                 "Compression": st.sampled_from(
-                    [cur.value for cur in cp.ValidCompressions]
+                    [cur.value for cur in sdm.ValidCompressions]
                 ),
                 "ExcludePatternsFile": st.just(str(EXCLUDE_FILE)) | st.none(),
                 "DevicePassCmd": st.text(),

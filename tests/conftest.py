@@ -5,6 +5,7 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
 import shell_interface as sh
+import storage_device_managers as sdm
 
 from butter_backup import device_managers as dm
 
@@ -46,7 +47,7 @@ def encrypted_btrfs_device(big_file):
         configuration allowing to interact with the returned device
     """
     config = dm.prepare_device_for_butterbackend(big_file)
-    with dm.symbolic_link(big_file, config.device()):
+    with sdm.symbolic_link(big_file, config.device()):
         yield config
 
 
@@ -61,7 +62,7 @@ def encrypted_restic_device(big_file):
         configuration allowing to interact with the returned device
     """
     config = dm.prepare_device_for_resticbackend(big_file)
-    with dm.symbolic_link(big_file, config.device()):
+    with sdm.symbolic_link(big_file, config.device()):
         yield config
 
 
