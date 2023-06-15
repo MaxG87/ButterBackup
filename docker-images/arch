@@ -1,5 +1,5 @@
-# archlinux:latest as of Feb. 8th, 2023
-FROM archlinux@sha256:4501b192ef52888bd0bcaacfa249d6168938d4bfbbfc10ceb60ff047bcc19434
+# archlinux:latest as of 15 June 2023
+FROM archlinux@sha256:707c4cb0473b45bdeb3664a85d1c8888f7d9143ced98d895eba138126d68e506
 
 RUN pacman -Syy --noconfirm archlinux-keyring
 RUN rm -fr /etc/pacman.d/gnupg
