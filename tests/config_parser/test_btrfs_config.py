@@ -9,6 +9,7 @@ import pytest
 from hypothesis import assume, given
 from hypothesis import strategies as st
 from pydantic import ValidationError
+from storage_device_managers import ValidCompressions
 
 from butter_backup import config_parser as cp
 from tests import hypothesis_utils as hu
@@ -24,7 +25,7 @@ def valid_unparsed_empty_btrfs_config(draw):
             {
                 "BackupRepositoryFolder": st.text(),
                 "Compression": st.sampled_from(
-                    [cur.value for cur in cp.ValidCompressions]
+                    [cur.value for cur in ValidCompressions]
                 ),
                 "ExcludePatternsFile": st.just(str(EXCLUDE_FILE)) | st.none(),
                 "DevicePassCmd": st.text(),
@@ -155,7 +156,7 @@ def test_btrfs_config_accepts_valid_zlib(base_config, level: Optional[int]) -> N
         compression += f":{level}"
     base_config["Compression"] = compression
     cfg = cp.BtrFSRsyncConfig.parse_obj(base_config)
-    assert cfg.Compression == cp.ValidCompressions(compression)
+    assert cfg.Compression == ValidCompressions(compression)
 
 
 @given(
@@ -168,7 +169,7 @@ def test_btrfs_config_accepts_valid_zstd(base_config, level: Optional[int]) -> N
         compression += f":{level}"
     base_config["Compression"] = compression
     cfg = cp.BtrFSRsyncConfig.parse_obj(base_config)
-    assert cfg.Compression == cp.ValidCompressions(compression)
+    assert cfg.Compression == ValidCompressions(compression)
 
 
 @given(
@@ -178,7 +179,7 @@ def test_btrfs_config_accepts_valid_lzo(base_config) -> None:
     compression = "lzo"
     base_config["Compression"] = compression
     cfg = cp.BtrFSRsyncConfig.parse_obj(base_config)
-    assert cfg.Compression == cp.ValidCompressions.LZO
+    assert cfg.Compression == ValidCompressions.LZO
 
 
 @given(base_config=valid_unparsed_empty_btrfs_config(), folder_dest=hu.filenames())
