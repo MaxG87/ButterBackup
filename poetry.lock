@@ -762,13 +762,13 @@ files = [
 
 [[package]]
 name = "storage-device-managers"
-version = "0.10.0"
+version = "0.11.1"
 description = "Helpful context managers for managing decryption and mounts of storage devices"
 optional = false
 python-versions = ">=3.8.1,<3.12"
 files = [
-    {file = "storage_device_managers-0.10.0-py3-none-any.whl", hash = "sha256:6c423dbbfb3d946bed26f1756464aa7e8b9b2877a4bf673dd87900caf40e0390"},
-    {file = "storage_device_managers-0.10.0.tar.gz", hash = "sha256:d484084ae0848043eb504fc599480e48a1fbd37686eef4c2989bdab2cc0447da"},
+    {file = "storage_device_managers-0.11.1-py3-none-any.whl", hash = "sha256:963c0ed78bf7ed220093ed7f5ecaaa8e0286094b901bda9d7bc644dd1175f4b7"},
+    {file = "storage_device_managers-0.11.1.tar.gz", hash = "sha256:66afdd2bc8efe9dfc5123e32bc725e22fd5431a7e2725669ef972af9b167753f"},
 ]
 
 [package.dependencies]
@@ -845,4 +845,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12"
-content-hash = "bc0a55fa25c17dd26286c8de8d802c521078b37cea2d078d56e41d568eadfbb7"
+content-hash = "cbc7a3c60c23994e3e9cd6fca18a8ae35f5eb409165e2b6e432360e4b5a00133"
