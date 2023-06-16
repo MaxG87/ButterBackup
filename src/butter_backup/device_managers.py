@@ -14,12 +14,15 @@ def prepare_device_for_butterbackend(device: Path) -> cp.BtrFSRsyncConfig:
     backup_repository_folder = "ButterBackupRepository"
     volume_uuid = sdm.encrypt_device(device, password_cmd)
     compression = sdm.ValidCompressions.ZSTD
+    user = sh.get_user()
+    group = sh.get_group(user)
     with sdm.decrypted_device(device, password_cmd) as decrypted:
         sdm.mkfs_btrfs(decrypted)
         with sdm.mounted_device(decrypted) as mounted:
             backup_repository = mounted / backup_repository_folder
             mkdir_cmd: sh.StrPathList = ["sudo", "mkdir", backup_repository]
             sh.run_cmd(cmd=mkdir_cmd)
+
             initial_subvol = backup_repository / date.today().strftime(
                 cp.BtrFSRsyncConfig.SubvolTimestampFmt
             )
@@ -31,6 +34,8 @@ def prepare_device_for_butterbackend(device: Path) -> cp.BtrFSRsyncConfig:
                 initial_subvol,
             ]
             sh.run_cmd(cmd=subvol_cmd)
+            sdm.chown(mounted, user, group, recursive=True)
+
     config = cp.BtrFSRsyncConfig(
         BackupRepositoryFolder=backup_repository_folder,
         Compression=compression,
@@ -49,6 +54,8 @@ def prepare_device_for_resticbackend(device: Path) -> cp.ResticConfig:
     backup_repository_folder = "ResticBackupRepository"
     compression = None  # Restic encrypts and encrypted data are incompressible
     volume_uuid = sdm.encrypt_device(device, device_passcmd)
+    user = sh.get_user()
+    group = sh.get_group(user)
     with sdm.decrypted_device(device, device_passcmd) as decrypted:
         sdm.mkfs_btrfs(decrypted)
         with sdm.mounted_device(decrypted) as mounted:
@@ -59,6 +66,7 @@ def prepare_device_for_resticbackend(device: Path) -> cp.ResticConfig:
                 repository_passcmd,
                 ["sudo", "restic", "init", "-r", backup_repo],
             )
+            sdm.chown(mounted, user, group, recursive=True)
     config = cp.ResticConfig(
         BackupRepositoryFolder=backup_repository_folder,
         Compression=compression,
