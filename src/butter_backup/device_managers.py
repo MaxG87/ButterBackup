@@ -16,7 +16,7 @@ def prepare_device_for_butterbackend(device: Path) -> cp.BtrFSRsyncConfig:
     compression = sdm.ValidCompressions.ZSTD
     with sdm.decrypted_device(device, password_cmd) as decrypted:
         sdm.mkfs_btrfs(decrypted)
-        with sdm.mounted_device(decrypted, compression) as mounted:
+        with sdm.mounted_device(decrypted) as mounted:
             backup_repository = mounted / backup_repository_folder
             mkdir_cmd: sh.StrPathList = ["sudo", "mkdir", backup_repository]
             sh.run_cmd(cmd=mkdir_cmd)
@@ -51,7 +51,7 @@ def prepare_device_for_resticbackend(device: Path) -> cp.ResticConfig:
     volume_uuid = sdm.encrypt_device(device, device_passcmd)
     with sdm.decrypted_device(device, device_passcmd) as decrypted:
         sdm.mkfs_btrfs(decrypted)
-        with sdm.mounted_device(decrypted, compression) as mounted:
+        with sdm.mounted_device(decrypted) as mounted:
             backup_repo = mounted / backup_repository_folder
             cmd: sh.StrPathList = ["sudo", "mkdir", backup_repo]
             sh.run_cmd(cmd=cmd)
