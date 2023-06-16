@@ -36,7 +36,7 @@ def encrypted_btrfs_device(big_file):
     config: BtrfsConfig
         configuration allowing to interact with the returned device
     """
-    config = dm.prepare_device_for_butterbackend(big_file)
+    config = dm.prepare_device_for_butterbackend(big_file, fast_and_insecure=True)
     with sdm.symbolic_link(big_file, config.device()):
         yield config
 
@@ -51,7 +51,7 @@ def encrypted_restic_device(big_file):
     config: ResticConfig
         configuration allowing to interact with the returned device
     """
-    config = dm.prepare_device_for_resticbackend(big_file)
+    config = dm.prepare_device_for_resticbackend(big_file, fast_and_insecure=True)
     with sdm.symbolic_link(big_file, config.device()):
         yield config
 
