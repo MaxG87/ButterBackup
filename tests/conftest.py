@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+import uuid
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
@@ -38,8 +39,19 @@ def big_file(_big_file_persistent):
         yield big_file
 
 
+@pytest.fixture(scope="session")
+def _encrypted_btrfs_device_persistent(
+    _big_file_persistent,
+):
+    with NamedTemporaryFile() as ntf:
+        big_file = Path(ntf.name)
+        shutil.copy(_big_file_persistent, big_file)
+        config = dm.prepare_device_for_butterbackend(big_file, fast_and_insecure=True)
+        yield big_file, config
+
+
 @pytest.fixture
-def encrypted_btrfs_device(big_file):
+def encrypted_btrfs_device(_encrypted_btrfs_device_persistent):
     """
     Prepare device for ButterBackup and return its config
 
@@ -48,9 +60,18 @@ def encrypted_btrfs_device(big_file):
     config: BtrfsConfig
         configuration allowing to interact with the returned device
     """
-    config = dm.prepare_device_for_butterbackend(big_file, fast_and_insecure=True)
-    with sdm.symbolic_link(big_file, config.device()):
-        yield config
+
+    # This implementation resets the UUID of the configuration. This causes the
+    # partition's UUID and the configuration's UUID to differ. Since the only
+    # relevance of the partition's UUID is to allow Linux to create the device
+    # node in /dev/disk/by-uuid, this is not a problem.
+    old_fs_file, old_config = _encrypted_btrfs_device_persistent
+    with NamedTemporaryFile() as ntf:
+        big_file = Path(ntf.name)
+        shutil.copy(old_fs_file, big_file)
+        config = old_config.copy(update={"UUID": uuid.uuid4()})
+        with sdm.symbolic_link(big_file, config.device()):
+            yield config
 
 
 @pytest.fixture
