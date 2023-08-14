@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
@@ -23,21 +24,18 @@ def get_random_filename() -> str:
 @st.composite
 def valid_unparsed_empty_restic_config(draw):
     config = draw(
-        st.fixed_dictionaries(
-            {
-                "BackupRepositoryFolder": st.text(),
-                "Compression": st.sampled_from(
-                    [cur.value for cur in sdm.ValidCompressions]
-                ),
-                "ExcludePatternsFile": st.just(str(EXCLUDE_FILE)) | st.none(),
-                "DevicePassCmd": st.text(),
-                "FilesAndFolders": st.just([]),
-                "RepositoryPassCmd": st.text(),
-                "UUID": st.uuids().map(str),
-            }
+        st.builds(
+            cp.ResticConfig,
+            BackupRepositoryFolder=st.text(),
+            Compression=st.sampled_from([cur.value for cur in sdm.ValidCompressions]),
+            ExcludePatternsFile=st.just(str(EXCLUDE_FILE)) | st.none(),
+            DevicePassCmd=st.text(),
+            FilesAndFolders=st.just([]),
+            RepositoryPassCmd=st.text(),
+            UUID=st.uuids(),
         )
     )
-    return config
+    return json.loads(config.json())
 
 
 @given(base_config=valid_unparsed_empty_restic_config())
