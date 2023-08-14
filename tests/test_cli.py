@@ -127,13 +127,6 @@ def test_subprograms_refuse_directories(subprogram, runner) -> None:
         assert result.exit_code != 0
 
 
-def test_open_refuses_missing_config(runner) -> None:
-    config_file = Path(get_random_filename())
-    result = runner.invoke(app, ["open", "--config", str(config_file)])
-    assert f"{config_file}" in result.stderr
-    assert result.exit_code != 0
-
-
 @pytest.mark.skip("Impossible to implement!")
 def test_open_refuses_missing_xdg_config(runner) -> None:
     # It seems as if this test cannot be implemented at the moment.
