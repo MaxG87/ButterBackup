@@ -3,7 +3,7 @@ from __future__ import annotations
 import shutil
 import uuid
 from pathlib import Path
-from tempfile import NamedTemporaryFile, TemporaryDirectory
+from tempfile import NamedTemporaryFile
 
 import pytest
 import storage_device_managers as sdm
@@ -11,20 +11,12 @@ import storage_device_managers as sdm
 from butter_backup import device_managers as dm
 
 
-def get_random_filename(dir_: str) -> str:
-    with NamedTemporaryFile(dir=dir_) as ntf:
-        pass
-    return ntf.name
-
-
 @pytest.fixture(scope="session")
 def _big_file_persistent():
     min_size = 128 * 1024**2  # ~109MiB is the minimum size for BtrFS
-    with TemporaryDirectory() as tempdir:
-        filename = get_random_filename(dir_=tempdir)
-        file = Path(filename)
-        with file.open("wb") as fh:
-            fh.write(bytes(min_size))
+    with NamedTemporaryFile() as ntf:
+        file = Path(ntf.name)
+        file.write_bytes(bytes(min_size))
         yield file
 
 
