@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
@@ -15,8 +16,8 @@ def get_random_filename(dir_: str) -> str:
     return ntf.name
 
 
-@pytest.fixture
-def big_file():
+@pytest.fixture(scope="session")
+def _big_file_persistent():
     min_size = 128 * 1024**2  # ~109MiB is the minimum size for BtrFS
     with TemporaryDirectory() as tempdir:
         filename = get_random_filename(dir_=tempdir)
@@ -24,6 +25,17 @@ def big_file():
         with file.open("wb") as fh:
             fh.write(bytes(min_size))
         yield file
+
+
+@pytest.fixture
+def big_file(_big_file_persistent):
+    """
+    Prepare a file of minimum size for BtrFS and return its path
+    """
+    with NamedTemporaryFile() as ntf:
+        big_file = Path(ntf.name)
+        shutil.copy(_big_file_persistent, big_file)
+        yield big_file
 
 
 @pytest.fixture
