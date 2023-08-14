@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from tempfile import NamedTemporaryFile, TemporaryDirectory
+from tempfile import TemporaryDirectory
 from uuid import UUID
 
 import pytest
@@ -13,11 +13,6 @@ from pydantic import ValidationError
 from butter_backup import config_parser as cp
 
 SUCCESS_CODES = {0, None}
-
-
-def get_random_filename() -> str:
-    with NamedTemporaryFile() as named_file:
-        return named_file.name
 
 
 def test_parse_configuration_rejects_empty_list() -> None:
