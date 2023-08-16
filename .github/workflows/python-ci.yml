@@ -23,6 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           poetry install ${{ matrix.dependency-extras }}
+          sudo apt install restic
       - name: Check formatting with black
         run: |
           poetry run black --check .
