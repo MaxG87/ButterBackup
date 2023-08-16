@@ -1,0 +1,39 @@
+name: Python package
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        dependency-extras: ["-E logging", ""]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install "poetry==1.5.1"
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "poetry"
+      - name: Install dependencies
+        run: |
+          poetry install ${{ matrix.dependency-extras }}
+      - name: Check formatting with black
+        run: |
+          poetry run black --check .
+      - name: Check import ordering with ruff
+        run: |
+          poetry run ruff check --format=github --select I .
+      - name: Check static typing with mypy
+        run: poetry run mypy .
+      - name: Lint with ruff
+        run: |
+          poetry run ruff check --format=github .
+      - name: Test with pytest
+        run: |
+          poetry run pytest --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html
