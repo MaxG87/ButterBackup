@@ -47,7 +47,7 @@ $(CACHEDIR)/run-%-tests: | $(CACHEDIR)/%-test-image
 
 $(CACHEDIR)/%-test-image: | $(CACHEDIR)
 	platform=$(subst -test-image,,$(notdir $@)) ; \
-	DOCKER_BUILDKIT=1 docker build . -t $(DOCKER_TEST_TAG).$$platform -f docker-images/$$platform
+	DOCKER_BUILDKIT=1 docker build . -t $(DOCKER_TEST_TAG).$$platform -f dockerfiles/$$platform
 	touch $@
 
 
