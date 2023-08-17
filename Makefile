@@ -1,5 +1,6 @@
 # Configuration
 ALL_FILES := $(sort $(shell find -type f -not -wholename "./.*" -not -name Makefile -not -wholename "*/__pycache__/*"))
+ALL_DOCKER_FILES := $(shell ls dockerfiles)
 SERVICE := $(notdir $(CURDIR))
 SERVICE_LC := $(shell echo $(SERVICE) | tr '[[:upper:]]' '[[:lower:]]')
 SERVICE_ID_FULL := $(shell sha256sum $(ALL_FILES) | sha256sum | cut -d' ' -f1)
@@ -9,8 +10,11 @@ SERVICE_ID_SHORT := $(shell echo $(SERVICE_ID_FULL) | head -c 6)
 DOCKER_TEST_TAG = $(SERVICE_LC)-$(SERVICE_ID_SHORT).test
 
 # Preparation of dependencies
-CACHEBASE ?= ~/.cache/$(SERVICE).make-cache/
+CACHEBASE ?= ~/.cache/$(SERVICE).make-cache
 CACHEDIR = $(CACHEBASE)/$(SERVICE_ID_FULL)
+
+# $(CACHEDIR)/run-arch-tests, $(CACHEDIR)/run-python3.8-tests, ...
+DOCKER_TESTS_TARGETS := $(addsuffix -tests, $(addprefix $(CACHEDIR)/run-,$(ALL_DOCKER_FILES)))
 
 .SECONDARY:  # Do not remove intermediate files. We need them for caching!
 
@@ -25,7 +29,7 @@ check-linters: | $(CACHEDIR)/check-linters
 .PHONY: run-tests
 run-tests: run-docker-tests | run-undockered-tests
 .PHONY: run-docker-tests
-run-docker-tests: | $(addprefix $(CACHEDIR)/,run-arch-tests run-debian-tests run-python3.8-tests run-python3.9-tests run-python3.10-tests)
+run-docker-tests: | $(DOCKER_TESTS_TARGETS)
 .PHONY: run-undockered-tests
 run-undockered-tests: | $(CACHEDIR)/run-undockered-tests
 .PHONY: get-service-id
@@ -47,7 +51,7 @@ $(CACHEDIR)/run-%-tests: | $(CACHEDIR)/%-test-image
 
 $(CACHEDIR)/%-test-image: | $(CACHEDIR)
 	platform=$(subst -test-image,,$(notdir $@)) ; \
-	DOCKER_BUILDKIT=1 docker build . -t $(DOCKER_TEST_TAG).$$platform -f docker-images/$$platform
+	DOCKER_BUILDKIT=1 docker build . -t $(DOCKER_TEST_TAG).$$platform -f dockerfiles/$$platform
 	touch $@
 
 
