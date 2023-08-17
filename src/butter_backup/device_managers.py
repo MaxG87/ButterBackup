@@ -9,14 +9,10 @@ import storage_device_managers as sdm
 from . import config_parser as cp
 
 
-def prepare_device_for_butterbackend(
-    device: Path
-) -> cp.BtrFSRsyncConfig:
+def prepare_device_for_butterbackend(device: Path) -> cp.BtrFSRsyncConfig:
     password_cmd = sdm.generate_passcmd()
     backup_repository_folder = "ButterBackupRepository"
-    volume_uuid = sdm.encrypt_device(
-        device, password_cmd
-    )
+    volume_uuid = sdm.encrypt_device(device, password_cmd)
     compression = sdm.ValidCompressions.ZSTD
     user = sh.get_user()
     group = sh.get_group(user)
@@ -52,16 +48,12 @@ def prepare_device_for_butterbackend(
     return config
 
 
-def prepare_device_for_resticbackend(
-    device: Path
-) -> cp.ResticConfig:
+def prepare_device_for_resticbackend(device: Path) -> cp.ResticConfig:
     device_passcmd = sdm.generate_passcmd()
     repository_passcmd = sdm.generate_passcmd()
     backup_repository_folder = "ResticBackupRepository"
     compression = None  # Restic encrypts and encrypted data are incompressible
-    volume_uuid = sdm.encrypt_device(
-        device, device_passcmd
-    )
+    volume_uuid = sdm.encrypt_device(device, device_passcmd)
     user = sh.get_user()
     group = sh.get_group(user)
     with sdm.decrypted_device(device, device_passcmd) as decrypted:
