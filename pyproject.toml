@@ -12,6 +12,12 @@ pydantic = "<2.0"
 loguru = "^0.7.0"
 shell-interface = "^0.10.0"
 storage-device-managers = "^0.11.1"
+rich = {version = "^13.5.2", optional = true}
+
+[tool.poetry.extras]
+# In fact, `typer[all]` would be preferred, but Poetry does not support to have
+# optional extras of dependencies.
+all = ["rich"]
 
 [tool.poetry.group.dev.dependencies]
 hypothesis = "^6.81.2"
