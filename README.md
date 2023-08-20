@@ -60,19 +60,30 @@ aufzubewahren ohne dabei zu verkomplizieren, neue Sicherungskopien anzulegen.
 
 ## Ausführung der Tests
 
-**ACHTUNG**: Es gibt einen Konflikt mit Docker, der dazu führt, dass genau ein
-Test der Testsuite bei der ersten Ausführung fehlschlägt. Ab der zweiten
-Ausführung ist die Test-Suite aber robust und zuverlässig. Dieser erste
-Fehlschlag kann provoziert werden, in dem der entsprechende Test direkt
-ausgeführt wird, z.B. über
+ButterBackup hat eine umfangreiche Testsuite, die viele relevanten Aspekte des
+Programms abdeckt. Diese wird ergänzt durch die ähnlich umfangreichen
+Testsuites der Abhängigkeiten `storage-device-managers` und `shell-interface`.
+Diese beiden Abhängigkeiten sind aus ButterBackup hervorgegangen, womit deren
+Testsuite weitere für ButterBackup wichtige Aspekte gründlich abdeckt.
 
-    poetry run pytest -k test_mounted_device_fails_on_not_unmountable_device
+Für die schnelle Ausführung während der Entwicklung bietet es sich an, die
+Testsuite direkt auszuführen. Dies ist wird im Abschnitt "schnell" erläutert.
+Spätestens vor einem Release sollten aber auch die distributionsübergreifenden
+Tests ausgeführt werden, da diese garantieren, dass ButterBackup auch unter
+Arch und allen unterstützten Pythonversionen funktioniert.
+
 
 ### Schnell
 
-    poetry run flake8
+#### Direkt
+
+    poetry run ruff check .
     poetry run mypy .
     poetry run pytest
+
+#### Mittels Makefile
+
+    make check-format check-linters run-undockered-tests
 
 ### Plattformübergreifende Tests
 
@@ -83,6 +94,10 @@ nur, weil es Probleme mit Arch gab.
 Die Testsuite kann mittels `make` ausgeführt werden. Es ist auch eine
 Parallelisierung mittels `make -j N` möglich, wobei N die Anzahl der Prozesse
 angibt.
+
+Diese Tests werden ergänzt durch eine Testmatrix auf Github. Diese Testmatrix
+deckt Ubuntu mit allen unterstützten Pythonversionen ab. Dies erlaubt ggf., die
+sehr lang laufende Docker-Testsuite seltener auszuführen.
 
 ## Designentscheidungen
 
