@@ -46,7 +46,7 @@ $(CACHEDIR)/run-undockered-tests: | $(CACHEDIR)
 
 $(CACHEDIR)/run-%-tests: | $(CACHEDIR)/%-test-image
 	platform=$(subst -test-image,,$(notdir $|)) ; \
-	docker run --privileged -v "$(CURDIR)/tests/:/project/tests" -t $(DOCKER_TEST_TAG).$$platform
+	docker run --rm --privileged -v "$(CURDIR)/tests/:/project/tests" -t $(DOCKER_TEST_TAG).$$platform
 	touch $@
 
 $(CACHEDIR)/%-test-image: | $(CACHEDIR)
