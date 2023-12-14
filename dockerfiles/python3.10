@@ -1,5 +1,5 @@
-# python:3.10.12-slim-bookworm as of 15 June 2023
-FROM python@sha256:c11490fd02e0cda47e577d2aca36fa6509c71308a675d18a2e881864f8798736
+# python:3.10.13-slim-bookworm as of 14 December 2023
+FROM python@sha256:a2c9b8dd3da225debeb156176c111752499d152b7505146c1373364766d762a4
 
 # Provide excecutables
 ENV DEBIAN_FRONTEND=noninteractive
