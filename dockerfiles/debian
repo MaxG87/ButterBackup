@@ -1,5 +1,5 @@
-# Debian stable-slim as of Oct. 12th, 2021
-FROM debian@sha256:cb4f1877372e3b13a254fca5e7345a48a2f3e6accbd29d36f94101049ad661ec
+# Debian stable-slim as of 14 December 2023
+FROM debian@sha256:375fb84f3c64691a1b9a9ff5ff3905173dcd0c5e11bc2aebd5c3472a139fa2b4
 
 # Provide excecutables
 ENV DEBIAN_FRONTEND=noninteractive
