@@ -41,7 +41,7 @@ $(CACHEDIR):
 
 
 $(CACHEDIR)/run-undockered-tests: | $(CACHEDIR)
-	poetry run pytest
+	poetry run pytest -n $$(nproc)
 	touch $@
 
 $(CACHEDIR)/run-%-tests: | $(CACHEDIR)/%-test-image
