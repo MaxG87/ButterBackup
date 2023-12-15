@@ -29,6 +29,7 @@ pytest-cov = "^3.0.0"
 mypy = "^1.4.1"
 black = "^23.7.0"
 ruff = "^0.0.278"
+pytest-xdist = "^3.5.0"
 
 [tool.poetry.scripts]
 butter-backup = "butter_backup.cli:cli"
