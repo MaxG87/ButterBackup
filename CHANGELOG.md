@@ -2,6 +2,9 @@
 
 ## [3.3.2](https://github.com/MaxG87/ButterBackup/compare/v3.3.1...v3.3.2) (2023-12-15)
 
+### Features
+
+* Ermögliche schöne CLI-Darstellung durch Rich mit `butter-backup[all]`
 
 ### Bug Fixes
 
