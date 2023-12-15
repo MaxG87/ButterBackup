@@ -17,4 +17,3 @@ jobs:
         with:
           token: ${{ secrets.ButterBackup_CICD }}
           release-type: python
-          package-name: release-please-action
