@@ -123,18 +123,16 @@ def get_result_content_for_restic(
     config: cp.ResticConfig, mounted: Path
 ) -> Counter[bytes]:
     with TemporaryDirectory() as restore_dir:
-        sh.pipe_pass_cmd_to_real_cmd(
-            config.RepositoryPassCmd,
-            [
-                "restic",
-                "-r",
-                mounted / config.BackupRepositoryFolder,
-                "restore",
-                "latest",
-                "--target",
-                restore_dir,
-            ],
-        )
+        restore_cmd: sh.StrPathList = [
+            "restic",
+            "-r",
+            mounted / config.BackupRepositoryFolder,
+            "restore",
+            "latest",
+            "--target",
+            restore_dir,
+        ]
+        sh.pipe_pass_cmd_to_real_cmd(config.RepositoryPassCmd, restore_cmd)
         return Counter(
             file.read_bytes() for file in list_files_recursively(Path(restore_dir))
         )
