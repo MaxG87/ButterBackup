@@ -13,8 +13,8 @@ DOCKER_TEST_TAG = $(SERVICE_LC)-$(SERVICE_ID_SHORT).test
 CACHEBASE ?= ~/.cache/$(SERVICE).make-cache/
 CACHEDIR = $(CACHEBASE)/$(SERVICE_ID_FULL)
 
-# $(CACHEDIR)/run-arch-tests, $(CACHEDIR)/run-python3.8-tests, ...
-DOCKER_TESTS_TARGETS := $(addsuffix -tests, $(addprefix $(CACHEDIR)/run-,$(ALL_DOCKER_FILES)))
+# run-arch-tests, run-python3.8-tests, ...
+DOCKER_TESTS := $(addsuffix -tests, $(addprefix run-,$(ALL_DOCKER_FILES)))
 
 .SECONDARY:  # Do not remove intermediate files. We need them for caching!
 
@@ -29,7 +29,9 @@ check-linters: | $(CACHEDIR)/check-linters
 .PHONY: run-tests
 run-tests: run-docker-tests | run-undockered-tests
 .PHONY: run-docker-tests
-run-docker-tests: | $(DOCKER_TESTS_TARGETS)
+run-docker-tests: | $(DOCKER_TESTS)
+.PHONY: $(DOCKER_TESTS)
+run-%-tests: | $(CACHEDIR)/run-%-tests
 .PHONY: run-undockered-tests
 run-undockered-tests: | $(CACHEDIR)/run-undockered-tests
 .PHONY: get-service-id

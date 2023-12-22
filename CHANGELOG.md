@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.4.0](https://github.com/MaxG87/ButterBackup/compare/v3.3.2...v3.4.0) (2023-12-22)
+
+
+### Features
+
+* Erweitere Unterstützung auf Python 3.12 ([26b59c5](https://github.com/MaxG87/ButterBackup/commit/26b59c5156e218f9c8fc492ad402813747b1c2fa))
+
+
+### Dependencies
+
+* Hebe Version zweier Abhängigkeiten ([ef58a1e](https://github.com/MaxG87/ButterBackup/commit/ef58a1ee849694c1fef1f608046589b0453a39ff))
+
+
+### Documentation
+
+* Behebe kleinen Fehler in CHANGELOG ([31b0f7f](https://github.com/MaxG87/ButterBackup/commit/31b0f7f65fa990412706154bbf69908757c3dd80))
+
 ## [3.3.2](https://github.com/MaxG87/ButterBackup/compare/v3.3.1...v3.3.2) (2023-12-15)
 
 
