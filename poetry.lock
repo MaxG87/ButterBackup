@@ -807,17 +807,17 @@ files = [
 
 [[package]]
 name = "shell-interface"
-version = "0.10.0"
+version = "0.13.0"
 description = "Helpful and convenient utilities to interact with UNIX shells"
 optional = false
-python-versions = ">=3.8.1,<3.12"
+python-versions = ">=3.8.1,<3.13"
 files = [
-    {file = "shell_interface-0.10.0-py3-none-any.whl", hash = "sha256:d675b2c46e6d36e088885702a2d8aa589bef50c4d55c4ffe5a4d07b2ae2c07a4"},
-    {file = "shell_interface-0.10.0.tar.gz", hash = "sha256:fa6cedf746e2439f80f9efb81b201c9d9e40b107ecaab543220b33697d35d6f6"},
+    {file = "shell_interface-0.13.0-py3-none-any.whl", hash = "sha256:ceff3ac1b1df7f874039d41628215594e24c65356a3dff2f97f54b009aab25c6"},
+    {file = "shell_interface-0.13.0.tar.gz", hash = "sha256:3a32d93a53d0a5b47fddde01d98eb85e68dc6b1450aa39836836e26516ac2b74"},
 ]
 
-[package.dependencies]
-loguru = ">=0.7.0,<0.8.0"
+[package.extras]
+logging = ["loguru (>=0.7.2,<0.8.0)"]
 
 [[package]]
 name = "sortedcontainers"
@@ -832,18 +832,20 @@ files = [
 
 [[package]]
 name = "storage-device-managers"
-version = "0.11.1"
+version = "0.14.0"
 description = "Helpful context managers for managing decryption and mounts of storage devices"
 optional = false
-python-versions = ">=3.8.1,<3.12"
+python-versions = ">=3.8.1,<3.13"
 files = [
-    {file = "storage_device_managers-0.11.1-py3-none-any.whl", hash = "sha256:963c0ed78bf7ed220093ed7f5ecaaa8e0286094b901bda9d7bc644dd1175f4b7"},
-    {file = "storage_device_managers-0.11.1.tar.gz", hash = "sha256:66afdd2bc8efe9dfc5123e32bc725e22fd5431a7e2725669ef972af9b167753f"},
+    {file = "storage_device_managers-0.14.0-py3-none-any.whl", hash = "sha256:68a0238071548ea9d44c656f3de0ac3d8da7b2e78c79ac2283df2a44363a3268"},
+    {file = "storage_device_managers-0.14.0.tar.gz", hash = "sha256:8de4360ea79d7372b85b7cd4c6fac054df0ebc5f1aaeabaf165a63c411e48c7a"},
 ]
 
 [package.dependencies]
-loguru = ">=0.7.0,<0.8.0"
-shell-interface = ">=0.10.0,<0.11.0"
+shell-interface = ">=0.13.0,<0.14.0"
+
+[package.extras]
+logging = ["loguru (>=0.7.2,<0.8.0)"]
 
 [[package]]
 name = "tomli"
@@ -924,5 +926,5 @@ all = ["rich"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = ">=3.8.1,<3.12"
-content-hash = "ee5356eeaac7d003c6fc7301958b0678c32322b96e472e1916a1041f25239a3d"
+python-versions = ">=3.8.1,<3.13"
+content-hash = "e6e7d55d8dc935930b98076a14fb89f81f5d0f4537d6c145e51b87cd0a67060b"
