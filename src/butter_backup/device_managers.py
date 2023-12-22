@@ -60,12 +60,16 @@ def prepare_device_for_resticbackend(device: Path) -> cp.ResticConfig:
         sdm.mkfs_btrfs(decrypted)
         with sdm.mounted_device(decrypted) as mounted:
             backup_repo = mounted / backup_repository_folder
-            cmd: sh.StrPathList = ["sudo", "mkdir", backup_repo]
-            sh.run_cmd(cmd=cmd)
-            sh.pipe_pass_cmd_to_real_cmd(
-                repository_passcmd,
-                ["sudo", "restic", "init", "-r", backup_repo],
-            )
+            mkdir_repo: sh.StrPathList = ["sudo", "mkdir", backup_repo]
+            restic_init: sh.StrPathList = [
+                "sudo",
+                "restic",
+                "init",
+                "-r",
+                backup_repo,
+            ]
+            sh.run_cmd(cmd=mkdir_repo)
+            sh.pipe_pass_cmd_to_real_cmd(repository_passcmd, restic_init)
             sdm.chown(mounted, user, group, recursive=True)
     config = cp.ResticConfig(
         BackupRepositoryFolder=backup_repository_folder,
