@@ -21,11 +21,11 @@ all = ["rich"]
 
 [tool.poetry.group.dev.dependencies]
 hypothesis = "^6.81.2"
-pytest = "^7.4.0"
-pynvim = "^0.4.3"
-jedi = "^0.18.2"
+pytest = ">=7.4,<9.0"
+pynvim = ">=0.4.3,<0.6.0"
+jedi = ">=0.18.2,<0.20.0"
 pdbpp = "^0.10.3"
-pytest-cov = "^3.0.0"
+pytest-cov = ">=3,<6"
 mypy = "^1.4.1"
 black = "^24.4.2"
 ruff = "^0.4.10"
