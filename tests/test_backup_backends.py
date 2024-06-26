@@ -29,15 +29,13 @@ def list_files_recursively(path: Path) -> Iterable[Path]:
 @overload
 def complement_configuration(
     config: cp.BtrFSRsyncConfig, source_dir: Path
-) -> cp.BtrFSRsyncConfig:
-    ...
+) -> cp.BtrFSRsyncConfig: ...
 
 
 @overload
 def complement_configuration(
     config: cp.ResticConfig, source_dir: Path
-) -> cp.ResticConfig:
-    ...
+) -> cp.ResticConfig: ...
 
 
 def complement_configuration(
@@ -54,15 +52,13 @@ def complement_configuration(
 @overload
 def get_expected_content(
     config: cp.BtrFSRsyncConfig, exclude_to_ignore_file: bool
-) -> Dict[Path, bytes]:
-    ...
+) -> Dict[Path, bytes]: ...
 
 
 @overload
 def get_expected_content(
     config: cp.ResticConfig, exclude_to_ignore_file: bool
-) -> Counter[bytes]:
-    ...
+) -> Counter[bytes]: ...
 
 
 def get_expected_content(
@@ -87,13 +83,13 @@ def get_expected_content(
 
 
 @overload
-def get_result_content(config: cp.BtrFSRsyncConfig, mounted: Path) -> Dict[Path, bytes]:
-    ...
+def get_result_content(
+    config: cp.BtrFSRsyncConfig, mounted: Path
+) -> Dict[Path, bytes]: ...
 
 
 @overload
-def get_result_content(config: cp.ResticConfig, mounted: Path) -> Counter[bytes]:
-    ...
+def get_result_content(config: cp.ResticConfig, mounted: Path) -> Counter[bytes]: ...
 
 
 def get_result_content(

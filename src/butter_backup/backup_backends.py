@@ -14,18 +14,15 @@ from . import config_parser as cp
 
 class BackupBackend(abc.ABC):
     @abc.abstractmethod
-    def do_backup(self, mount_dir: Path) -> None:
-        ...
+    def do_backup(self, mount_dir: Path) -> None: ...
 
     @overload
     @staticmethod
-    def from_config(config: cp.BtrFSRsyncConfig) -> BtrFSRsyncBackend:
-        ...
+    def from_config(config: cp.BtrFSRsyncConfig) -> BtrFSRsyncBackend: ...
 
     @overload
     @staticmethod
-    def from_config(config: cp.ResticConfig) -> ResticBackend:
-        ...
+    def from_config(config: cp.ResticConfig) -> ResticBackend: ...
 
     @staticmethod
     def from_config(
