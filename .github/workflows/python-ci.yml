@@ -29,12 +29,12 @@ jobs:
           poetry run black --check .
       - name: Check import ordering with ruff
         run: |
-          poetry run ruff check --format=github --select I .
+          poetry run ruff check --output-format=github --select I .
       - name: Check static typing with mypy
         run: poetry run mypy .
       - name: Lint with ruff
         run: |
-          poetry run ruff check --format=github .
+          poetry run ruff check --output-format=github .
       - name: Test with pytest
         run: |
           poetry run pytest --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html
