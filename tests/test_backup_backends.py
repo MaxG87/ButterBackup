@@ -67,9 +67,9 @@ def get_expected_content(
 ) -> Union[Counter[bytes], Dict[Path, bytes]]:
     source_dir: Path
     if isinstance(config, cp.BtrFSRsyncConfig):
-        source_dir = list(config.Folders.keys())[0]
+        source_dir = next(iter(config.Folders))
     elif isinstance(config, cp.ResticConfig):
-        source_dir = list(config.FilesAndFolders)[0]
+        source_dir = next(iter(config.FilesAndFolders))
     else:
         raise TypeError("Unsupported configuration encountered.")
     expected_content = {
@@ -106,7 +106,7 @@ def get_result_content(
 def get_result_content_for_btrfs(
     config: cp.BtrFSRsyncConfig, mounted: Path
 ) -> Dict[Path, bytes]:
-    folder_dest_dir = list(config.Folders.values())[0]
+    folder_dest_dir = next(iter(config.Folders.values()))
     backup_repository = mounted / config.BackupRepositoryFolder
     latest_folder = sorted(backup_repository.iterdir())[-1]
     return {
