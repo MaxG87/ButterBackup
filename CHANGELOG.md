@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.4.1](https://github.com/MaxG87/ButterBackup/compare/v3.4.0...v3.4.1) (2024-06-26)
+
+
+### Dependencies
+
+* Bump `black` to 24.2.2 ([d5d5fff](https://github.com/MaxG87/ButterBackup/commit/d5d5fff8a4511e12dc14a79aad415f938c5f85cd))
+* Relock all dependencies ([4a072cf](https://github.com/MaxG87/ButterBackup/commit/4a072cf524ed003a07acac5ff20d76504ff3b201))
+* Update ruff 0.0.278 --&gt; 0.4.10 ([1779361](https://github.com/MaxG87/ButterBackup/commit/1779361c6aa08f5e4aa28f40c5f9a6e2446e3a8e))
+
 ## [3.4.0](https://github.com/MaxG87/ButterBackup/compare/v3.3.2...v3.4.0) (2023-12-22)
 
 
