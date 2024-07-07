@@ -673,21 +673,22 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pynvim"
-version = "0.4.3"
-description = "Python client to neovim"
+version = "0.5.0"
+description = "Python client for Neovim"
 optional = false
-python-versions = "*"
+python-versions = ">=3.7"
 files = [
-    {file = "pynvim-0.4.3.tar.gz", hash = "sha256:3a795378bde5e8092fbeb3a1a99be9c613d2685542f1db0e5c6fd467eed56dff"},
+    {file = "pynvim-0.5.0-py2.py3-none-any.whl", hash = "sha256:2ac197ef0cdfff53719184a45c33cfb7cef88d1c9bf7f0525c21b3239cb5365f"},
+    {file = "pynvim-0.5.0.tar.gz", hash = "sha256:e80a11f6f5d194c6a47bea4135b90b55faca24da3544da7cf4a5f7ba8fb09215"},
 ]
 
 [package.dependencies]
-greenlet = "*"
+greenlet = ">=3.0"
 msgpack = ">=0.5.0"
 
 [package.extras]
 pyuv = ["pyuv (>=1.0.0)"]
-test = ["pytest (>=3.4.0)"]
+test = ["pytest"]
 
 [[package]]
 name = "pyreadline"
@@ -936,4 +937,4 @@ all = ["rich"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.13"
-content-hash = "559b5332ca9f653312e6f2768f34e652123ead6f9454ce9fff51f7080d7e4d5a"
+content-hash = "c54f7bc6e593bd60b6388572a6c24e8a96f4f77614c5b77f15e21b24454bc6cd"
