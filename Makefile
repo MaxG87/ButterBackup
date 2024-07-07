@@ -30,13 +30,15 @@ check-linters: | $(CACHEDIR)/check-linters
 run-tests: run-docker-tests | run-undockered-tests
 .PHONY: run-docker-tests
 run-docker-tests: | $(DOCKER_TESTS)
-.PHONY: $(DOCKER_TESTS)
-run-%-tests: | $(CACHEDIR)/run-%-tests
 .PHONY: run-undockered-tests
 run-undockered-tests: | $(CACHEDIR)/run-undockered-tests
 .PHONY: get-service-id
 get-service-id:
 	@echo $(SERVICE_ID_FULL)
+run-%-tests: | $(CACHEDIR)/run-%-tests
+	# This is a pseudo phony target. Unfortunately, Make does not support
+	# phony pattern rules.
+	@touch $@
 
 $(CACHEDIR):
 	mkdir -p $@
