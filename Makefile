@@ -10,7 +10,7 @@ SERVICE_ID_SHORT := $(shell echo $(SERVICE_ID_FULL) | head -c 6)
 DOCKER_TEST_TAG = $(SERVICE_LC)-$(SERVICE_ID_SHORT).test
 
 # Preparation of dependencies
-CACHEBASE ?= ~/.cache/$(SERVICE).make-cache/
+CACHEBASE ?= ~/.cache/$(SERVICE).make-cache
 CACHEDIR = $(CACHEBASE)/$(SERVICE_ID_FULL)
 
 # run-arch-tests, run-python3.8-tests, ...
