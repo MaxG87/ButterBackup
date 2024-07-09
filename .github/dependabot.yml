@@ -9,3 +9,7 @@ updates:
         dependency-type: "production"
       development-dependencies:
         dependency-type: "development"
+  - package-ecosystem: "source"
+    directory: "dockerfiles"
+    schedule:
+      interval: "daily"
