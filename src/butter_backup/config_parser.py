@@ -13,7 +13,7 @@ from pydantic import (
     FilePath,
     TypeAdapter,
     field_validator,
-    root_validator,
+    model_validator,
 )
 from storage_device_managers import ValidCompressions
 
@@ -80,15 +80,15 @@ class BtrFSRsyncConfig(BaseConfig):
         new = {str(Path(src).expanduser()): dest for src, dest in folders.items()}
         return new
 
-    @root_validator(skip_on_failure=True)
-    def files_dest_is_no_folder_dest(cls, values):
-        files_dest = values["FilesDest"]
-        destinations = values["Folders"].values()
+    @model_validator(mode="after")
+    def files_dest_is_no_folder_dest(self):
+        files_dest = self.FilesDest
+        destinations = self.Folders.values()
         if files_dest in destinations:
             raise ValueError(
                 f"Zielverzeichnis {files_dest} ist gleichzeitig Ziel für Ordner und Einzeldateien."
             )
-        return values
+        return self
 
     @staticmethod
     def raise_with_message_upon_duplicate(
