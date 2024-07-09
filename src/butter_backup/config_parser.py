@@ -10,25 +10,26 @@ from typing import ClassVar, Dict, List, Optional, Set, Union
 from pydantic import (
     BaseModel,
     DirectoryPath,
-    Extra,
     FilePath,
-    parse_raw_as,
-    root_validator,
-    validator,
+    TypeAdapter,
+    field_validator,
+    model_validator,
 )
 from storage_device_managers import ValidCompressions
 
 FoldersT = Dict[DirectoryPath, str]
 
 
-def path_aware_btrfs_json_decoding(v, *, default) -> str:
-    v["Folders"] = {str(key): val for key, val in v["Folders"].items()}
-    return json.dumps(v, default=default)
+def path_aware_btrfs_json_decoding(folders: FoldersT) -> str:
+    as_dict = {str(key): val for key, val in folders.items()}
+    return json.dumps(as_dict)
 
 
-def path_aware_restic_json_decoding(v, *, default) -> str:
-    v["FilesAndFolders"] = {str(cur) for cur in v["FilesAndFolders"]}
-    return json.dumps(v, default=default)
+def path_aware_restic_json_decoding(
+    files_and_folders: Set[Union[FilePath, DirectoryPath]]
+) -> str:
+    as_dict = {str(cur) for cur in files_and_folders}
+    return json.dumps(as_dict)
 
 
 class BaseConfig(BaseModel):
@@ -46,17 +47,16 @@ class BtrFSRsyncConfig(BaseConfig):
     SubvolTimestampFmt: ClassVar[str] = "%F_%H:%M:%S"
 
     class Config:
-        extra = Extra.forbid
+        extra = "forbid"
         frozen = True
-        json_dumps = path_aware_btrfs_json_decoding
 
-    @validator("Files")
+    @field_validator("Files")
     def source_file_names_must_be_unique(cls, files):
         file_names = Counter(f.name for f in files)
         cls.raise_with_message_upon_duplicate(file_names, ("Dateinamen", "Dateinamen"))
         return files
 
-    @validator("Folders")
+    @field_validator("Folders")
     def folder_destinations_must_be_unique(cls, folders: FoldersT) -> FoldersT:
         destinations = Counter(folders.values())
         cls.raise_with_message_upon_duplicate(
@@ -64,31 +64,31 @@ class BtrFSRsyncConfig(BaseConfig):
         )
         return folders
 
-    @validator("ExcludePatternsFile", pre=True)
+    @field_validator("ExcludePatternsFile", mode="before")
     def expand_tilde_in_exclude_patterns_file_name(cls, maybe_exclude_patterns):
         if maybe_exclude_patterns is None:
             return None
         return Path(maybe_exclude_patterns).expanduser()
 
-    @validator("Files", pre=True)
+    @field_validator("Files", mode="before")
     def expand_tilde_in_file_sources(cls, files):
         new = [Path(cur).expanduser() for cur in files]
         return new
 
-    @validator("Folders", pre=True)
-    def expand_tilde_in_folder_sources(cls, folders):
-        new = {Path(src).expanduser(): dest for src, dest in folders.items()}
+    @field_validator("Folders", mode="before")
+    def expand_tilde_in_folder_sources(cls, folders) -> Dict[str, str]:
+        new = {str(Path(src).expanduser()): dest for src, dest in folders.items()}
         return new
 
-    @root_validator(skip_on_failure=True)
-    def files_dest_is_no_folder_dest(cls, values):
-        files_dest = values["FilesDest"]
-        destinations = values["Folders"].values()
+    @model_validator(mode="after")
+    def files_dest_is_no_folder_dest(self):
+        files_dest = self.FilesDest
+        destinations = self.Folders.values()
         if files_dest in destinations:
             raise ValueError(
                 f"Zielverzeichnis {files_dest} ist gleichzeitig Ziel für Ordner und Einzeldateien."
             )
-        return values
+        return self
 
     @staticmethod
     def raise_with_message_upon_duplicate(
@@ -116,19 +116,20 @@ class ResticConfig(BaseConfig):
     RepositoryPassCmd: str
 
     class Config:
-        extra = Extra.forbid
+        extra = "forbid"
         frozen = True
-        json_dumps = path_aware_restic_json_decoding
 
-    @validator("ExcludePatternsFile", pre=True)
-    def expand_tilde_in_exclude_patterns_file_name(cls, maybe_exclude_patterns):
+    @field_validator("ExcludePatternsFile", mode="before")
+    def expand_tilde_in_exclude_patterns_file_name(
+        cls, maybe_exclude_patterns
+    ) -> Optional[str]:
         if maybe_exclude_patterns is None:
             return None
-        return Path(maybe_exclude_patterns).expanduser()
+        return str(Path(maybe_exclude_patterns).expanduser())
 
-    @validator("FilesAndFolders", pre=True)
-    def expand_tilde_in_sources(cls, files_and_folders):
-        new = {Path(src).expanduser() for src in files_and_folders}
+    @field_validator("FilesAndFolders", mode="before")
+    def expand_tilde_in_sources(cls, files_and_folders) -> set[str]:
+        new = {str(Path(src).expanduser()) for src in files_and_folders}
         return new
 
     def device(self) -> Path:
@@ -142,7 +143,8 @@ Configuration = Union[BtrFSRsyncConfig, ResticConfig]
 
 
 def parse_configuration(content: str) -> list[Configuration]:
-    config_lst = parse_raw_as(List[Configuration], content)
+    ConfigList = TypeAdapter(List[Configuration])
+    config_lst = ConfigList.validate_json(content)
     if len(config_lst) == 0:
         sys.exit("Leere Konfigurationsdateien sind nicht erlaubt.\n")
     return config_lst

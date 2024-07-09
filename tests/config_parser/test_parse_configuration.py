@@ -57,7 +57,7 @@ def test_parse_configuration_parses_btrfs_config(
             Folders={Path(source): backup_dest_dirs[0]},
             UUID=uuid,
         )
-        cfg_lst = cp.parse_configuration(f"[{btrfs_cfg.json()}]")
+        cfg_lst = cp.parse_configuration(f"[{btrfs_cfg.model_dump_json()}]")
         assert cfg_lst == [btrfs_cfg]
 
 
@@ -83,5 +83,5 @@ def test_load_configuration_parses_restic_config(
             RepositoryPassCmd=repository_pass_cmd,
             UUID=uuid,
         )
-        cfg_lst = cp.parse_configuration(f"[{restic_cfg.json()}]")
+        cfg_lst = cp.parse_configuration(f"[{restic_cfg.model_dump_json()}]")
         assert cfg_lst == [restic_cfg]
