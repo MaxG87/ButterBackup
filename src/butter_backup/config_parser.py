@@ -9,6 +9,7 @@ from typing import ClassVar, Dict, List, Optional, Set, Union
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     DirectoryPath,
     FilePath,
     TypeAdapter,
@@ -41,14 +42,11 @@ class BaseConfig(BaseModel):
 
 
 class BtrFSRsyncConfig(BaseConfig):
+    model_config = ConfigDict(extra="forbid", frozen=True)
     Files: Set[FilePath]
     FilesDest: str
     Folders: FoldersT
     SubvolTimestampFmt: ClassVar[str] = "%F_%H:%M:%S"
-
-    class Config:
-        extra = "forbid"
-        frozen = True
 
     @field_validator("Files")
     def source_file_names_must_be_unique(cls, files):
@@ -114,12 +112,9 @@ class BtrFSRsyncConfig(BaseConfig):
 
 
 class ResticConfig(BaseConfig):
+    model_config = ConfigDict(extra="forbid", frozen=True)
     FilesAndFolders: Set[Union[FilePath, DirectoryPath]]
     RepositoryPassCmd: str
-
-    class Config:
-        extra = "forbid"
-        frozen = True
 
     @field_validator("ExcludePatternsFile", mode="before")
     def expand_tilde_in_exclude_patterns_file_name(
