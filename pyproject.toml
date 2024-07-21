@@ -23,7 +23,6 @@ all = ["rich"]
 hypothesis = "^6.81.2"
 pytest = "^7.4.0"
 pynvim = "^0.5.0"
-jedi = "^0.18.2"
 pdbpp = "^0.10.3"
 pytest-cov = "^3.0.0"
 mypy = "^1.4.1"
