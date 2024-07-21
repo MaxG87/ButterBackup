@@ -190,6 +190,6 @@ def test_btrfs_config_json_roundtrip(base_config, folder_dest: str):
             base_config["Folders"] = {src_folder: folder_dest}
             base_config["Files"] = [src_file.name]
             cfg = cp.BtrFSRsyncConfig.model_validate(base_config)
-            as_json = cfg.json()
-            deserialised = cp.BtrFSRsyncConfig.parse_raw(as_json)
+            as_json = cfg.model_dump_json()
+            deserialised = cp.BtrFSRsyncConfig.model_validate_json(as_json)
     assert cfg == deserialised

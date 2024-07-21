@@ -65,14 +65,16 @@ class BtrFSRsyncConfig(BaseConfig):
         return folders
 
     @field_validator("ExcludePatternsFile", mode="before")
-    def expand_tilde_in_exclude_patterns_file_name(cls, maybe_exclude_patterns):
+    def expand_tilde_in_exclude_patterns_file_name(
+        cls, maybe_exclude_patterns
+    ) -> str | None:
         if maybe_exclude_patterns is None:
             return None
-        return Path(maybe_exclude_patterns).expanduser()
+        return str(Path(maybe_exclude_patterns).expanduser())
 
     @field_validator("Files", mode="before")
-    def expand_tilde_in_file_sources(cls, files):
-        new = [Path(cur).expanduser() for cur in files]
+    def expand_tilde_in_file_sources(cls, files) -> list[str]:
+        new = [str(Path(cur).expanduser()) for cur in files]
         return new
 
     @field_validator("Folders", mode="before")

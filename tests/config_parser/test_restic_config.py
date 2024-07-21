@@ -35,7 +35,7 @@ def valid_unparsed_empty_restic_config(draw):
             UUID=st.uuids(),
         )
     )
-    return json.loads(config.json())
+    return json.loads(config.model_dump_json())
 
 
 @given(base_config=valid_unparsed_empty_restic_config())
@@ -79,6 +79,6 @@ def test_restic_config_json_roundtrip(base_config):
         with NamedTemporaryFile() as src_file:
             base_config["FilesAndFolders"] = {src_folder, src_file.name}
             cfg = cp.ResticConfig.model_validate(base_config)
-            as_json = cfg.json()
-            deserialised = cp.ResticConfig.parse_raw(as_json)
+            as_json = cfg.model_dump_json()
+            deserialised = cp.ResticConfig.model_validate_json(as_json)
     assert cfg == deserialised
