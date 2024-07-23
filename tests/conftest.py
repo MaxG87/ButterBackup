@@ -13,6 +13,10 @@ from butter_backup import device_managers as dm
 
 @pytest.fixture(scope="session")
 def _big_file_persistent():
+    """
+    Prepare a file of minimum size for BtrFS and return its path
+    """
+
     min_size = 128 * 1024**2  # ~109MiB is the minimum size for BtrFS
     with NamedTemporaryFile() as ntf:
         file = Path(ntf.name)
