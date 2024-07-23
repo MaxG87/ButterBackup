@@ -13,6 +13,10 @@ from butter_backup import device_managers as dm
 
 @pytest.fixture(scope="session")
 def _big_file_persistent():
+    """
+    Prepare a file of minimum size for BtrFS and return its path
+    """
+
     min_size = 128 * 1024**2  # ~109MiB is the minimum size for BtrFS
     with NamedTemporaryFile() as ntf:
         file = Path(ntf.name)
@@ -61,7 +65,7 @@ def encrypted_btrfs_device(_encrypted_btrfs_device_persistent):
     with NamedTemporaryFile() as ntf:
         big_file = Path(ntf.name)
         shutil.copy(old_fs_file, big_file)
-        config = old_config.copy(update={"UUID": uuid.uuid4()})
+        config = old_config.model_copy(update={"UUID": uuid.uuid4()})
         with sdm.symbolic_link(big_file, config.device()):
             yield config
 
@@ -94,7 +98,7 @@ def encrypted_restic_device(_encrypted_restic_device_persistent):
     with NamedTemporaryFile() as ntf:
         big_file = Path(ntf.name)
         shutil.copy(old_fs_file, big_file)
-        config = old_config.copy(update={"UUID": uuid.uuid4()})
+        config = old_config.model_copy(update={"UUID": uuid.uuid4()})
         with sdm.symbolic_link(big_file, config.device()):
             yield config
 

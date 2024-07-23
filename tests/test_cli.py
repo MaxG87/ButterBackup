@@ -149,7 +149,7 @@ def test_close_does_not_close_unopened_device(runner, encrypted_btrfs_device) ->
     config = encrypted_btrfs_device
     with NamedTemporaryFile() as tempf:
         config_file = Path(tempf.name)
-        config_file.write_text(f"[{config.json()}]")
+        config_file.write_text(f"[{config.model_dump_json()}]")
         close_result = runner.invoke(app, ["close", "--config", str(config_file)])
         assert close_result.stdout == ""
         assert close_result.exit_code == 0
@@ -163,7 +163,7 @@ def test_open_close_roundtrip(runner, encrypted_device) -> None:
     expected_cryptsetup_map = Path(f"/dev/mapper/{config.UUID}")
     with NamedTemporaryFile() as tempf:
         config_file = Path(tempf.name)
-        config_file.write_text(f"[{config.json()}]")
+        config_file.write_text(f"[{config.model_dump_json()}]")
         open_result = runner.invoke(app, ["open", "--config", str(config_file)])
         expected_msg = (
             f"Speichermedium {config.UUID} wurde in (?P<mount_dest>/[^ ]+) geöffnet."
