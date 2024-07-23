@@ -20,16 +20,15 @@ rich = {version = "^13.5.2", optional = true}
 all = ["rich"]
 
 [tool.poetry.group.dev.dependencies]
-hypothesis = "^6.81.2"
-pytest = "^7.4.0"
+hypothesis = "^6.108.2"
+pytest = "^8.3.1"
 pynvim = "^0.5.0"
-jedi = "^0.18.2"
 pdbpp = "^0.10.3"
-pytest-cov = "^3.0.0"
-mypy = "^1.4.1"
+pytest-cov = "^5.0.0"
+mypy = "^1.11.0"
 black = "^24.4.2"
-ruff = "^0.4.10"
-pytest-xdist = "^3.5.0"
+ruff = "^0.5.4"
+pytest-xdist = "^3.6.1"
 
 [tool.poetry.scripts]
 butter-backup = "butter_backup.cli:cli"
