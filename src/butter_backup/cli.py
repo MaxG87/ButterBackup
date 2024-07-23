@@ -193,7 +193,7 @@ def format_device(
         else prepare_device_for_resticbackend
     )
     config = formatter(device)
-    json_serialisable = json.loads(config.json(exclude_none=True))
+    json_serialisable = json.loads(config.model_dump_json(exclude_none=True))
     config_writer(json.dumps([json_serialisable], indent=4, sort_keys=True))
 
 
