@@ -43,9 +43,9 @@ def complement_configuration(
 ) -> cp.Configuration:
     if isinstance(config, cp.BtrFSRsyncConfig):
         folder_dest_dir = "some-folder-name"
-        return config.copy(update={"Folders": {source_dir: folder_dest_dir}})
+        return config.model_copy(update={"Folders": {source_dir: folder_dest_dir}})
     if isinstance(config, cp.ResticConfig):
-        return config.copy(update={"FilesAndFolders": {source_dir}})
+        return config.model_copy(update={"FilesAndFolders": {source_dir}})
     raise TypeError("Unsupported configuration encountered.")
 
 
@@ -156,7 +156,7 @@ def test_do_backup(source_directories, mounted_device) -> None:
 def test_do_backup_handles_exclude_list(source_directories, mounted_device) -> None:
     empty_config, device = mounted_device
     for source_dir in source_directories:
-        config = complement_configuration(empty_config, source_dir).copy(
+        config = complement_configuration(empty_config, source_dir).model_copy(
             update={"ExcludePatternsFile": EXCLUDE_FILE}
         )
         backend = bb.BackupBackend.from_config(config)
@@ -193,7 +193,7 @@ def test_do_backup_removes_existing_files_in_exclude_list(
     first_backend = bb.BackupBackend.from_config(first_config)
     first_backend.do_backup(device)
 
-    second_config = complement_configuration(empty_config, second_source).copy(
+    second_config = complement_configuration(empty_config, second_source).model_copy(
         update={"ExcludePatternsFile": EXCLUDE_FILE}
     )
     second_backend = bb.BackupBackend.from_config(second_config)
@@ -215,7 +215,9 @@ def test_do_backup_for_btrfs_creates_snapshots_with_timestamp_names(
         # tradeoff to short-circuit the test here.
         return
     folder_dest_dir = "some-folder-name"
-    config = empty_config.copy(update={"Folders": {FIRST_BACKUP: folder_dest_dir}})
+    config = empty_config.model_copy(
+        update={"Folders": {FIRST_BACKUP: folder_dest_dir}}
+    )
     backend = bb.BtrFSRsyncBackend(config)
     backend.do_backup(device)
     backup_repository = device / config.BackupRepositoryFolder
