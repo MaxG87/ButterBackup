@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.1](https://github.com/MaxG87/ButterBackup/compare/v3.4.0...v3.4.1) (2024-08-04)
+
+
+### Dependencies
+
+* Wechsle zu pydantic 2.0 ([b2d2aab](https://github.com/MaxG87/ButterBackup/commit/b2d2aab5ada00e08c4bfa1ac35c8737c1262cad6))
+
 ## [3.4.0](https://github.com/MaxG87/ButterBackup/compare/v3.3.2...v3.4.0) (2023-12-22)
 
 
