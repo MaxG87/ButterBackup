@@ -19,6 +19,9 @@ rich = {version = "^13.5.2", optional = true}
 # optional extras of dependencies.
 all = ["rich"]
 
+[tool.poetry.group.dev]
+optional = true
+
 [tool.poetry.group.dev.dependencies]
 hypothesis = "^6.108.2"
 pytest = "^8.3.1"
