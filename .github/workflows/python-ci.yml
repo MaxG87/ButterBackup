@@ -22,7 +22,7 @@ jobs:
           cache: "poetry"
       - name: Install dependencies
         run: |
-          poetry install ${{ matrix.dependency-extras }}
+          poetry install --with dev ${{ matrix.dependency-extras }}
           sudo apt install restic
       - name: Check formatting with black
         run: |
