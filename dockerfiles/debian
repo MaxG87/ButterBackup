@@ -1,5 +1,4 @@
-# Debian stable-slim as of 14 December 2023
-FROM debian@sha256:375fb84f3c64691a1b9a9ff5ff3905173dcd0c5e11bc2aebd5c3472a139fa2b4
+FROM debian:bookworm-slim
 
 # Provide excecutables
 ENV DEBIAN_FRONTEND=noninteractive
