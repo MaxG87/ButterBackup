@@ -7,10 +7,9 @@ RUN apt update && \
     apt autoclean
 
 # Setup Poetry
-ENV POETRY_VERSION=1.8.3
+ENV POETRY_VERSION=1.8.4
 RUN python3 -m pip install "poetry==$POETRY_VERSION"
 ENV PATH=$PATH:/root/.poetry/bin
-
 
 # Setup production dependencies
 WORKDIR /project
