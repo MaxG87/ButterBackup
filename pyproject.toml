@@ -11,8 +11,8 @@ python = ">=3.9,<3.13"
 typer = ">=0.9,<0.16"
 pydantic = "^2.8.2"
 loguru = "^0.7.0"
-shell-interface = "^0.13.0"
-storage-device-managers = ">=0.14,<0.16"
+shell-interface = "^1.0.0"
+storage-device-managers = "^1.0.0"
 rich = {version = "^13.5.2", optional = true}
 
 [tool.poetry.extras]
