@@ -9,3 +9,6 @@ updates:
         dependency-type: "production"
       development-dependencies:
         dependency-type: "development"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps(dev)"
