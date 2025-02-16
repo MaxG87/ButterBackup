@@ -40,4 +40,4 @@ RUN uv sync --frozen
 
 # Create /dev/disk/by-uuid/. It is required by the test suite but not available
 # in Docker containers by default.
-CMD sudo mkdir -p /dev/disk/by-uuid/ && uv run pytest --no-cov .
+CMD sudo mkdir -p /dev/disk/by-uuid/ && uv run pytest --no-cov --stepwise .
