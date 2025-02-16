@@ -27,7 +27,7 @@ def path_aware_btrfs_json_decoding(folders: FoldersT) -> str:
 
 
 def path_aware_restic_json_decoding(
-    files_and_folders: Set[Union[FilePath, DirectoryPath]]
+    files_and_folders: Set[Union[FilePath, DirectoryPath]],
 ) -> str:
     as_dict = {str(cur) for cur in files_and_folders}
     return json.dumps(as_dict)

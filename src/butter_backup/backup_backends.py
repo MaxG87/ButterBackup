@@ -26,7 +26,7 @@ class BackupBackend(abc.ABC):
 
     @staticmethod
     def from_config(
-        config: Union[cp.BtrFSRsyncConfig, cp.ResticConfig]
+        config: Union[cp.BtrFSRsyncConfig, cp.ResticConfig],
     ) -> Union[BtrFSRsyncBackend, ResticBackend]:
         # Getestet durch Tests der Backuplogik
         if isinstance(config, cp.BtrFSRsyncConfig):
