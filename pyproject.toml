@@ -19,6 +19,9 @@ all = [
     "rich>=13.9.4",
 ]
 
+[project.scripts]
+butter-backup = "butter_backup.cli:cli"
+
 [dependency-groups]
 dev = [
     "black>=25.1.0",
@@ -45,9 +48,6 @@ mypy = "^1.11.0"
 black = "^24.4.2"
 ruff = ">=0.5.4,<0.10.0"
 pytest-xdist = "^3.6.1"
-
-[tool.poetry.scripts]
-butter-backup = "butter_backup.cli:cli"
 
 [tool.mypy]
 plugins = [
