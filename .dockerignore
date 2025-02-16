@@ -1,0 +1,21 @@
+# Ignore all hidden files and directories
+# Most notably, this will ignore .git and some Python cache directories.
+.*
+# A random dude on the internet suggested not to exclude .dockerignore. Since
+# the file is very small and does not change often, his devices is followed.
+# Source:
+# https://hn.mrugesh.dev/how-to-use-a-dockerignore-file-a-comprehensive-guide-with-examples#heading-pitfall-1-ignoring-the-dockerfile-or-dockerignore-file
+!.dockerignore
+
+# Python excludes
+# Inspired by https://shisho.dev/blog/posts/how-to-use-dockerignore/
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+venv
+env
+
+# Rust excludes
+target
+!target/release/*
