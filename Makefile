@@ -45,7 +45,7 @@ $(CACHEDIR):
 
 
 $(CACHEDIR)/run-undockered-tests: | $(CACHEDIR)
-	poetry run pytest -n $$(nproc)
+	uv run pytest -n $$(nproc)
 	touch $@
 
 $(CACHEDIR)/run-%-tests: | $(CACHEDIR)/%-test-image
@@ -64,27 +64,27 @@ $(CACHEDIR)/check-linters: | $(CACHEDIR)/check-ruff $(CACHEDIR)/check-mypy
 	touch $@
 
 $(CACHEDIR)/check-ruff: | $(CACHEDIR)/check-format
-	poetry run ruff check .
+	uv run ruff check .
 	touch $@
 
 $(CACHEDIR)/check-mypy: | $(CACHEDIR)
-	poetry run mypy .
+	uv run mypy .
 	touch $@
 
 
 # CHECKING FORMAT AND REFORMATTING
 $(CACHEDIR)/apply-format: $(ALL_FILES) | $(CACHEDIR)
-	poetry run ruff check --select I --fix .
-	poetry run black .
+	uv run ruff check --select I --fix .
+	uv run black .
 	touch $@
 
 $(CACHEDIR)/check-format: | $(CACHEDIR)/check-black $(CACHEDIR)/check-import-ordering
 	touch $@
 
 $(CACHEDIR)/check-black: | $(CACHEDIR)
-	poetry run black --check .
+	uv run black --check .
 	touch $@
 
 $(CACHEDIR)/check-import-ordering: | $(CACHEDIR)
-	poetry run ruff check --select I .
+	uv run ruff check --select I .
 	touch $@
