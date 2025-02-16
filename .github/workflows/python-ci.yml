@@ -9,35 +9,34 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
-        dependency-extras: ["", "-E all"]
+        dependency-extras: ["", "--extra all"]
 
     steps:
       - uses: actions/checkout@v4
-      - name: Install poetry
-        run: pipx install "poetry==2.1.0"
+      - name: Install uv
+        run: pipx install 'uv==0.5.31'
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-          cache: "poetry"
       - name: Install dependencies
         run: |
-          poetry install --with dev ${{ matrix.dependency-extras }}
+          uv sync ${{ matrix.dependency-extras }}
           sudo apt install restic
       - name: Check formatting with black
         run: |
-          poetry run black --check .
+          uv run black --check .
       - name: Check import ordering with ruff
         run: |
-          poetry run ruff check --output-format=github --select I .
+          uv run ruff check --output-format=github --select I .
       - name: Check static typing with mypy
-        run: poetry run mypy .
+        run: uv run mypy .
       - name: Lint with ruff
         run: |
-          poetry run ruff check --output-format=github .
+          uv run ruff check --output-format=github .
       - name: Test with pytest
         run: |
-          poetry run pytest --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html
+          uv run pytest --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html
 
   check:
     if: always()
