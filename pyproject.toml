@@ -1,9 +1,10 @@
-[tool.poetry]
+[project]
 name = "butter-backup"
 version = "3.4.0"
 description = "Vollverschlüsselte, pseudoinkrementelle Sicherungskopien leicht gemacht"
-authors = ["Max Görner <max@familie-goerner.eu>"]
+authors = [{name = "Max Görner", email = "max@familie-goerner.eu"}]
 license = "GPL-3.0-or-later"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
