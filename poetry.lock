@@ -1057,5 +1057,5 @@ all = ["rich"]
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.9,<3.13"
-content-hash = "367e4e98235046bbb75946f0bb69029fe48e24bc98d11f067de5df1a02cb0197"
+python-versions = ">=3.9,<4.0.0"
+content-hash = "9232ea3f8c859f0fc6cc1206a4f4dae96ef652bba33a5fe44b09c89ee5b8ffb4"
