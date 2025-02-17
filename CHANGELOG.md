@@ -1,5 +1,38 @@
 # Changelog
 
+## [3.5.0](https://github.com/MaxG87/ButterBackup/compare/v3.4.0...v3.5.0) (2025-02-17)
+
+
+### Bug Fixes
+
+* **ci:** Use correct automatic variable in pseudo phony target ([3d414e5](https://github.com/MaxG87/ButterBackup/commit/3d414e51c4db4e553bdc538ec3cd2d876c0e6751))
+* **tests:** Use archlinux image that exists ([8cf8631](https://github.com/MaxG87/ButterBackup/commit/8cf86316e6aec79428df590c0f90c6b882d4eba2))
+* The local dockerised test suite works again.
+
+
+### Dependencies
+
+* **Added support for Python 3.13!***
+* **Removed upper limit of Python**, which should allow usage on upcomming Python versions. ([0710dee](https://github.com/MaxG87/ButterBackup/commit/0710deeba6bca605347ac4f9699ef21490768de9))
+* Bump shell-interface and storage-device-managers to v1.0.0 ([ec23d13](https://github.com/MaxG87/ButterBackup/commit/ec23d131ba57927a70d2e7e28518e62c7cb7d027))
+* **dev:** Bump pynvim to v0.5.2 ([af799dd](https://github.com/MaxG87/ButterBackup/commit/af799dd11e6d8d85e70d25fcb44d674725e1f040))
+* **dev:** bump ruff in the development-dependencies group ([#76](https://github.com/MaxG87/ButterBackup/issues/76)) ([854abe7](https://github.com/MaxG87/ButterBackup/commit/854abe705cda4d51f6e311107f74fe91800fd658))
+* Drop support for Python 3.8 ([ec53681](https://github.com/MaxG87/ButterBackup/commit/ec53681fcae1be070d9a6a7df7bc0134e0bffac6))
+* Remove upper bound on all project dependencies ([de2e5ab](https://github.com/MaxG87/ButterBackup/commit/de2e5ab35a48d686d9f195383348c96cf3f640f5))
+* Wechsle zu pydantic 2.0 ([b2d2aab](https://github.com/MaxG87/ButterBackup/commit/b2d2aab5ada00e08c4bfa1ac35c8737c1262cad6))
+
+
+### Miscellaneous Chores
+
+* release 3.5.0 ([9296019](https://github.com/MaxG87/ButterBackup/commit/92960193a649f4f4342c428e7a28ec1425c60f75))
+
+
+### Other
+
+* Switched to `uv` for project management.
+* Include README in distribution, improving the representation on PyPI.
+
+
 ## [3.4.0](https://github.com/MaxG87/ButterBackup/compare/v3.3.2...v3.4.0) (2023-12-22)
 
 
