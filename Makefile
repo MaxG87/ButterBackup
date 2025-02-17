@@ -35,10 +35,11 @@ run-undockered-tests: | $(CACHEDIR)/run-undockered-tests
 .PHONY: get-service-id
 get-service-id:
 	@echo $(SERVICE_ID_FULL)
+
+# This is a pseudo phony target. Unfortunately, Make does not support
+# phony pattern rules.
 run-%-tests: | $(CACHEDIR)/run-%-tests
-	# This is a pseudo phony target. Unfortunately, Make does not support
-	# phony pattern rules.
-	@touch $@
+	@touch $|
 
 $(CACHEDIR):
 	mkdir -p $@
