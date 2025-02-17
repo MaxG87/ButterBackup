@@ -1,6 +1,6 @@
 [project]
 name = "butter-backup"
-version = "3.4.0"
+version = "3.5.0"
 description = "Vollverschlüsselte, pseudoinkrementelle Sicherungskopien leicht gemacht"
 authors = [{name = "Max Görner", email = "max@familie-goerner.eu"}]
 license = "GPL-3.0-or-later"
