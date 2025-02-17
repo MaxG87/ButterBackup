@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.1](https://github.com/MaxG87/ButterBackup/compare/v3.5.0...v3.5.1) (2025-02-17)
+
+
+### Bug Fixes
+
+* **ci:** Use publish pipeline based on uv and PyPI Github Action ([54f7639](https://github.com/MaxG87/ButterBackup/commit/54f763956426ec1ad36ee8c17326e12a48d84b3a))
+
 ## [3.5.0](https://github.com/MaxG87/ButterBackup/compare/v3.4.0...v3.5.0) (2025-02-17)
 
 
