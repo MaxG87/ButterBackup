@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.5.2](https://github.com/MaxG87/ButterBackup/compare/v3.5.1...v3.5.2) (2025-06-09)
+
+
+### Dependencies
+
+* **dev:** bump the development-dependencies group with 4 updates ([#79](https://github.com/MaxG87/ButterBackup/issues/79)) ([3e83246](https://github.com/MaxG87/ButterBackup/commit/3e832460e8dfe1fa5321f3fb36316c37674858c5))
+* **dev:** bump the development-dependencies group with 7 updates ([#78](https://github.com/MaxG87/ButterBackup/issues/78)) ([d84b2fe](https://github.com/MaxG87/ButterBackup/commit/d84b2fe8f6c8830b777da75f9a0592271ab1c730))
+
+
+### Documentation
+
+* Add project URLs ([e039cf7](https://github.com/MaxG87/ButterBackup/commit/e039cf7d99148086ebb691d2da988b7f67901778))
+
 ## [3.5.1](https://github.com/MaxG87/ButterBackup/compare/v3.5.0...v3.5.1) (2025-02-17)
 
 
