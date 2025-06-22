@@ -59,7 +59,7 @@ def test_restic_config_expands_user(base_config):
 @given(base_config=valid_unparsed_empty_restic_config())
 def test_restic_config_uuid_is_mapname(base_config) -> None:
     cfg = cp.ResticConfig.model_validate(base_config)
-    assert base_config["UUID"] == cfg.map_name()
+    assert base_config["UUID"] == str(cfg.UUID)
 
 
 @given(base_config=valid_unparsed_empty_restic_config())

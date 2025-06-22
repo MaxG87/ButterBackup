@@ -51,8 +51,8 @@ class BaseConfig(BaseModel):
     def device(self) -> Path:
         return Path(f"/dev/disk/by-uuid/{self.UUID}")
 
-    def map_name(self) -> str:
-        return str(self.UUID)
+    def map_name(self) -> Path:
+        return Path(f"/dev/mapper/{self.UUID}")
 
 
 class BtrFSRsyncConfig(BaseConfig):

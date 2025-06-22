@@ -111,7 +111,7 @@ def test_btrfs_config_rejects_duplicate_dest(base_config, folder_dest: str):
 @given(base_config=valid_unparsed_empty_btrfs_config())
 def test_btrfs_config_uuid_is_mapname(base_config) -> None:
     cfg = cp.BtrFSRsyncConfig.model_validate(base_config)
-    assert base_config["UUID"] == cfg.map_name()
+    assert base_config["UUID"] == str(cfg.UUID)
 
 
 @given(base_config=valid_unparsed_empty_btrfs_config())

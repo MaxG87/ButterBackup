@@ -79,6 +79,11 @@ def open(  # noqa: A001
     configurations = cp.parse_configuration(config.read_text())
     for cfg in configurations:
         if cfg.device().exists():
+            if sdm.is_mounted(cfg.map_name()):
+                logger.warning(
+                    f"Speichermedium {cfg.UUID} ist bereits gemountet. Es wird übersprungen."
+                )
+                continue
             mount_dir = Path(mkdtemp())
             decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
             sdm.mount_btrfs_device(
