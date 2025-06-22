@@ -12,11 +12,7 @@ from typer.testing import CliRunner
 from butter_backup import cli
 from butter_backup import config_parser as cp
 from butter_backup.cli import app
-
-
-def get_random_filename() -> str:
-    with NamedTemporaryFile() as named_file:
-        return named_file.name
+from tests import get_random_filename
 
 
 def in_docker_container() -> bool:

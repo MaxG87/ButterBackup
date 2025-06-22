@@ -11,14 +11,10 @@ from hypothesis import strategies as st
 from pydantic import ValidationError
 
 from butter_backup import config_parser as cp
+from tests import get_random_filename
 
 TEST_RESOURCES = Path(__file__).parent.parent / "resources"
 EXCLUDE_FILE = TEST_RESOURCES / "exclude-file"
-
-
-def get_random_filename() -> str:
-    with NamedTemporaryFile() as named_file:
-        return named_file.name
 
 
 @st.composite

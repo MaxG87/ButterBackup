@@ -12,6 +12,7 @@ import shell_interface as sh
 
 from butter_backup import backup_backends as bb
 from butter_backup import config_parser as cp
+from tests import complement_configuration
 
 TEST_RESOURCES = Path(__file__).parent / "resources"
 EXCLUDE_FILE = TEST_RESOURCES / "exclude-file"
@@ -24,29 +25,6 @@ def list_files_recursively(path: Path) -> Iterable[Path]:
     for file_or_folder in path.rglob("*"):
         if file_or_folder.is_file():
             yield file_or_folder
-
-
-@overload
-def complement_configuration(
-    config: cp.BtrFSRsyncConfig, source_dir: Path
-) -> cp.BtrFSRsyncConfig: ...
-
-
-@overload
-def complement_configuration(
-    config: cp.ResticConfig, source_dir: Path
-) -> cp.ResticConfig: ...
-
-
-def complement_configuration(
-    config: cp.Configuration, source_dir: Path
-) -> cp.Configuration:
-    if isinstance(config, cp.BtrFSRsyncConfig):
-        folder_dest_dir = "some-folder-name"
-        return config.model_copy(update={"Folders": {source_dir: folder_dest_dir}})
-    if isinstance(config, cp.ResticConfig):
-        return config.model_copy(update={"FilesAndFolders": {source_dir}})
-    raise TypeError("Unsupported configuration encountered.")
 
 
 @overload
