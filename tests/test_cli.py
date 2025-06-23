@@ -25,7 +25,7 @@ def in_docker_container() -> bool:
 
 @pytest.fixture
 def runner():
-    return CliRunner(mix_stderr=False)
+    return CliRunner()
 
 
 def test_get_default_config_path() -> None:
