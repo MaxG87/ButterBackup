@@ -65,7 +65,7 @@ $(CACHEDIR)/check-linters: | $(CACHEDIR)/check-ruff $(CACHEDIR)/check-mypy
 	touch $@
 
 $(CACHEDIR)/check-ruff: | $(CACHEDIR)/check-format
-	uv run ruff check .
+	uv run ruff check
 	touch $@
 
 $(CACHEDIR)/check-mypy: | $(CACHEDIR)
@@ -75,17 +75,17 @@ $(CACHEDIR)/check-mypy: | $(CACHEDIR)
 
 # CHECKING FORMAT AND REFORMATTING
 $(CACHEDIR)/apply-format: $(ALL_FILES) | $(CACHEDIR)
-	uv run ruff check --select I --fix .
-	uv run black .
+	uv run ruff check --select I --fix
+	uv run ruff format
 	touch $@
 
 $(CACHEDIR)/check-format: | $(CACHEDIR)/check-black $(CACHEDIR)/check-import-ordering
 	touch $@
 
 $(CACHEDIR)/check-black: | $(CACHEDIR)
-	uv run black --check .
+	uv run ruff format --check
 	touch $@
 
 $(CACHEDIR)/check-import-ordering: | $(CACHEDIR)
-	uv run ruff check --select I .
+	uv run ruff check --select I
 	touch $@

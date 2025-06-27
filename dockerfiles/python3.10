@@ -6,8 +6,8 @@ RUN apt update && \
     apt install -y btrfs-progs cryptsetup make restic rsync sudo && \
     apt autoclean
 
-# Setup Poetry
-ENV UV_VERSION=0.5.31
+# Setup uv
+ENV UV_VERSION=0.7.15
 RUN python3 -m pip install "uv==$UV_VERSION"
 
 # Setup production dependencies

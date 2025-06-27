@@ -11,7 +11,7 @@
 
 ## Installation
 
-    poetry build
+    uv build
     pipx install dist/butter-backup-<version>.whl
 
 ## Benutzung
@@ -77,9 +77,9 @@ Arch und allen unterstützten Pythonversionen funktioniert.
 
 #### Direkt
 
-    poetry run ruff check .
-    poetry run mypy .
-    poetry run pytest
+    uv run ruff check .
+    uv run mypy .
+    uv run pytest
 
 #### Mittels Makefile
 
