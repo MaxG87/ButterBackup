@@ -40,6 +40,20 @@ class BaseConfig(BaseModel):
     UUID: uuid.UUID
     Compression: Optional[ValidCompressions] = None
 
+    @field_validator("ExcludePatternsFile", mode="before")
+    def expand_tilde_in_exclude_patterns_file_name(
+        cls, maybe_exclude_patterns
+    ) -> Optional[str]:
+        if maybe_exclude_patterns is None:
+            return None
+        return str(Path(maybe_exclude_patterns).expanduser())
+
+    def device(self) -> Path:
+        return Path(f"/dev/disk/by-uuid/{self.UUID}")
+
+    def map_name(self) -> str:
+        return str(self.UUID)
+
 
 class BtrFSRsyncConfig(BaseConfig):
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -61,14 +75,6 @@ class BtrFSRsyncConfig(BaseConfig):
             destinations, ("Zielverzeichnissen", "Ziele")
         )
         return folders
-
-    @field_validator("ExcludePatternsFile", mode="before")
-    def expand_tilde_in_exclude_patterns_file_name(
-        cls, maybe_exclude_patterns
-    ) -> str | None:
-        if maybe_exclude_patterns is None:
-            return None
-        return str(Path(maybe_exclude_patterns).expanduser())
 
     @field_validator("Files", mode="before")
     def expand_tilde_in_file_sources(cls, files) -> list[str]:
@@ -104,36 +110,16 @@ class BtrFSRsyncConfig(BaseConfig):
         )
         raise ValueError(f"{errmsg_begin} {errmsg_body}")
 
-    def device(self) -> Path:
-        return Path(f"/dev/disk/by-uuid/{self.UUID}")
-
-    def map_name(self) -> str:
-        return str(self.UUID)
-
 
 class ResticConfig(BaseConfig):
     model_config = ConfigDict(extra="forbid", frozen=True)
     FilesAndFolders: Set[Union[FilePath, DirectoryPath]]
     RepositoryPassCmd: str
 
-    @field_validator("ExcludePatternsFile", mode="before")
-    def expand_tilde_in_exclude_patterns_file_name(
-        cls, maybe_exclude_patterns
-    ) -> Optional[str]:
-        if maybe_exclude_patterns is None:
-            return None
-        return str(Path(maybe_exclude_patterns).expanduser())
-
     @field_validator("FilesAndFolders", mode="before")
     def expand_tilde_in_sources(cls, files_and_folders) -> set[str]:
         new = {str(Path(src).expanduser()) for src in files_and_folders}
         return new
-
-    def device(self) -> Path:
-        return Path(f"/dev/disk/by-uuid/{self.UUID}")
-
-    def map_name(self) -> str:
-        return str(self.UUID)
 
 
 Configuration = Union[BtrFSRsyncConfig, ResticConfig]
