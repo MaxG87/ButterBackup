@@ -5,7 +5,7 @@ import os
 from collections import Counter
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Dict, Iterable, overload
+from typing import Iterable, overload
 
 import pytest
 import shell_interface as sh
@@ -30,7 +30,7 @@ def list_files_recursively(path: Path) -> Iterable[Path]:
 @overload
 def get_expected_content(
     config: cp.BtrFSRsyncConfig, exclude_to_ignore_file: bool
-) -> Dict[Path, bytes]: ...
+) -> dict[Path, bytes]: ...
 
 
 @overload
@@ -42,7 +42,7 @@ def get_expected_content(
 def get_expected_content(
     config: cp.Configuration,
     exclude_to_ignore_file: bool,
-) -> Counter[bytes] | Dict[Path, bytes]:
+) -> Counter[bytes] | dict[Path, bytes]:
     if isinstance(config, cp.BtrFSRsyncConfig):
         source_dirs = set(config.Folders)
         source_files = config.Files
@@ -100,7 +100,7 @@ def get_expected_content_single_files(source_files: set[Path]) -> Dict[str, byte
 @overload
 def get_result_content(
     config: cp.BtrFSRsyncConfig, mounted: Path
-) -> Dict[Path, bytes]: ...
+) -> dict[Path, bytes]: ...
 
 
 @overload
@@ -109,7 +109,7 @@ def get_result_content(config: cp.ResticConfig, mounted: Path) -> Counter[bytes]
 
 def get_result_content(
     config: cp.Configuration, mounted: Path
-) -> Counter[bytes] | Dict[Path, bytes]:
+) -> Counter[bytes] | dict[Path, bytes]:
     if isinstance(config, cp.BtrFSRsyncConfig):
         return get_result_content_for_btrfs(config, mounted)
     elif isinstance(config, cp.ResticConfig):
@@ -124,7 +124,7 @@ def get_result_content(
 
 def get_result_content_for_btrfs(
     config: cp.BtrFSRsyncConfig, mounted: Path
-) -> Dict[Path, bytes]:
+) -> dict[Path, bytes]:
     folder_dest_by_config = next(iter(config.Folders.values()))
     backup_repository = mounted / config.BackupRepositoryFolder
     latest_snapshot = sorted(backup_repository.iterdir())[-1]

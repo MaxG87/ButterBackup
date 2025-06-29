@@ -5,7 +5,7 @@ import os
 import sys
 from pathlib import Path
 from tempfile import mkdtemp
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 import storage_device_managers as sdm
 import typer
@@ -56,8 +56,8 @@ def setup_logging(verbosity: int) -> None:
 def _skip_device(
     config: cp.BaseConfig,
     *,
-    log_missing: Optional[Callable[[], None]] = None,
-    log_opened: Optional[Callable[[], None]] = None,
+    log_missing: Callable[[], None] | None = None,
+    log_opened: Callable[[], None] | None = None,
 ) -> bool:
     """
     Helper function to determine whether a device should be skipped.
@@ -193,7 +193,7 @@ def format_device(
     device: Path = typer.Argument(  # noqa: B008
         ..., exists=True, dir_okay=False, readable=False
     ),
-    config_to: Optional[Path] = typer.Option(  # noqa: B008
+    config_to: Path | None = typer.Option(  # noqa: B008
         None,
         help="Datei, in welche die generierte Konfiguration geschrieben werden"
         " soll. Die angegebene Datei darf nicht existieren. Wenn nicht"

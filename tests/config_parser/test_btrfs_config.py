@@ -1,7 +1,6 @@
 import re
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-from typing import Optional
 
 import pytest
 from hypothesis import assume, given
@@ -148,7 +147,7 @@ def test_btrfs_config_rejects_out_of_bounds_compression_level(
     base_config=valid_unparsed_empty_btrfs_config(),
     level=st.integers(min_value=1, max_value=9) | st.none(),
 )
-def test_btrfs_config_accepts_valid_zlib(base_config, level: Optional[int]) -> None:
+def test_btrfs_config_accepts_valid_zlib(base_config, level: int | None) -> None:
     compression = "zlib"
     if level is not None:
         compression += f":{level}"
@@ -161,7 +160,7 @@ def test_btrfs_config_accepts_valid_zlib(base_config, level: Optional[int]) -> N
     base_config=valid_unparsed_empty_btrfs_config(),
     level=st.integers(min_value=1, max_value=15) | st.none(),
 )
-def test_btrfs_config_accepts_valid_zstd(base_config, level: Optional[int]) -> None:
+def test_btrfs_config_accepts_valid_zstd(base_config, level: int | None) -> None:
     compression = "zstd"
     if level is not None:
         compression += f":{level}"
