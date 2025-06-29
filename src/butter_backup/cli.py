@@ -171,10 +171,15 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> Non
     setup_logging(verbose)
     configurations = cp.parse_configuration(config.read_text())
     for cfg in configurations:
-        if not cfg.device().exists():
-            logger.info(
-                f"Speichermedium {cfg.UUID} existiert nicht. Es wird kein Backup angelegt."
-            )
+        if _skip_device(
+            cfg,
+            log_missing=lambda: logger.info(
+                f"Speichermedium {cfg.UUID} existiert nicht. Es wird kein Backup angelegt."  # noqa: B023
+            ),
+            log_opened=lambda: logger.warning(
+                f"Speichermedium {cfg.UUID} ist bereits geöffnet. Es wird übersprungen."  # noqa: B023
+            ),
+        ):
             continue
         backend = bb.BackupBackend.from_config(cfg)
         with sdm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted:
