@@ -134,7 +134,7 @@ def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None
     configurations = cp.parse_configuration(config.read_text())
     mounted_devices = sdm.get_mounted_devices()
     for cfg in configurations:
-        mapped_device = f"/dev/mapper/{cfg.UUID}"
+        mapped_device = str(cfg.map_name())
         if cfg.device().exists() and mapped_device in mounted_devices:
             mount_dirs = mounted_devices[mapped_device]
             if len(mount_dirs) != 1:
