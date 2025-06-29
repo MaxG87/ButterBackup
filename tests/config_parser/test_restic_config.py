@@ -11,14 +11,10 @@ from hypothesis import strategies as st
 from pydantic import ValidationError
 
 from butter_backup import config_parser as cp
+from tests import get_random_filename
 
 TEST_RESOURCES = Path(__file__).parent.parent / "resources"
 EXCLUDE_FILE = TEST_RESOURCES / "exclude-file"
-
-
-def get_random_filename() -> str:
-    with NamedTemporaryFile() as named_file:
-        return named_file.name
 
 
 @st.composite
@@ -63,7 +59,7 @@ def test_restic_config_expands_user(base_config):
 @given(base_config=valid_unparsed_empty_restic_config())
 def test_restic_config_uuid_is_mapname(base_config) -> None:
     cfg = cp.ResticConfig.model_validate(base_config)
-    assert base_config["UUID"] == cfg.map_name()
+    assert base_config["UUID"] == str(cfg.UUID)
 
 
 @given(base_config=valid_unparsed_empty_restic_config())

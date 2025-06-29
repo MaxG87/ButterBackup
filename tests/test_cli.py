@@ -12,11 +12,7 @@ from typer.testing import CliRunner
 from butter_backup import cli
 from butter_backup import config_parser as cp
 from butter_backup.cli import app
-
-
-def get_random_filename() -> str:
-    with NamedTemporaryFile() as named_file:
-        return named_file.name
+from tests import complement_configuration, get_random_filename
 
 
 def in_docker_container() -> bool:
@@ -236,3 +232,24 @@ def test_version(runner) -> None:
     assert len(lines) == 1
     parts = lines[0].split(".")
     assert len(parts) == 3  # noqa: PLR2004
+
+
+@pytest.mark.parametrize("subprogram", ["open", "backup"])
+@pytest.mark.skipif(
+    in_docker_container(), reason="Test is known to fail in Docker container"
+)
+def test_do_backup_refuses_backup_when_device_is_already_open(
+    subprogram: str, runner: CliRunner, encrypted_device, tmp_path: Path
+) -> None:
+    config = complement_configuration(encrypted_device, tmp_path)
+    config_file = tmp_path / "config.json"
+
+    config_file.write_text(f"[{config.model_dump_json()}]")
+    runner.invoke(app, ["open", "--config", str(config_file)])
+    result = runner.invoke(app, [subprogram, "--config", str(config_file)])
+    expected_msg = (
+        f"Speichermedium {config.UUID} ist bereits geöffnet. Es wird übersprungen."
+    )
+
+    assert result.exit_code == 0
+    assert expected_msg in result.stderr

@@ -53,6 +53,34 @@ def setup_logging(verbosity: int) -> None:
     logger.add(sys.stderr, level=available_levels[level])
 
 
+def _skip_device(
+    config: cp.BaseConfig,
+    *,
+    log_missing: Optional[Callable[[], None]] = None,
+    log_opened: Optional[Callable[[], None]] = None,
+) -> bool:
+    """
+    Helper function to determine whether a device should be skipped.
+
+    A device should be skipped if:
+      - it is not present in the system
+      - it is already opened by cryptsetup
+
+    The first condition is obvious. The second condition is important to prevent subtle
+    race conditions when a user already works on the device. In this case she e.g. might
+    remove it before a started backup is finished.
+    """
+    if not config.device().exists():
+        if log_missing is not None:
+            log_missing()
+        return True
+    if config.map_name().exists():
+        if log_opened is not None:
+            log_opened()
+        return True
+    return False
+
+
 CONFIG_OPTION = typer.Option(get_default_config_path(), exists=True, dir_okay=False)
 VERBOSITY_OPTION = typer.Option(0, "--verbose", "-v", count=True)
 
@@ -78,13 +106,19 @@ def open(  # noqa: A001
     setup_logging(verbose)
     configurations = cp.parse_configuration(config.read_text())
     for cfg in configurations:
-        if cfg.device().exists():
-            mount_dir = Path(mkdtemp())
-            decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
-            sdm.mount_btrfs_device(
-                decrypted, mount_dir=mount_dir, compression=cfg.Compression
-            )
-            typer.echo(f"Speichermedium {cfg.UUID} wurde in {mount_dir} geöffnet.")
+        if _skip_device(
+            cfg,
+            log_opened=lambda: logger.warning(
+                f"Speichermedium {cfg.UUID} ist bereits geöffnet. Es wird übersprungen."  # noqa: B023
+            ),
+        ):
+            continue
+        mount_dir = Path(mkdtemp())
+        decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
+        sdm.mount_btrfs_device(
+            decrypted, mount_dir=mount_dir, compression=cfg.Compression
+        )
+        typer.echo(f"Speichermedium {cfg.UUID} wurde in {mount_dir} geöffnet.")
 
 
 @app.command()
@@ -100,7 +134,7 @@ def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None
     configurations = cp.parse_configuration(config.read_text())
     mounted_devices = sdm.get_mounted_devices()
     for cfg in configurations:
-        mapped_device = f"/dev/mapper/{cfg.UUID}"
+        mapped_device = str(cfg.map_name())
         if cfg.device().exists() and mapped_device in mounted_devices:
             mount_dirs = mounted_devices[mapped_device]
             if len(mount_dirs) != 1:
@@ -137,10 +171,15 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> Non
     setup_logging(verbose)
     configurations = cp.parse_configuration(config.read_text())
     for cfg in configurations:
-        if not cfg.device().exists():
-            logger.info(
-                f"Speichermedium {cfg.UUID} existiert nicht. Es wird kein Backup angelegt."
-            )
+        if _skip_device(
+            cfg,
+            log_missing=lambda: logger.info(
+                f"Speichermedium {cfg.UUID} existiert nicht. Es wird kein Backup angelegt."  # noqa: B023
+            ),
+            log_opened=lambda: logger.warning(
+                f"Speichermedium {cfg.UUID} ist bereits geöffnet. Es wird übersprungen."  # noqa: B023
+            ),
+        ):
             continue
         backend = bb.BackupBackend.from_config(cfg)
         with sdm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted:
