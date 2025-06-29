@@ -247,7 +247,7 @@ def test_do_backup_refuses_backup_when_device_is_already_open(
     runner.invoke(app, ["open", "--config", str(config_file)])
     result = runner.invoke(app, ["open", "--config", str(config_file)])
     expected_msg = (
-        f"Speichermedium {config.UUID} ist bereits gemountet. Es wird übersprungen."
+        f"Speichermedium {config.UUID} ist bereits geöffnet. Es wird übersprungen."
     )
 
     assert result.exit_code == 0
