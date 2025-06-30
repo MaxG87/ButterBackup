@@ -5,7 +5,7 @@ import os
 from collections import Counter
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Dict, Iterable, Union, overload
+from typing import Dict, Iterable, overload
 
 import pytest
 import shell_interface as sh
@@ -42,7 +42,7 @@ def get_expected_content(
 def get_expected_content(
     config: cp.Configuration,
     exclude_to_ignore_file: bool,
-) -> Union[Counter[bytes], Dict[Path, bytes]]:
+) -> Counter[bytes] | Dict[Path, bytes]:
     source_dir: Path
     if isinstance(config, cp.BtrFSRsyncConfig):
         source_dir = next(iter(config.Folders))
@@ -72,7 +72,7 @@ def get_result_content(config: cp.ResticConfig, mounted: Path) -> Counter[bytes]
 
 def get_result_content(
     config: cp.Configuration, mounted: Path
-) -> Union[Counter[bytes], Dict[Path, bytes]]:
+) -> Counter[bytes] | Dict[Path, bytes]:
     if isinstance(config, cp.BtrFSRsyncConfig):
         return get_result_content_for_btrfs(config, mounted)
     elif isinstance(config, cp.ResticConfig):
