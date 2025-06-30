@@ -5,7 +5,7 @@ import sys
 import uuid
 from collections import Counter
 from pathlib import Path
-from typing import ClassVar, Dict, List, Set, Union
+from typing import ClassVar, Dict, List, Set
 
 from pydantic import (
     BaseModel,
@@ -27,7 +27,7 @@ def path_aware_btrfs_json_decoding(folders: FoldersT) -> str:
 
 
 def path_aware_restic_json_decoding(
-    files_and_folders: Set[Union[FilePath, DirectoryPath]],
+    files_and_folders: Set[FilePath | DirectoryPath],
 ) -> str:
     as_dict = {str(cur) for cur in files_and_folders}
     return json.dumps(as_dict)
@@ -98,7 +98,7 @@ class BtrFSRsyncConfig(BaseConfig):
 
     @staticmethod
     def raise_with_message_upon_duplicate(
-        counts: Union[Counter[Path], Counter[str]], token: tuple[str, str]
+        counts: Counter[Path] | Counter[str], token: tuple[str, str]
     ) -> None:
         if all(val == 1 for val in counts.values()):
             return
@@ -113,7 +113,7 @@ class BtrFSRsyncConfig(BaseConfig):
 
 class ResticConfig(BaseConfig):
     model_config = ConfigDict(extra="forbid", frozen=True)
-    FilesAndFolders: Set[Union[FilePath, DirectoryPath]]
+    FilesAndFolders: Set[FilePath | DirectoryPath]
     RepositoryPassCmd: str
 
     @field_validator("FilesAndFolders", mode="before")
@@ -122,7 +122,7 @@ class ResticConfig(BaseConfig):
         return new
 
 
-Configuration = Union[BtrFSRsyncConfig, ResticConfig]
+Configuration = BtrFSRsyncConfig | ResticConfig
 
 
 def parse_configuration(content: str) -> list[Configuration]:

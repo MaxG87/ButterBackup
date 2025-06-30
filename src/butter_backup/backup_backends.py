@@ -4,7 +4,7 @@ import abc
 import datetime as dt
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Union, overload
+from typing import overload
 
 import shell_interface as sh
 from loguru import logger
@@ -26,8 +26,8 @@ class BackupBackend(abc.ABC):
 
     @staticmethod
     def from_config(
-        config: Union[cp.BtrFSRsyncConfig, cp.ResticConfig],
-    ) -> Union[BtrFSRsyncBackend, ResticBackend]:
+        config: cp.BtrFSRsyncConfig | cp.ResticConfig,
+    ) -> BtrFSRsyncBackend | ResticBackend:
         # Getestet durch Tests der Backuplogik
         if isinstance(config, cp.BtrFSRsyncConfig):
             return BtrFSRsyncBackend(config=config)
