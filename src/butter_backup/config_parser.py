@@ -5,7 +5,7 @@ import sys
 import uuid
 from collections import Counter
 from pathlib import Path
-from typing import ClassVar, Dict, List, Optional, Set, Union
+from typing import ClassVar, Dict, List, Set, Union
 
 from pydantic import (
     BaseModel,
@@ -36,14 +36,14 @@ def path_aware_restic_json_decoding(
 class BaseConfig(BaseModel):
     BackupRepositoryFolder: str
     DevicePassCmd: str
-    ExcludePatternsFile: Optional[FilePath] = None
+    ExcludePatternsFile: FilePath | None = None
     UUID: uuid.UUID
-    Compression: Optional[ValidCompressions] = None
+    Compression: ValidCompressions | None = None
 
     @field_validator("ExcludePatternsFile", mode="before")
     def expand_tilde_in_exclude_patterns_file_name(
         cls, maybe_exclude_patterns
-    ) -> Optional[str]:
+    ) -> str | None:
         if maybe_exclude_patterns is None:
             return None
         return str(Path(maybe_exclude_patterns).expanduser())
