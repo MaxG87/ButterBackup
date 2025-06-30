@@ -4,7 +4,7 @@ import abc
 import datetime as dt
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Union, overload
+from typing import Union, overload
 
 import shell_interface as sh
 from loguru import logger
@@ -92,7 +92,7 @@ class BtrFSRsyncBackend(BackupBackend):
 
     @staticmethod
     def rsync_folder(
-        src: Path, dest: Path, maybe_exclude_patterns: Optional[Path]
+        src: Path, dest: Path, maybe_exclude_patterns: Path | None
     ) -> None:
         cmd: sh.StrPathList = [
             "sudo",
