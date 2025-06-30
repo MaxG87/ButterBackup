@@ -32,7 +32,7 @@ def wait_until_gone(p: Path, timeout: dt.timedelta = dt.timedelta(seconds=3)) ->
 
 @pytest.fixture
 def runner():
-    return CliRunner(mix_stderr=False)
+    return CliRunner()
 
 
 def test_get_default_config_path() -> None:

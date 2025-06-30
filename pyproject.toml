@@ -8,10 +8,10 @@ readme = "README.md"
 requires-python = ">=3.10,<4.0.0"
 dependencies = [
     "loguru>=0.7.3",
-    "pydantic>=2.10.6",
-    "shell-interface>=1.0.0",
+    "pydantic>=2.11.7",
+    "shell-interface>=1.0.1",
     "storage-device-managers>=1.0.0",
-    "typer>=0.15.1",
+    "typer>=0.16.0",
 ]
 
 [project.urls]
