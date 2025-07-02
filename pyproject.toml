@@ -36,7 +36,6 @@ dev = [
     "pdbpp>=0.10.3",
     "pytest>=8.3.4",
     "pytest-cov>=6.0.0",
-    "pytest-xdist>=3.6.1",
     "ruff>=0.9.6",
 ]
 
