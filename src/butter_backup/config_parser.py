@@ -5,7 +5,7 @@ import sys
 import uuid
 from collections import Counter
 from pathlib import Path
-from typing import ClassVar, Dict, List, Optional, Set, Union
+from typing import ClassVar
 
 from pydantic import (
     BaseModel,
@@ -18,7 +18,7 @@ from pydantic import (
 )
 from storage_device_managers import ValidCompressions
 
-FoldersT = Dict[DirectoryPath, str]
+FoldersT = dict[DirectoryPath, str]
 
 
 def path_aware_btrfs_json_decoding(folders: FoldersT) -> str:
@@ -27,7 +27,7 @@ def path_aware_btrfs_json_decoding(folders: FoldersT) -> str:
 
 
 def path_aware_restic_json_decoding(
-    files_and_folders: Set[Union[FilePath, DirectoryPath]],
+    files_and_folders: set[FilePath | DirectoryPath],
 ) -> str:
     as_dict = {str(cur) for cur in files_and_folders}
     return json.dumps(as_dict)
@@ -36,14 +36,14 @@ def path_aware_restic_json_decoding(
 class BaseConfig(BaseModel):
     BackupRepositoryFolder: str
     DevicePassCmd: str
-    ExcludePatternsFile: Optional[FilePath] = None
+    ExcludePatternsFile: FilePath | None = None
     UUID: uuid.UUID
-    Compression: Optional[ValidCompressions] = None
+    Compression: ValidCompressions | None = None
 
     @field_validator("ExcludePatternsFile", mode="before")
     def expand_tilde_in_exclude_patterns_file_name(
         cls, maybe_exclude_patterns
-    ) -> Optional[str]:
+    ) -> str | None:
         if maybe_exclude_patterns is None:
             return None
         return str(Path(maybe_exclude_patterns).expanduser())
@@ -57,7 +57,7 @@ class BaseConfig(BaseModel):
 
 class BtrFSRsyncConfig(BaseConfig):
     model_config = ConfigDict(extra="forbid", frozen=True)
-    Files: Set[FilePath]
+    Files: set[FilePath]
     FilesDest: str
     Folders: FoldersT
     SubvolTimestampFmt: ClassVar[str] = "%F_%H:%M:%S"
@@ -82,7 +82,7 @@ class BtrFSRsyncConfig(BaseConfig):
         return new
 
     @field_validator("Folders", mode="before")
-    def expand_tilde_in_folder_sources(cls, folders) -> Dict[str, str]:
+    def expand_tilde_in_folder_sources(cls, folders) -> dict[str, str]:
         new = {str(Path(src).expanduser()): dest for src, dest in folders.items()}
         return new
 
@@ -98,7 +98,7 @@ class BtrFSRsyncConfig(BaseConfig):
 
     @staticmethod
     def raise_with_message_upon_duplicate(
-        counts: Union[Counter[Path], Counter[str]], token: tuple[str, str]
+        counts: Counter[Path] | Counter[str], token: tuple[str, str]
     ) -> None:
         if all(val == 1 for val in counts.values()):
             return
@@ -113,7 +113,7 @@ class BtrFSRsyncConfig(BaseConfig):
 
 class ResticConfig(BaseConfig):
     model_config = ConfigDict(extra="forbid", frozen=True)
-    FilesAndFolders: Set[Union[FilePath, DirectoryPath]]
+    FilesAndFolders: set[FilePath | DirectoryPath]
     RepositoryPassCmd: str
 
     @field_validator("FilesAndFolders", mode="before")
@@ -122,11 +122,11 @@ class ResticConfig(BaseConfig):
         return new
 
 
-Configuration = Union[BtrFSRsyncConfig, ResticConfig]
+Configuration = BtrFSRsyncConfig | ResticConfig
 
 
 def parse_configuration(content: str) -> list[Configuration]:
-    ConfigList = TypeAdapter(List[Configuration])
+    ConfigList = TypeAdapter(list[Configuration])
     config_lst = ConfigList.validate_json(content)
     if len(config_lst) == 0:
         sys.exit("Leere Konfigurationsdateien sind nicht erlaubt.\n")

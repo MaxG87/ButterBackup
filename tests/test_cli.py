@@ -1,4 +1,6 @@
+import datetime as dt
 import re
+import time
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from unittest import mock
@@ -19,9 +21,18 @@ def in_docker_container() -> bool:
     return Path("/.dockerenv").exists()
 
 
+def wait_until_gone(p: Path, timeout: dt.timedelta = dt.timedelta(seconds=3)) -> None:
+    """Wait until the given path is gone."""
+    start = dt.datetime.now()
+    while p.exists():
+        if dt.datetime.now() - start > timeout:
+            raise TimeoutError(f"Path {p} did not disappear in time.")
+        time.sleep(0.01)  # Sleep a bit to avoid busy waiting
+
+
 @pytest.fixture
 def runner():
-    return CliRunner(mix_stderr=False)
+    return CliRunner()
 
 
 def test_get_default_config_path() -> None:
@@ -194,10 +205,12 @@ def test_format_device(runner, backend: str, big_file: Path) -> None:
     config_lst = list(cp.parse_configuration(serialised_config))
     assert len(config_lst) == 1
     device_uuid = config_lst[0].UUID
+    link_dest = Path(f"/dev/disk/by-uuid/{device_uuid}")
+    wait_until_gone(link_dest, dt.timedelta(seconds=3))
     with NamedTemporaryFile("w") as fh:
         fh.write(serialised_config)
         fh.seek(0)
-        with sdm.symbolic_link(big_file, Path(f"/dev/disk/by-uuid/{device_uuid}")):
+        with sdm.symbolic_link(big_file, link_dest):
             open_result = runner.invoke(app, ["open", "--config", fh.name])
             close_result = runner.invoke(app, ["close", "--config", fh.name])
     assert format_result.exit_code == 0
