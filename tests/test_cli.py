@@ -71,30 +71,30 @@ def test_open_close_roundtrip(runner, encrypted_device) -> None:
 
 @pytest.mark.parametrize("backend", ["restic", "btrfs-rsync"])
 def test_format_device(runner, backend: str, big_file: Path) -> None:
-    print(f"{list(BY_UUID.iterdir())=}")
+    print(f"01 - {list(BY_UUID.iterdir())=}")
     format_result = runner.invoke(app, ["format-device", backend, str(big_file)])
-    print(f"{format_result.stdout=}")
-    print(f"{format_result.stderr=}")
-    print(f"{list(BY_UUID.iterdir())=}")
+    print(f"02 - {format_result.stdout=}")
+    print(f"03 - {format_result.stderr=}")
+    print(f"04 - {list(BY_UUID.iterdir())=}")
     serialised_config = format_result.stdout
-    print(f"{list(BY_UUID.iterdir())=}")
+    print(f"05 - {list(BY_UUID.iterdir())=}")
     config_lst = list(cp.parse_configuration(serialised_config))
-    print(f"{list(BY_UUID.iterdir())=}")
-    print(f"{config_lst=}")
+    print(f"06 - {list(BY_UUID.iterdir())=}")
+    print(f"07 - {config_lst=}")
     assert len(config_lst) == 1
     device_uuid = config_lst[0].UUID
-    print(f"{list(BY_UUID.iterdir())=}")
+    print(f"08 - {list(BY_UUID.iterdir())=}")
     link_dest = Path(f"/dev/disk/by-uuid/{device_uuid}")
-    print(f"{list(BY_UUID.iterdir())=}")
-    print(f"{link_dest=}")
-    print(f"{link_dest.exists()=}")
-    print(f"{link_dest.is_symlink()=}")
+    print(f"09 - {list(BY_UUID.iterdir())=}")
+    print(f"10 - {link_dest=}")
+    print(f"11 - {link_dest.exists()=}")
+    print(f"12 - {link_dest.is_symlink()=}")
     sibblings = list(link_dest.parent.iterdir())
-    print(f"{sibblings=}")
+    print(f"13 - {sibblings=}")
     with NamedTemporaryFile("w") as fh:
         fh.write(serialised_config)
         fh.seek(0)
-        print(f"{fh.name=}")
+        print(f"14 - {fh.name=}")
         with sdm.symbolic_link(big_file, Path(f"/dev/disk/by-uuid/{device_uuid}")):
             print("Symbolic link created successfully.")
             open_result = runner.invoke(app, ["open", "--config", fh.name])
@@ -103,7 +103,7 @@ def test_format_device(runner, backend: str, big_file: Path) -> None:
     assert open_result.exit_code == 0
     assert close_result.exit_code == 0
     assert str(device_uuid) in open_result.stdout
-    print(f"{list(BY_UUID.iterdir())=}")
+    print(f"15 - {list(BY_UUID.iterdir())=}")
 
 
 @pytest.mark.parametrize("backend", ["restic", "btrfs-rsync"])
