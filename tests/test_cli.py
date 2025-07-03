@@ -190,14 +190,22 @@ def test_format_device_refuses_incorrect_backend(runner, backend: str) -> None:
 @pytest.mark.parametrize("backend", ["restic", "btrfs-rsync"])
 def test_format_device(runner, backend: str, big_file: Path) -> None:
     format_result = runner.invoke(app, ["format-device", backend, str(big_file)])
+    print(f"{format_result.stdout=}")
+    print(f"{format_result.stderr=}")
     serialised_config = format_result.stdout
     config_lst = list(cp.parse_configuration(serialised_config))
+    print(f"{config_lst=}")
     assert len(config_lst) == 1
     device_uuid = config_lst[0].UUID
+    link_dest = Path(f"/dev/disk/by-uuid/{device_uuid}")
+    print(f"{link_dest.exists()=}")
+    print(f"{link_dest.is_symlink()=}")
     with NamedTemporaryFile("w") as fh:
         fh.write(serialised_config)
         fh.seek(0)
+        print(f"{fh.name=}")
         with sdm.symbolic_link(big_file, Path(f"/dev/disk/by-uuid/{device_uuid}")):
+            print("Symbolic link created successfully.")
             open_result = runner.invoke(app, ["open", "--config", fh.name])
             close_result = runner.invoke(app, ["close", "--config", fh.name])
     assert format_result.exit_code == 0
