@@ -1,5 +1,29 @@
 # Changelog
 
+## [3.5.2](https://github.com/MaxG87/ButterBackup/compare/v3.5.1...v3.5.2) (2025-07-03)
+
+
+### Bug Fixes
+
+* Busy wait to avoid race condition ([9d6dd1b](https://github.com/MaxG87/ButterBackup/commit/9d6dd1ba64775a6ecb785b99b8ab9f7eca6aefe4))
+* Refuse to do backup on opened device ([34caba3](https://github.com/MaxG87/ButterBackup/commit/34caba3b197483992ecb13045d95800f6f3b89c9))
+* Refuse to open already opened device ([7b9acb8](https://github.com/MaxG87/ButterBackup/commit/7b9acb8c3f4acfa56622a7b07efb57c364b24225))
+
+
+### Dependencies
+
+* Bump typer (v0.16.0) and pydantic (v2.11.7) ([aa5ebd3](https://github.com/MaxG87/ButterBackup/commit/aa5ebd38c75d8342649783b402db523de1ab16ec))
+* **dev:** Bump all development dependencies ([0926918](https://github.com/MaxG87/ButterBackup/commit/0926918bf453221f1e32fb65f6ce965aedc0fd5d))
+* **dev:** bump the development-dependencies group with 4 updates ([#79](https://github.com/MaxG87/ButterBackup/issues/79)) ([3e83246](https://github.com/MaxG87/ButterBackup/commit/3e832460e8dfe1fa5321f3fb36316c37674858c5))
+* **dev:** bump the development-dependencies group with 7 updates ([#78](https://github.com/MaxG87/ButterBackup/issues/78)) ([d84b2fe](https://github.com/MaxG87/ButterBackup/commit/d84b2fe8f6c8830b777da75f9a0592271ab1c730))
+* **dev:** Drop pynvim ([bde08cc](https://github.com/MaxG87/ButterBackup/commit/bde08ccc046167a3e6b6d3656a19457d56d43a46))
+
+
+### Documentation
+
+* Add project URLs ([e039cf7](https://github.com/MaxG87/ButterBackup/commit/e039cf7d99148086ebb691d2da988b7f67901778))
+* Replace poetry with uv in README ([d9d17f8](https://github.com/MaxG87/ButterBackup/commit/d9d17f819702fdd6f8222888713d560c9985aba2))
+
 ## [3.5.1](https://github.com/MaxG87/ButterBackup/compare/v3.5.0...v3.5.1) (2025-02-17)
 
 
