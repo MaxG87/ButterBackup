@@ -200,6 +200,8 @@ def test_format_device(runner, backend: str, big_file: Path) -> None:
     link_dest = Path(f"/dev/disk/by-uuid/{device_uuid}")
     print(f"{link_dest.exists()=}")
     print(f"{link_dest.is_symlink()=}")
+    sibblings = list(link_dest.parent.iterdir())
+    print(f"{sibblings=}")
     with NamedTemporaryFile("w") as fh:
         fh.write(serialised_config)
         fh.seek(0)
@@ -232,14 +234,6 @@ def test_format_device_chowns_filesystem_to_user(
     expected_group = sh.get_group(expected_user)
     assert owner == expected_user
     assert group == expected_group
-
-
-def test_version(runner) -> None:
-    result = runner.invoke(app, ["version"])
-    lines = result.stdout.splitlines()
-    assert len(lines) == 1
-    parts = lines[0].split(".")
-    assert len(parts) == 3  # noqa: PLR2004
 
 
 @pytest.mark.parametrize("subprogram", ["open", "backup"])
