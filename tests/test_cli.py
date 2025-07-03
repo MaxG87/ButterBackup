@@ -75,12 +75,17 @@ def test_format_device(runner, backend: str, big_file: Path) -> None:
     format_result = runner.invoke(app, ["format-device", backend, str(big_file)])
     print(f"{format_result.stdout=}")
     print(f"{format_result.stderr=}")
+    print(f"{list(BY_UUID.iterdir())=}")
     serialised_config = format_result.stdout
+    print(f"{list(BY_UUID.iterdir())=}")
     config_lst = list(cp.parse_configuration(serialised_config))
+    print(f"{list(BY_UUID.iterdir())=}")
     print(f"{config_lst=}")
     assert len(config_lst) == 1
     device_uuid = config_lst[0].UUID
+    print(f"{list(BY_UUID.iterdir())=}")
     link_dest = Path(f"/dev/disk/by-uuid/{device_uuid}")
+    print(f"{list(BY_UUID.iterdir())=}")
     print(f"{link_dest=}")
     print(f"{link_dest.exists()=}")
     print(f"{link_dest.is_symlink()=}")
