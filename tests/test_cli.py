@@ -4,6 +4,7 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 from unittest import mock
 
 import pytest
+import shell_interface as sh
 import storage_device_managers as sdm
 from loguru import logger
 from typer.testing import CliRunner
@@ -11,7 +12,7 @@ from typer.testing import CliRunner
 from butter_backup import cli
 from butter_backup import config_parser as cp
 from butter_backup.cli import app
-from tests import get_random_filename
+from tests import complement_configuration, get_random_filename
 
 
 def in_docker_container() -> bool:
@@ -211,3 +212,52 @@ def test_format_device(runner, backend: str, big_file: Path) -> None:
     assert open_result.exit_code == 0
     assert close_result.exit_code == 0
     assert str(device_uuid) in open_result.stdout
+
+
+@pytest.mark.parametrize("backend", ["restic", "btrfs-rsync"])
+def test_format_device_chowns_filesystem_to_user(
+    runner, backend: str, big_file: Path
+) -> None:
+    format_result = runner.invoke(app, ["format-device", backend, str(big_file)])
+    serialised_config = format_result.stdout
+    config_lst = list(cp.parse_configuration(serialised_config))
+    assert len(config_lst) == 1
+    config = config_lst[0]
+
+    with sdm.decrypted_device(big_file, config.DevicePassCmd) as decrypted:
+        with sdm.mounted_device(decrypted, sdm.ValidCompressions.ZLIB1) as mounted:
+            owner = mounted.owner()
+            group = mounted.group()
+    expected_user = sh.get_user()
+    expected_group = sh.get_group(expected_user)
+    assert owner == expected_user
+    assert group == expected_group
+
+
+def test_version(runner) -> None:
+    result = runner.invoke(app, ["version"])
+    lines = result.stdout.splitlines()
+    assert len(lines) == 1
+    parts = lines[0].split(".")
+    assert len(parts) == 3  # noqa: PLR2004
+
+
+@pytest.mark.parametrize("subprogram", ["open", "backup"])
+@pytest.mark.skipif(
+    in_docker_container(), reason="Test is known to fail in Docker container"
+)
+def test_do_backup_refuses_backup_when_device_is_already_open(
+    subprogram: str, runner: CliRunner, encrypted_device, tmp_path: Path
+) -> None:
+    config = complement_configuration(encrypted_device, tmp_path)
+    config_file = tmp_path / "config.json"
+
+    config_file.write_text(f"[{config.model_dump_json()}]")
+    runner.invoke(app, ["open", "--config", str(config_file)])
+    result = runner.invoke(app, [subprogram, "--config", str(config_file)])
+    expected_msg = (
+        f"Speichermedium {config.UUID} ist bereits geöffnet. Es wird übersprungen."
+    )
+
+    assert result.exit_code == 0
+    assert expected_msg in result.stderr
