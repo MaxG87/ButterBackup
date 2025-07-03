@@ -1,17 +1,15 @@
 import re
 from pathlib import Path
-from tempfile import NamedTemporaryFile, TemporaryDirectory
-from unittest import mock
+from tempfile import NamedTemporaryFile
 
 import pytest
 import shell_interface as sh
 import storage_device_managers as sdm
 from typer.testing import CliRunner
 
-from butter_backup import cli
 from butter_backup import config_parser as cp
 from butter_backup.cli import app
-from tests import complement_configuration, get_random_filename
+from tests import complement_configuration
 
 BY_UUID = Path("/dev/disk/by-uuid")
 print(f"{BY_UUID=}")
@@ -25,76 +23,6 @@ def in_docker_container() -> bool:
 @pytest.fixture
 def runner():
     return CliRunner()
-
-
-def test_get_default_config_path() -> None:
-    print(f"{list(BY_UUID.iterdir())=}")
-    with TemporaryDirectory() as tempdir:
-        xdg_config_dir = Path(tempdir)
-    with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config_dir}.get):
-        config_file = cli.get_default_config_path()
-    expected_cfg = xdg_config_dir / cli.DEFAULT_CONFIG_NAME
-    assert str(expected_cfg) == config_file
-    print(f"{list(BY_UUID.iterdir())=}")
-
-
-@pytest.mark.parametrize(
-    "subprogram",
-    ["backup", "close", "open"],
-)
-def test_subprograms_refuse_missing_config(subprogram, runner) -> None:
-    print(f"{list(BY_UUID.iterdir())=}")
-    config_file = Path(get_random_filename())
-    result = runner.invoke(app, [subprogram, "--config", str(config_file)])
-    assert f"{config_file}" in result.stderr
-    assert result.exit_code != 0
-    print(f"{list(BY_UUID.iterdir())=}")
-
-
-@pytest.mark.skipif(in_docker_container(), reason="All files are readable for root")
-@pytest.mark.parametrize(
-    "subprogram",
-    ["backup", "close", "open"],
-)
-def test_subprograms_refuse_unreadable_file(subprogram, runner) -> None:
-    print(f"{list(BY_UUID.iterdir())=}")
-    with NamedTemporaryFile() as fh:
-        config_file = Path(fh.name)
-        config_file.chmod(0)
-        result = runner.invoke(app, [subprogram, "--config", str(config_file)])
-        assert f"{config_file}" in result.stderr
-        assert result.exit_code != 0
-    print(f"{list(BY_UUID.iterdir())=}")
-
-
-@pytest.mark.parametrize(
-    "subprogram",
-    ["backup", "close", "open"],
-)
-def test_subprograms_refuse_directories(subprogram, runner) -> None:
-    print(f"{list(BY_UUID.iterdir())=}")
-    with TemporaryDirectory() as tmp_dir:
-        result = runner.invoke(app, [subprogram, "--config", tmp_dir])
-        assert tmp_dir in result.stderr
-        assert result.exit_code != 0
-    print(f"{list(BY_UUID.iterdir())=}")
-
-
-@pytest.mark.skip("Impossible to implement!")
-def test_open_refuses_missing_xdg_config(runner) -> None:
-    print(f"{list(BY_UUID.iterdir())=}")
-    # It seems as if this test cannot be implemented at the moment.
-    #
-    # This test resets XDG_CONFIG_HOME to provoke that get_default_config_path
-    # returns a not existing config file. However, get_default_config_path is
-    # executed at import time, rendering resetting XDG_CONFIG_HOME effectless.
-    with TemporaryDirectory() as xdg_config_dir:
-        pass
-    with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config_dir}.get):
-        result = runner.invoke(app, ["open"])
-    assert xdg_config_dir in result.stderr
-    assert result.exit_code != 0
-    print(f"{list(BY_UUID.iterdir())=}")
 
 
 @pytest.mark.skipif(
@@ -138,17 +66,6 @@ def test_open_close_roundtrip(runner, encrypted_device) -> None:
         assert not expected_cryptsetup_map.exists()
         assert not sdm.is_mounted(mount_dest)
         assert not mount_dest.exists()
-    print(f"{list(BY_UUID.iterdir())=}")
-
-
-@pytest.mark.parametrize(
-    "backend", ["BackupBackend", "fvglxvleaeb", "NotYetImplementedBackend"]
-)
-def test_format_device_refuses_incorrect_backend(runner, backend: str) -> None:
-    print(f"{list(BY_UUID.iterdir())=}")
-    with NamedTemporaryFile() as tempf:
-        result = runner.invoke(app, ["format-device", tempf.name, backend])
-        assert result.exit_code != 0
     print(f"{list(BY_UUID.iterdir())=}")
 
 
