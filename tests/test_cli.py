@@ -164,6 +164,7 @@ def test_format_device(runner, backend: str, big_file: Path) -> None:
     assert len(config_lst) == 1
     device_uuid = config_lst[0].UUID
     link_dest = Path(f"/dev/disk/by-uuid/{device_uuid}")
+    print(f"{link_dest=}")
     print(f"{link_dest.exists()=}")
     print(f"{link_dest.is_symlink()=}")
     sibblings = list(link_dest.parent.iterdir())
