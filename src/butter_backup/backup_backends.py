@@ -49,9 +49,9 @@ class BtrFSRsyncBackend(BackupBackend):
             dest = backup_root / dest_name
             self.rsync_folder(src, dest, self.config.ExcludePatternsFile)
 
-        files_dest = backup_root / self.config.FilesDest
-        for src in self.config.Files:
-            self.rsync_file(src, files_dest)
+        # files_dest = backup_root / self.config.FilesDest
+        # for src in self.config.Files:
+        #     self.rsync_file(src, files_dest)
 
     @staticmethod
     def get_source_snapshot(root: Path) -> Path:
@@ -85,10 +85,10 @@ class BtrFSRsyncBackend(BackupBackend):
         sh.run_cmd(cmd=cmd)
         return backup_root
 
-    @staticmethod
-    def rsync_file(src: Path, dest: Path) -> None:
-        cmd: sh.StrPathList = ["sudo", "rsync", "-ax", "--inplace", src, dest]
-        sh.run_cmd(cmd=cmd)
+    # @staticmethod
+    # def rsync_file(src: Path, dest: Path) -> None:
+    #     cmd: sh.StrPathList = ["sudo", "rsync", "-ax", "--inplace", src, dest]
+    #     sh.run_cmd(cmd=cmd)
 
     @staticmethod
     def rsync_folder(
