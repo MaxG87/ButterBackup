@@ -1,0 +1,6 @@
+{
+    "bip": "172.26.0.1/16",
+    "features": {
+        "buildkit": true
+    }
+}
