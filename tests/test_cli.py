@@ -241,6 +241,8 @@ def test_version(runner) -> None:
 def test_do_backup_refuses_backup_when_device_is_already_open(
     subprogram: str, runner: CliRunner, encrypted_device, tmp_path: Path
 ) -> None:
+    backup_root = tmp_path / "backup-root"
+    backup_root.mkdir()
     config = complement_configuration(encrypted_device, tmp_path)
     config_file = tmp_path / "config.json"
 

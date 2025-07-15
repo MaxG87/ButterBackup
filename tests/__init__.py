@@ -25,9 +25,10 @@ def complement_configuration(
 def complement_configuration(
     config: cp.Configuration, source_dir: Path
 ) -> cp.Configuration:
+    folders_root = source_dir / "backup-root"
     if isinstance(config, cp.BtrFSRsyncConfig):
         folder_dest_dir = "some-folder-name"
-        return config.model_copy(update={"Folders": {source_dir: folder_dest_dir}})
+        return config.model_copy(update={"Folders": {folders_root: folder_dest_dir}})
     if isinstance(config, cp.ResticConfig):
-        return config.model_copy(update={"FilesAndFolders": {source_dir}})
+        return config.model_copy(update={"FilesAndFolders": {folders_root}})
     raise TypeError("Unsupported configuration encountered.")
