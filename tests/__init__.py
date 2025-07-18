@@ -31,4 +31,4 @@ def complement_configuration(
         return config.model_copy(update={"Folders": {folders_root: folder_dest_dir}})
     if isinstance(config, cp.ResticConfig):
         return config.model_copy(update={"FilesAndFolders": {folders_root}})
-    raise TypeError("Unsupported configuration encountered.")
+    t.assert_never(config)

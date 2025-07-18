@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime as dt
 import os
+import typing as t
 from collections import Counter
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -49,7 +50,7 @@ def get_expected_content(
     elif isinstance(config, cp.ResticConfig):
         source_dir = next(iter(config.FilesAndFolders))
     else:
-        raise TypeError("Unsupported configuration encountered.")
+        t.assert_never(config)
     expected_content = {
         file.relative_to(source_dir): file.read_bytes()
         for file in list_files_recursively(source_dir)
@@ -78,7 +79,7 @@ def get_result_content(
     elif isinstance(config, cp.ResticConfig):
         return get_result_content_for_restic(config, mounted)
     else:
-        raise TypeError("Unsupported configuration encountered.")
+        t.assert_never(config)
 
 
 def get_result_content_for_btrfs(
