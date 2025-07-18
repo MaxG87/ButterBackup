@@ -42,20 +42,34 @@ def get_expected_content(
     config: cp.Configuration,
     exclude_to_ignore_file: bool,
 ) -> Union[Counter[bytes], Dict[Path, bytes]]:
-    source_dir: Path
     if isinstance(config, cp.BtrFSRsyncConfig):
-        source_dir = next(iter(config.Folders))
+        source_dirs = set(config.Folders)
     elif isinstance(config, cp.ResticConfig):
-        source_dir = next(iter(config.FilesAndFolders))
+        source_dirs = {cur for cur in config.FilesAndFolders if cur.is_dir()}
     else:
         t.assert_never(config)
-    expected_content = {
-        file.relative_to(source_dir): file.read_bytes()
-        for file in list_files_recursively(source_dir)
-        if exclude_to_ignore_file is False or "ignore" not in file.name
-    }
+
+    expected_content_dirs = get_expected_content_recursive_dir(
+        source_dirs, exclude_to_ignore_file
+    )
+    expected_content = expected_content_dirs
     if isinstance(config, cp.ResticConfig):
         return Counter(expected_content.values())
+    return expected_content
+
+
+def get_expected_content_recursive_dir(
+    source_dirs: set[Path],
+    exclude_to_ignore_file: bool,
+) -> Dict[Path, bytes]:
+    expected_content = {}
+    for cur_dir in source_dirs:
+        cur_content = {
+            file.relative_to(cur_dir): file.read_bytes()
+            for file in list_files_recursively(cur_dir)
+            if exclude_to_ignore_file is False or "ignore" not in file.name
+        }
+        expected_content.update(cur_content)
     return expected_content
 
 
