@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import abc
 import datetime as dt
 from dataclasses import dataclass
@@ -18,16 +16,16 @@ class BackupBackend(abc.ABC):
 
     @overload
     @staticmethod
-    def from_config(config: cp.BtrFSRsyncConfig) -> BtrFSRsyncBackend: ...
+    def from_config(config: cp.BtrFSRsyncConfig) -> "BtrFSRsyncBackend": ...
 
     @overload
     @staticmethod
-    def from_config(config: cp.ResticConfig) -> ResticBackend: ...
+    def from_config(config: cp.ResticConfig) -> "ResticBackend": ...
 
     @staticmethod
     def from_config(
         config: cp.BtrFSRsyncConfig | cp.ResticConfig,
-    ) -> BtrFSRsyncBackend | ResticBackend:
+    ) -> "BtrFSRsyncBackend | ResticBackend":
         # Getestet durch Tests der Backuplogik
         if isinstance(config, cp.BtrFSRsyncConfig):
             return BtrFSRsyncBackend(config=config)
