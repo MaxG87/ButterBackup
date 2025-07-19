@@ -29,7 +29,7 @@ def list_files_recursively(path: Path) -> Iterable[Path]:
 @overload
 def get_expected_content(
     config: cp.BtrFSRsyncConfig, exclude_to_ignore_file: bool
-) -> Dict[Path | str, bytes]: ...
+) -> Dict[Path, bytes]: ...
 
 
 @overload
@@ -41,7 +41,7 @@ def get_expected_content(
 def get_expected_content(
     config: cp.Configuration,
     exclude_to_ignore_file: bool,
-) -> Union[Counter[bytes], Dict[Path | str, bytes]]:
+) -> Union[Counter[bytes], Dict[Path, bytes]]:
     if isinstance(config, cp.BtrFSRsyncConfig):
         source_dirs = set(config.Folders)
         source_files = config.Files
@@ -55,10 +55,17 @@ def get_expected_content(
         source_dirs, exclude_to_ignore_file
     )
     expected_content_files = get_expected_content_single_files(source_files)
-    expected_content = expected_content_dirs | expected_content_files
-    if isinstance(config, cp.ResticConfig):
+    if isinstance(config, cp.BtrFSRsyncConfig):
+        expected_content_files_by_path = {
+            Path(config.FilesDest) / key: value
+            for key, value in expected_content_files.items()
+        }
+        return expected_content_dirs | expected_content_files_by_path
+    elif isinstance(config, cp.ResticConfig):
+        expected_content = expected_content_dirs | expected_content_files
         return Counter(expected_content.values())
-    return expected_content
+    else:
+        t.assert_never(config)
 
 
 def get_expected_content_recursive_dir(
@@ -105,13 +112,21 @@ def get_result_content(
 def get_result_content_for_btrfs(
     config: cp.BtrFSRsyncConfig, mounted: Path
 ) -> Dict[Path, bytes]:
-    folder_dest_dir = next(iter(config.Folders.values()))
+    folder_dest_by_config = next(iter(config.Folders.values()))
     backup_repository = mounted / config.BackupRepositoryFolder
-    latest_folder = sorted(backup_repository.iterdir())[-1]
-    return {
-        file.relative_to(latest_folder / folder_dest_dir): file.read_bytes()
-        for file in list_files_recursively(latest_folder)
+    latest_snapshot = sorted(backup_repository.iterdir())[-1]
+
+    folder_dest_dir = latest_snapshot / folder_dest_by_config
+    folder_content = {
+        file.relative_to(folder_dest_dir): file.read_bytes()
+        for file in list_files_recursively(folder_dest_dir)
     }
+    files_dest = latest_snapshot / config.FilesDest
+    files_content = {
+        file.relative_to(latest_snapshot): file.read_bytes()
+        for file in list_files_recursively(files_dest)
+    }
+    return folder_content | files_content
 
 
 def get_result_content_for_restic(
@@ -145,6 +160,7 @@ def test_do_backup(source_directories, mounted_device) -> None:
         backend.do_backup(device)
     result_content = get_result_content(config, device)
     expected_content = get_expected_content(config, exclude_to_ignore_file=False)
+    assert result_content.keys() == expected_content.keys()
     assert result_content == expected_content
 
 
