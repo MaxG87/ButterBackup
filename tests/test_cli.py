@@ -1,5 +1,6 @@
+from __future__ import annotations  # Required for Python < 3.10
+
 import re
-import typing as t
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from unittest import mock
@@ -28,7 +29,11 @@ def prepare_tmp_path(
     elif isinstance(config, cp.ResticConfig):
         prepare_tmp_path_for_restic(config)
     else:
-        t.assert_never(config)
+        # TODO: Use t.assert_never when Python 3.11 is the minimum version!
+        raise TypeError(
+            f"Unsupported configuration type: {type(config).__name__}. "
+            "Expected BtrFSRsyncConfig or ResticConfig."
+        )
 
 
 def prepare_tmp_path_for_btrfs(config: cp.BtrFSRsyncConfig, parent: Path) -> None:

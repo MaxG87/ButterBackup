@@ -1,10 +1,11 @@
+from __future__ import annotations  # Required for Python < 3.10
+
 import datetime as dt
 import os
-import typing as t
 from collections import Counter
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Dict, Iterable, Union, overload
+from typing import Dict, Iterable, overload
 
 import pytest
 import shell_interface as sh
@@ -41,7 +42,7 @@ def get_expected_content(
 def get_expected_content(
     config: cp.Configuration,
     exclude_to_ignore_file: bool,
-) -> Union[Counter[bytes], Dict[Path, bytes]]:
+) -> Counter[bytes] | Dict[Path, bytes]:
     if isinstance(config, cp.BtrFSRsyncConfig):
         source_dirs = set(config.Folders)
         source_files = config.Files
@@ -49,7 +50,11 @@ def get_expected_content(
         source_dirs = {cur for cur in config.FilesAndFolders if cur.is_dir()}
         source_files = {cur for cur in config.FilesAndFolders if cur.is_file()}
     else:
-        t.assert_never(config)
+        # TODO: Use t.assert_never when Python 3.11 is the minimum version!
+        raise TypeError(
+            f"Unsupported configuration type: {type(config).__name__}. "
+            "Expected BtrFSRsyncConfig or ResticConfig."
+        )
 
     expected_content_dirs = get_expected_content_recursive_dir(
         source_dirs, exclude_to_ignore_file
@@ -65,7 +70,11 @@ def get_expected_content(
         expected_content = expected_content_dirs | expected_content_files
         return Counter(expected_content.values())
     else:
-        t.assert_never(config)
+        # TODO: Use t.assert_never when Python 3.11 is the minimum version!
+        raise TypeError(
+            f"Unsupported configuration type: {type(config).__name__}. "
+            "Expected BtrFSRsyncConfig or ResticConfig."
+        )
 
 
 def get_expected_content_recursive_dir(
@@ -100,13 +109,17 @@ def get_result_content(config: cp.ResticConfig, mounted: Path) -> Counter[bytes]
 
 def get_result_content(
     config: cp.Configuration, mounted: Path
-) -> Union[Counter[bytes], Dict[Path, bytes]]:
+) -> Counter[bytes] | Dict[Path, bytes]:
     if isinstance(config, cp.BtrFSRsyncConfig):
         return get_result_content_for_btrfs(config, mounted)
     elif isinstance(config, cp.ResticConfig):
         return get_result_content_for_restic(config, mounted)
     else:
-        t.assert_never(config)
+        # TODO: Use t.assert_never when Python 3.11 is the minimum version!
+        raise TypeError(
+            f"Unsupported configuration type: {type(config).__name__}. "
+            "Expected BtrFSRsyncConfig or ResticConfig."
+        )
 
 
 def get_result_content_for_btrfs(

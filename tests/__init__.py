@@ -44,4 +44,8 @@ def complement_configuration(
         return config.model_copy(
             update={"FilesAndFolders": {folders_root}.union(single_files)}
         )
-    t.assert_never(config)
+    # TODO: Use t.assert_never when Python 3.11 is the minimum version!
+    raise TypeError(
+        f"Unsupported configuration type: {type(config).__name__}. "
+        "Expected BtrFSRsyncConfig or ResticConfig."
+    )
