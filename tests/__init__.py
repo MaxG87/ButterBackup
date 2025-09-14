@@ -26,11 +26,11 @@ def complement_configuration(
     config: cp.Configuration, source_dir: Path
 ) -> cp.Configuration:
     folders_root = source_dir / "backup-root"
-    single_files = [
+    single_files = {
         source_dir / "config" / "docker" / "daemon.json",
         source_dir / "etc" / "fstab",
         source_dir / "cache" / "randomfile.bin",
-    ]
+    }
     if isinstance(config, cp.BtrFSRsyncConfig):
         folder_dest_dir = "some-folder-name"
         return config.model_copy(
