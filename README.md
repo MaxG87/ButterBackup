@@ -11,6 +11,12 @@
 
 ## Installation
 
+ButterBackup kann direkt von PyPI installiert werden:
+
+    pipx install butter-backup
+
+Es ist aber auch möglich, das Projekt kann aus dem lokalen Quellcode zu installieren:
+
     uv build
     pipx install dist/butter-backup-<version>.whl
 
