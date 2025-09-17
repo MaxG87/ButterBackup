@@ -24,6 +24,52 @@ Es ist aber auch möglich, das Projekt kann aus dem lokalen Quellcode zu install
 
 [![asciicast](https://asciinema.org/a/HTFzRxEWw8ltCoP6NDNo6tITP.svg)](https://asciinema.org/a/HTFzRxEWw8ltCoP6NDNo6tITP)
 
+## Verfügbare Module zum Anlegen von Sicherungskopien
+
+Momentan stehen zwei Module zum Anlegen von Sicherungskopien zur Verfügung.
+Weitere Module sind momentan nicht geplant, aber prinzipiell möglich. Anfragen
+dazu sind sehr willkommen!
+
+### BtrFSRsync
+
+Dieses Modul eignet sich besonders für Nutzer, die ihre Sicherungskopien
+einfach im Dateimanager durchsuchen möchten. Es kombiniert die Vorteile von
+BtrFS-Snapshots mit der Effizienz von `rsync`. Jeder Sicherungsvorgang legt ein
+neues BtrFS-Subvolume an, indem ein Snapshot des jüngsten Subvolumes erstellt
+wird. Dann wird mit `rsync` eine inkrementelle Kopie der Quelldateien in das
+neue Subvolume angelegt. Dies hat den Vorteil, dass die Sicherungskopie sehr
+schnell angelegt werden kann, da nur die geänderten Dateien kopiert werden
+müssen. Gleichzeitig sind die Sicherungskopien sehr platzsparend, da nur die
+geänderten Blöcke zusätzlich Speicherplatz benötigen.
+
+Am Ende verhält sich jede Sicherungskopie wie eine Vollsicherung, da jedes
+Subvolume alle Dateien enthält. Gleichzeitig wird aber nur der Speicherplatz
+von inkrementellen Sicherungen benötigt.
+
+Die Sicherungskopien können sehr einfach durchsucht werden, da jedes Subvolume
+als normales Verzeichnis erscheint. Nach `butter-backup open` sind alle
+Sicherungskopien direkt im Dateimanager verfügbar.
+
+**Achtung:** Durch die konkrete Art der Verwendung von `rsync` werden Dateien,
+die denselben Namen, dieselbe Größe und denselben Zeitstempel haben, nicht
+kopiert. Sollte also z.B. ein Prozess auf einem Dateisystem ohne
+Änderungszeitstempel wiederholt Dateien überschreiben, ohne deren Größe zu
+ändern, so werden diese Dateien in der Sicherungskopie nicht aktualisiert.
+
+### Restic
+
+Dieses Modul verwendet `restic`, um Sicherungskopien anzulegen. Das Programm
+`restic` ist ein sehr ausgereiftes Programm zum Anlegen von verschlüsselten
+Sicherungskopien mit fortgeschrittener Deduplizierung. Mehr Informationen zu
+`restic` und seinen Fähigkeiten finden sich auf [der offiziellen
+Webseite](https://restic.net/). Für technisch versierte Nutzer wird dieses
+Modul empfohlen.
+
+Hier steht nach `butter-backup open` nur ein einzelnes Verzeichnis zur
+Verfügung, in dem alle Sicherungskopien von `restic` enthalten sind. Der
+Zugriff auf einzelne Sicherungskopien erfolgt über die `restic`-Kommandozeile.
+
+
 ## Gefährdungsszenario
 
 ButterBackup wurde entworfen, um gegen eine Reihe spezieller
