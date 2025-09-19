@@ -1,5 +1,3 @@
-from __future__ import annotations  # Required for Python < 3.10
-
 import datetime as dt
 import os
 from collections import Counter
@@ -80,7 +78,7 @@ def get_expected_content(
 def get_expected_content_recursive_dir(
     source_dirs: set[Path],
     exclude_to_ignore_file: bool,
-) -> Dict[Path, bytes]:
+) -> dict[Path, bytes]:
     expected_content = {}
     for cur_dir in source_dirs:
         cur_content = {
@@ -92,7 +90,7 @@ def get_expected_content_recursive_dir(
     return expected_content
 
 
-def get_expected_content_single_files(source_files: set[Path]) -> Dict[str, bytes]:
+def get_expected_content_single_files(source_files: set[Path]) -> dict[str, bytes]:
     expected_content = {file.name: file.read_bytes() for file in source_files}
     return expected_content
 
