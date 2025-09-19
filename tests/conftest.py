@@ -6,7 +6,11 @@ from tempfile import NamedTemporaryFile
 import pytest
 import storage_device_managers as sdm
 
+from butter_backup import backup_backends as bb
+from butter_backup import config_parser as cp
 from butter_backup import device_managers as dm
+
+from . import complement_configuration
 
 
 @pytest.fixture(scope="session")
@@ -112,4 +116,13 @@ def mounted_device(encrypted_device):
     config = encrypted_device
     with sdm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted:
         with sdm.mounted_device(decrypted, config.Compression) as mounted_device:
+            if isinstance(config, cp.BtrFSRsyncConfig):
+                # Ensure `FilesDest` is a file, initially. This ensures correct handling
+                # of single files backup, even if an existing backup suffered from the
+                # erroneous behaviour of making FilesDest a file.
+                complemented = complement_configuration(config, Path("."))
+                backup_root = mounted_device / complemented.BackupRepositoryFolder
+                source_snapshot = bb.BtrFSRsyncBackend.get_source_snapshot(backup_root)
+                files_dest = source_snapshot / complemented.FilesDest
+                files_dest.touch()
             yield config, mounted_device

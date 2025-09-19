@@ -48,6 +48,9 @@ class BtrFSRsyncBackend(BackupBackend):
             self.rsync_folder(src, dest, self.config.ExcludePatternsFile)
 
         files_dest = backup_root / self.config.FilesDest
+        if files_dest.is_file():
+            files_dest.unlink()
+        files_dest.mkdir(parents=True, exist_ok=True)
         for src in self.config.Files:
             self.rsync_file(src, files_dest)
 

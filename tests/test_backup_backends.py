@@ -41,20 +41,57 @@ def get_expected_content(
     config: cp.Configuration,
     exclude_to_ignore_file: bool,
 ) -> Counter[bytes] | dict[Path, bytes]:
-    source_dir: Path
     if isinstance(config, cp.BtrFSRsyncConfig):
-        source_dir = next(iter(config.Folders))
+        source_dirs = set(config.Folders)
+        source_files = config.Files
     elif isinstance(config, cp.ResticConfig):
-        source_dir = next(iter(config.FilesAndFolders))
+        source_dirs = {cur for cur in config.FilesAndFolders if cur.is_dir()}
+        source_files = {cur for cur in config.FilesAndFolders if cur.is_file()}
     else:
-        raise TypeError("Unsupported configuration encountered.")
-    expected_content = {
-        file.relative_to(source_dir): file.read_bytes()
-        for file in list_files_recursively(source_dir)
-        if exclude_to_ignore_file is False or "ignore" not in file.name
-    }
-    if isinstance(config, cp.ResticConfig):
+        # TODO: Use t.assert_never when Python 3.11 is the minimum version!
+        raise TypeError(
+            f"Unsupported configuration type: {type(config).__name__}. "
+            "Expected BtrFSRsyncConfig or ResticConfig."
+        )
+
+    expected_content_dirs = get_expected_content_recursive_dir(
+        source_dirs, exclude_to_ignore_file
+    )
+    expected_content_files = get_expected_content_single_files(source_files)
+    if isinstance(config, cp.BtrFSRsyncConfig):
+        expected_content_files_by_path = {
+            Path(config.FilesDest) / key: value
+            for key, value in expected_content_files.items()
+        }
+        return expected_content_dirs | expected_content_files_by_path
+    elif isinstance(config, cp.ResticConfig):
+        expected_content = expected_content_dirs | expected_content_files
         return Counter(expected_content.values())
+    else:
+        # TODO: Use t.assert_never when Python 3.11 is the minimum version!
+        raise TypeError(
+            f"Unsupported configuration type: {type(config).__name__}. "
+            "Expected BtrFSRsyncConfig or ResticConfig."
+        )
+
+
+def get_expected_content_recursive_dir(
+    source_dirs: set[Path],
+    exclude_to_ignore_file: bool,
+) -> dict[Path, bytes]:
+    expected_content = {}
+    for cur_dir in source_dirs:
+        cur_content = {
+            file.relative_to(cur_dir): file.read_bytes()
+            for file in list_files_recursively(cur_dir)
+            if exclude_to_ignore_file is False or "ignore" not in file.name
+        }
+        expected_content.update(cur_content)
+    return expected_content
+
+
+def get_expected_content_single_files(source_files: set[Path]) -> dict[str, bytes]:
+    expected_content = {file.name: file.read_bytes() for file in source_files}
     return expected_content
 
 
@@ -76,19 +113,31 @@ def get_result_content(
     elif isinstance(config, cp.ResticConfig):
         return get_result_content_for_restic(config, mounted)
     else:
-        raise TypeError("Unsupported configuration encountered.")
+        # TODO: Use t.assert_never when Python 3.11 is the minimum version!
+        raise TypeError(
+            f"Unsupported configuration type: {type(config).__name__}. "
+            "Expected BtrFSRsyncConfig or ResticConfig."
+        )
 
 
 def get_result_content_for_btrfs(
     config: cp.BtrFSRsyncConfig, mounted: Path
 ) -> dict[Path, bytes]:
-    folder_dest_dir = next(iter(config.Folders.values()))
+    folder_dest_by_config = next(iter(config.Folders.values()))
     backup_repository = mounted / config.BackupRepositoryFolder
-    latest_folder = sorted(backup_repository.iterdir())[-1]
-    return {
-        file.relative_to(latest_folder / folder_dest_dir): file.read_bytes()
-        for file in list_files_recursively(latest_folder)
+    latest_snapshot = sorted(backup_repository.iterdir())[-1]
+
+    folder_dest_dir = latest_snapshot / folder_dest_by_config
+    folder_content = {
+        file.relative_to(folder_dest_dir): file.read_bytes()
+        for file in list_files_recursively(folder_dest_dir)
     }
+    files_dest = latest_snapshot / config.FilesDest
+    files_content = {
+        file.relative_to(latest_snapshot): file.read_bytes()
+        for file in list_files_recursively(files_dest)
+    }
+    return folder_content | files_content
 
 
 def get_result_content_for_restic(
@@ -122,6 +171,7 @@ def test_do_backup(source_directories, mounted_device) -> None:
         backend.do_backup(device)
     result_content = get_result_content(config, device)
     expected_content = get_expected_content(config, exclude_to_ignore_file=False)
+    assert result_content.keys() == expected_content.keys()
     assert result_content == expected_content
 
 

@@ -21,6 +21,39 @@ def in_docker_container() -> bool:
     return Path("/.dockerenv").exists()
 
 
+def prepare_tmp_path(
+    config: cp.BtrFSRsyncConfig | cp.ResticConfig, parent: Path
+) -> None:
+    if isinstance(config, cp.BtrFSRsyncConfig):
+        prepare_tmp_path_for_btrfs(config, parent)
+    elif isinstance(config, cp.ResticConfig):
+        prepare_tmp_path_for_restic(config)
+    else:
+        # TODO: Use t.assert_never when Python 3.11 is the minimum version!
+        raise TypeError(
+            f"Unsupported configuration type: {type(config).__name__}. "
+            "Expected BtrFSRsyncConfig or ResticConfig."
+        )
+
+
+def prepare_tmp_path_for_btrfs(config: cp.BtrFSRsyncConfig, parent: Path) -> None:
+    for cur in config.Folders:
+        cur.mkdir(exist_ok=True)
+    for cur in config.Files:
+        cur.parent.mkdir(exist_ok=True, parents=True)
+        cur.touch()
+    (parent / config.FilesDest).mkdir(exist_ok=True)
+
+
+def prepare_tmp_path_for_restic(config: cp.ResticConfig) -> None:
+    for cur in config.FilesAndFolders:
+        # For the purpose of the test that uses this helper function,
+        # test_do_backup_refuses_backup_when_device_is_already_open, it does not matter
+        # what the content of tmp_path is as long as the configuration can be parsed.
+        # Therefore, all items will be folders, since this is much easier to achieve.
+        cur.mkdir(parents=True, exist_ok=True)
+
+
 def wait_until_gone(p: Path, timeout: dt.timedelta = dt.timedelta(seconds=3)) -> None:
     """Wait until the given path is gone."""
     start = dt.datetime.now()
@@ -255,6 +288,8 @@ def test_do_backup_refuses_backup_when_device_is_already_open(
     subprogram: str, runner: CliRunner, encrypted_device, tmp_path: Path
 ) -> None:
     config = complement_configuration(encrypted_device, tmp_path)
+    prepare_tmp_path(config, tmp_path)
+
     config_file = tmp_path / "config.json"
 
     config_file.write_text(f"[{config.model_dump_json()}]")

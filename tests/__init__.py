@@ -25,9 +25,27 @@ def complement_configuration(
 def complement_configuration(
     config: cp.Configuration, source_dir: Path
 ) -> cp.Configuration:
+    folders_root = source_dir / "backup-root"
+    single_files = {
+        source_dir / "config" / "docker" / "daemon.json",
+        source_dir / "etc" / "fstab",
+        source_dir / "cache" / "randomfile.bin",
+    }
     if isinstance(config, cp.BtrFSRsyncConfig):
         folder_dest_dir = "some-folder-name"
-        return config.model_copy(update={"Folders": {source_dir: folder_dest_dir}})
+        return config.model_copy(
+            update={
+                "Folders": {folders_root: folder_dest_dir},
+                "Files": single_files,
+                "FilesDest": "Einzeldateien",
+            }
+        )
     if isinstance(config, cp.ResticConfig):
-        return config.model_copy(update={"FilesAndFolders": {source_dir}})
-    raise TypeError("Unsupported configuration encountered.")
+        return config.model_copy(
+            update={"FilesAndFolders": {folders_root}.union(single_files)}
+        )
+    # TODO: Use t.assert_never when Python 3.11 is the minimum version!
+    raise TypeError(
+        f"Unsupported configuration type: {type(config).__name__}. "
+        "Expected BtrFSRsyncConfig or ResticConfig."
+    )
