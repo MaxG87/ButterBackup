@@ -7,7 +7,6 @@
 
 * Fix behaviour of single files backup ([b8b46af](https://github.com/MaxG87/ButterBackup/commit/b8b46af8b5eea38f0dcda892cc27b65d4e42e5d8))
 * Make collection of single files a set ([af0f3ab](https://github.com/MaxG87/ButterBackup/commit/af0f3ab33c07972aecc9c98dfad6d87a19b92d01))
-* Restore compatibility with Python 3.9 ([9cb26b7](https://github.com/MaxG87/ButterBackup/commit/9cb26b76f36545f9abf0ec8f21d20b9d88467f3e))
 * **tests:** Ändere Größe der Einzeldatei-Zufallsdatei ([26aa5c7](https://github.com/MaxG87/ButterBackup/commit/26aa5c736795f720b2b4c971a2adf933a21322f6))
 
 
