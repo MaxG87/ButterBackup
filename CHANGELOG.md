@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.5.3](https://github.com/MaxG87/ButterBackup/compare/v3.5.2...v3.5.3) (2025-09-19)
+
+
+### Bug Fixes
+
+* Fix behaviour of single files backup ([b8b46af](https://github.com/MaxG87/ButterBackup/commit/b8b46af8b5eea38f0dcda892cc27b65d4e42e5d8))
+* Make collection of single files a set ([af0f3ab](https://github.com/MaxG87/ButterBackup/commit/af0f3ab33c07972aecc9c98dfad6d87a19b92d01))
+* **tests:** Ändere Größe der Einzeldatei-Zufallsdatei ([26aa5c7](https://github.com/MaxG87/ButterBackup/commit/26aa5c736795f720b2b4c971a2adf933a21322f6))
+
+
+### Documentation
+
+* Add documentation of backup modules ([5f02eb3](https://github.com/MaxG87/ButterBackup/commit/5f02eb33b0fae177a418675757ff4a96d0c67945))
+* Kleinere Verbesserung der Installationsanleitung ([962507a](https://github.com/MaxG87/ButterBackup/commit/962507a1b55cb2bd90812f057290938a8679df88))
+
 ## [3.5.2](https://github.com/MaxG87/ButterBackup/compare/v3.5.1...v3.5.2) (2025-07-03)
 
 
