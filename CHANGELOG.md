@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.4](https://github.com/MaxG87/ButterBackup/compare/v3.5.3...v3.5.4) (2025-09-19)
+
+
+### Bug Fixes
+
+* Fix uv.lock ([1fa59e2](https://github.com/MaxG87/ButterBackup/commit/1fa59e2cabe94de6f63401085cabe8c34e056ea7))
+
 ## [3.5.3](https://github.com/MaxG87/ButterBackup/compare/v3.5.2...v3.5.3) (2025-09-19)
 
 
