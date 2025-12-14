@@ -6,7 +6,16 @@ RUN pacman-key --init
 RUN pacman-key --populate archlinux
 
 # Provide relevant binaries
-RUN pacman -Sy --noconfirm btrfs-progs cryptsetup make python python-pipx restic rsync sudo
+RUN pacman -Sy --noconfirm \
+    btrfs-progs \
+    cryptsetup \
+    make \
+    python \
+    python-pipx \
+    python-uv \
+    restic \
+    rsync \
+    sudo
 
 # Create a new user with a group that is not the username. This is required to
 # ensure that resetting the ownership of restic's backup repository uses the
@@ -24,9 +33,6 @@ RUN gpasswd -a testuser sudo
 
 USER testuser
 ENV USER=testuser
-
-ENV PATH="/home/testuser/.local/bin:$PATH"
-RUN pipx install uv
 
 # Setup production dependencies
 WORKDIR /project
