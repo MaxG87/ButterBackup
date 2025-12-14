@@ -1,0 +1,25 @@
+FROM python:3.14
+
+# Provide excecutables
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt update && \
+    apt install -y btrfs-progs cryptsetup make restic rsync sudo && \
+    apt autoclean
+
+# Setup uv
+ENV UV_VERSION=0.9.17
+RUN python3 -m pip install "uv==$UV_VERSION"
+
+# Setup production dependencies
+WORKDIR /project
+RUN touch README.md  # Content is not relevant for this Dockerfile
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-install-project
+
+# Install project
+COPY src/ src/
+RUN uv sync --frozen
+
+# Create /dev/disk/by-uuid/. It is required by the test suite but not available
+# in Docker containers by default.
+CMD mkdir -p /dev/disk/by-uuid/ && uv run pytest --no-cov --stepwise .
