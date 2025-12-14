@@ -281,3 +281,62 @@ def test_do_backup_for_restic_adapts_ownership(
     }
     assert found_user == {expected_user}
     assert found_group == {expected_group}
+
+
+def test_do_backup_for_btrfs_with_empty_files_creates_directory(
+    mounted_device,
+) -> None:
+    """Test that reproduces the permission error when Files is empty.
+    
+    This test exercises the code path that causes a PermissionError in production
+    when creating a backup with empty Files set.
+    
+    The issue in production:
+    1. First backup works (initial subvolume is owned by user after chown)
+    2. Second backup fails with PermissionError because:
+       - A new snapshot is created with 'sudo btrfs subvolume snapshot'
+       - In production, the snapshot is owned by root
+       - files_dest.mkdir() is called without sudo (line 53 in backup_backends.py)
+       - mkdir fails with PermissionError when trying to create directory in
+         root-owned snapshot
+    
+    Note: This test may pass in CI environments where sudo preserves user
+    ownership, but it reproduces the production error scenario where Files is
+    empty and multiple backups are performed.
+    """
+    empty_config, device = mounted_device
+    if not isinstance(empty_config, cp.BtrFSRsyncConfig):
+        # This test is specific to BtrFS backend
+        return
+    
+    # Create config with empty Files set (this is the key to reproducing the bug)
+    folder_dest_dir = "some-folder-name"
+    config = empty_config.model_copy(
+        update={
+            "Folders": {FIRST_BACKUP: folder_dest_dir},
+            "Files": set(),  # Empty Files set triggers the bug
+            "FilesDest": "Einzeldateien",
+        }
+    )
+    
+    # First backup - creates first snapshot
+    backend = bb.BtrFSRsyncBackend(config)
+    backend.do_backup(device)
+    
+    # Verify the FilesDest directory was created in the first snapshot
+    backup_repository = device / config.BackupRepositoryFolder
+    first_snapshot = sorted(backup_repository.iterdir())[-1]
+    files_dest_first = first_snapshot / config.FilesDest
+    assert files_dest_first.exists()
+    assert files_dest_first.is_dir()
+    
+    # Second backup - creates snapshot from first snapshot
+    # In production with root-owned snapshots, this would raise PermissionError
+    # at the files_dest.mkdir() call because the snapshot is owned by root
+    backend.do_backup(device)
+    
+    # Verify the FilesDest directory was created in the second snapshot
+    second_snapshot = sorted(backup_repository.iterdir())[-1]
+    files_dest_second = second_snapshot / config.FilesDest
+    assert files_dest_second.exists()
+    assert files_dest_second.is_dir()
