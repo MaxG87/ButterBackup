@@ -13,7 +13,7 @@ DOCKER_TEST_TAG = $(SERVICE_LC)-$(SERVICE_ID_SHORT).test
 CACHEBASE ?= ~/.cache/$(SERVICE).make-cache
 CACHEDIR = $(CACHEBASE)/$(SERVICE_ID_FULL)
 
-# run-arch-tests, run-python3.8-tests, ...
+# run-arch-tests, run-python3.10-tests, run-python3.11-tests, ...
 DOCKER_TESTS := $(addsuffix -tests, $(addprefix run-,$(ALL_DOCKER_FILES)))
 
 .SECONDARY:  # Do not remove intermediate files. We need them for caching!
