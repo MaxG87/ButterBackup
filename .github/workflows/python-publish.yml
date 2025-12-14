@@ -13,7 +13,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Install uv
-      run: pipx install 'uv==0.5.31'
+      run: pipx install 'uv==0.9.17'
     - name: Publish package
       run: |
         uv build

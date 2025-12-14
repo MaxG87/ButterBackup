@@ -1,5 +1,4 @@
-# archlinux:latest as of 23 June 2025
-FROM archlinux@sha256:a921b6864609280975d8269df323c2f4f478cdc9d0f5479e70c3fb5e710d1b11
+FROM archlinux:latest
 
 RUN pacman -Syy --noconfirm archlinux-keyring
 RUN rm -fr /etc/pacman.d/gnupg
@@ -7,7 +6,16 @@ RUN pacman-key --init
 RUN pacman-key --populate archlinux
 
 # Provide relevant binaries
-RUN pacman -Sy --noconfirm btrfs-progs cryptsetup make python python-pipx restic rsync sudo
+RUN pacman -Sy --noconfirm \
+    btrfs-progs \
+    cryptsetup \
+    make \
+    python \
+    python-pipx \
+    python-uv \
+    restic \
+    rsync \
+    sudo
 
 # Create a new user with a group that is not the username. This is required to
 # ensure that resetting the ownership of restic's backup repository uses the
@@ -25,9 +33,6 @@ RUN gpasswd -a testuser sudo
 
 USER testuser
 ENV USER=testuser
-
-ENV PATH="/home/testuser/.local/bin:$PATH"
-RUN pipx install uv
 
 # Setup production dependencies
 WORKDIR /project

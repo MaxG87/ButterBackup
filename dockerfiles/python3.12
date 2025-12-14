@@ -7,7 +7,7 @@ RUN apt update && \
     apt autoclean
 
 # Setup uv
-ENV UV_VERSION=0.7.15
+ENV UV_VERSION=0.9.17
 RUN python3 -m pip install "uv==$UV_VERSION"
 
 # Setup production dependencies
