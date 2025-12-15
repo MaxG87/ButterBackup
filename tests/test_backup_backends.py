@@ -289,8 +289,8 @@ def test_do_backup_for_btrfs_with_empty_files_creates_directory(
     """Test that exercises the code path that causes permission errors in production.
 
     Background:
-    The code at backup_backends.py:53 calls files_dest.mkdir() without sudo,
-    even when Files is empty. This fails in production when:
+    The code at src/butter_backup/backup_backends.py:53 calls files_dest.mkdir()
+    without sudo, even when Files is empty. This fails in production when:
     1. A snapshot is created with 'sudo btrfs subvolume snapshot' (owned by root)
     2. Code tries to mkdir in the root-owned snapshot directory
     3. PermissionError is raised
@@ -346,7 +346,7 @@ def test_do_backup_for_btrfs_with_empty_files_creates_directory(
     # This is the critical line that would fail in production:
     # - Second backup creates snapshot with 'sudo btrfs subvolume snapshot'
     # - Snapshot is owned by root in production
-    # - files_dest.mkdir() at line 53 is called WITHOUT sudo
+    # - files_dest.mkdir() at src/butter_backup/backup_backends.py:53 is called WITHOUT sudo
     # - PermissionError is raised when trying to create SecondFilesDest
     #
     # In test environments, this passes because snapshots retain user ownership
