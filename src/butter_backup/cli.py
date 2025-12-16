@@ -56,8 +56,8 @@ def setup_logging(verbosity: int) -> None:
 def _skip_device(
     config: cp.BaseConfig,
     *,
-    log_missing: Callable[[], None] | None = None,
-    log_opened: Callable[[], None] | None = None,
+    log_missing: Callable[[cp.BaseConfig], None] | None = None,
+    log_opened: Callable[[cp.BaseConfig], None] | None = None,
 ) -> bool:
     """
     Helper function to determine whether a device should be skipped.
@@ -72,11 +72,11 @@ def _skip_device(
     """
     if not config.device().exists():
         if log_missing is not None:
-            log_missing()
+            log_missing(config)
         return True
     if config.map_name().exists():
         if log_opened is not None:
-            log_opened()
+            log_opened(config)
         return True
     return False
 
@@ -108,8 +108,8 @@ def open(  # noqa: A001
     for cfg in configurations:
         if _skip_device(
             cfg,
-            log_opened=lambda: logger.warning(
-                f"Speichermedium {cfg.UUID} ist bereits geöffnet. Es wird übersprungen."  # noqa: B023
+            log_opened=lambda cfg: logger.warning(
+                f"Speichermedium {cfg.UUID} ist bereits geöffnet. Es wird übersprungen."
             ),
         ):
             continue
@@ -173,11 +173,11 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> Non
     for cfg in configurations:
         if _skip_device(
             cfg,
-            log_missing=lambda: logger.info(
-                f"Speichermedium {cfg.UUID} existiert nicht. Es wird kein Backup angelegt."  # noqa: B023
+            log_missing=lambda cfg: logger.info(
+                f"Speichermedium {cfg.UUID} existiert nicht. Es wird kein Backup angelegt."
             ),
-            log_opened=lambda: logger.warning(
-                f"Speichermedium {cfg.UUID} ist bereits geöffnet. Es wird übersprungen."  # noqa: B023
+            log_opened=lambda cfg: logger.warning(
+                f"Speichermedium {cfg.UUID} ist bereits geöffnet. Es wird übersprungen."
             ),
         ):
             continue
