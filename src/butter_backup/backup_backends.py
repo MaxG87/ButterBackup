@@ -40,6 +40,7 @@ class BtrFSRsyncBackend(BackupBackend):
         logger.info(f"Beginne mit BtrFS-Backup für Speichermedium {self.config.UUID}.")
         backup_repository = mount_dir / self.config.BackupRepositoryFolder
         src_snapshot = self.get_source_snapshot(backup_repository)
+        logger.info(f"Basis-Sicherungskopie: {src_snapshot}.")
         backup_root = self.snapshot(
             src=src_snapshot, backup_repository=backup_repository
         )
