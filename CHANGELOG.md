@@ -1,5 +1,23 @@
 # Changelog
 
+## [3.5.4](https://github.com/MaxG87/ButterBackup/compare/v3.5.3...v3.5.4) (2025-12-22)
+
+
+### Bug Fixes
+
+* Fix uv.lock ([1fa59e2](https://github.com/MaxG87/ButterBackup/commit/1fa59e2cabe94de6f63401085cabe8c34e056ea7))
+
+
+### Dependencies
+
+* Bump all dependencies ([8496afc](https://github.com/MaxG87/ButterBackup/commit/8496afc46674231f68e4551a6120177964bbf02c))
+* **dev:** Bump all dev-dependencies ([dfba38a](https://github.com/MaxG87/ButterBackup/commit/dfba38a5f9f3a9afb847896883708dd4ef75242a))
+
+
+### Documentation
+
+* Update Python versions in one comment ([f8dcc42](https://github.com/MaxG87/ButterBackup/commit/f8dcc42fdbbae301f0128e0bc8282fbbb6808b46))
+
 ## [3.5.3](https://github.com/MaxG87/ButterBackup/compare/v3.5.2...v3.5.3) (2025-09-19)
 
 
