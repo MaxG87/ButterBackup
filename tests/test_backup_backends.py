@@ -230,6 +230,41 @@ def test_do_backup_removes_existing_files_in_exclude_list(
     assert result_content == expected_content
 
 
+@pytest.mark.parametrize(
+    "first_source, second_source",
+    [(FIRST_BACKUP, SECOND_BACKUP)],
+)
+def test_btrfs_backend_gracefully_handles_existing_snapshots_owned_by_root(
+    first_source, second_source, mounted_device
+) -> None:
+    # This test ensures that
+    empty_config, device = mounted_device
+    if not isinstance(empty_config, cp.BtrFSRsyncConfig):
+        # This test works for BtrfsConfig only. However, encrypted_device on
+        # which mounted_device depends on, is parameterised over all backends.
+        # Since this simplifies many other tests it seemed to be an acceptable
+        # tradeoff to short-circuit the test here.
+        return
+
+    first_config = complement_configuration(empty_config, first_source)
+    first_backend = bb.BackupBackend.from_config(first_config)
+    first_backend.do_backup(device)
+
+    for cur in device.glob("*"):
+        sh.run_cmd(cmd=f"sudo chown root:root '{cur}'".split())
+
+
+    second_config = complement_configuration(empty_config, second_source).model_copy(
+        update={"ExcludePatternsFile": EXCLUDE_FILE}
+    )
+    second_backend = bb.BackupBackend.from_config(second_config)
+    second_backend.do_backup(device)
+
+    result_content = get_result_content(second_config, device)
+    expected_content = get_expected_content(second_config, exclude_to_ignore_file=True)
+    assert result_content == expected_content
+
+
 def test_do_backup_for_btrfs_creates_snapshots_with_timestamp_names(
     mounted_device,
 ) -> None:
