@@ -1,4 +1,5 @@
 import datetime as dt
+import itertools
 import os
 from collections import Counter
 from pathlib import Path
@@ -218,6 +219,51 @@ def test_do_backup_removes_existing_files_in_exclude_list(
     first_config = complement_configuration(empty_config, first_source)
     first_backend = bb.BackupBackend.from_config(first_config)
     first_backend.do_backup(device)
+
+    second_config = complement_configuration(empty_config, second_source).model_copy(
+        update={"ExcludePatternsFile": EXCLUDE_FILE}
+    )
+    second_backend = bb.BackupBackend.from_config(second_config)
+    second_backend.do_backup(device)
+
+    result_content = get_result_content(second_config, device)
+    expected_content = get_expected_content(second_config, exclude_to_ignore_file=True)
+    assert result_content == expected_content
+
+
+@pytest.mark.xfail(reason="Reproduces a bug for which no fix is yet available.")
+@pytest.mark.parametrize(
+    "first_source, second_source",
+    [(FIRST_BACKUP, SECOND_BACKUP)],
+)
+def test_btrfs_backend_gracefully_handles_existing_snapshots_owned_by_root(
+    first_source, second_source, mounted_device
+) -> None:
+    # THIS IS A REGRESSION TEST!
+    #
+    # After the improvements on the handling of single files backups a weird error
+    # ocurred. Sometimes backups would fail due to "PermissionError"s. This happened
+    # when the existing snapshot was owned by root and was missing the single files
+    # target folder. This test reproduces this scenario and ensures that the backup
+    # works correctly, even in this case.
+    empty_config, device = mounted_device
+    if not isinstance(empty_config, cp.BtrFSRsyncConfig):
+        # This test works for BtrfsConfig only. However, encrypted_device on
+        # which mounted_device depends on, is parameterised over all backends.
+        # Since this simplifies many other tests it seemed to be an acceptable
+        # tradeoff to short-circuit the test here.
+        return
+
+    first_config = complement_configuration(empty_config, first_source)
+    first_backend = bb.BackupBackend.from_config(first_config)
+    first_backend.do_backup(device)
+
+    snapshot_root = device / first_config.BackupRepositoryFolder
+    latest_snapshot = sorted(snapshot_root.iterdir())[-1]
+    for cur in itertools.chain(snapshot_root.glob("*"), snapshot_root.glob("*/*")):
+        print(f"Changing ownership of {cur} to root:root")
+        sh.run_cmd(cmd=["sudo", "chown", "root:root", cur])
+    sh.run_cmd(cmd=["sudo", "rm", "-rf", latest_snapshot / first_config.FilesDest])
 
     second_config = complement_configuration(empty_config, second_source).model_copy(
         update={"ExcludePatternsFile": EXCLUDE_FILE}
