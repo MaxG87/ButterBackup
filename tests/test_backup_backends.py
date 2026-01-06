@@ -1,6 +1,7 @@
 import datetime as dt
 import itertools
 import os
+import typing as t
 from collections import Counter
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -24,6 +25,20 @@ def list_files_recursively(path: Path) -> Iterable[Path]:
     for file_or_folder in path.rglob("*"):
         if file_or_folder.is_file():
             yield file_or_folder
+
+
+def run_backup_cycle(
+    base_config: cp.Configuration,
+    source_dir: Path,
+    device: Path,
+    config_extension: dict[str, t.Any] | None = None,
+) -> cp.Configuration:
+    config = complement_configuration(base_config, source_dir)
+    if config_extension is not None:
+        config = config.model_copy(update=config_extension)
+    backend = bb.BackupBackend.from_config(config)
+    backend.do_backup(device)
+    return config
 
 
 @overload
@@ -167,9 +182,7 @@ def get_result_content_for_restic(
 def test_do_backup(source_directories, mounted_device) -> None:
     empty_config, device = mounted_device
     for source_dir in source_directories:
-        config = complement_configuration(empty_config, source_dir)
-        backend = bb.BackupBackend.from_config(config)
-        backend.do_backup(device)
+        config = run_backup_cycle(empty_config, source_dir, device)
     result_content = get_result_content(config, device)
     expected_content = get_expected_content(config, exclude_to_ignore_file=False)
     assert result_content.keys() == expected_content.keys()
@@ -183,11 +196,12 @@ def test_do_backup(source_directories, mounted_device) -> None:
 def test_do_backup_handles_exclude_list(source_directories, mounted_device) -> None:
     empty_config, device = mounted_device
     for source_dir in source_directories:
-        config = complement_configuration(empty_config, source_dir).model_copy(
-            update={"ExcludePatternsFile": EXCLUDE_FILE}
+        config = run_backup_cycle(
+            empty_config,
+            source_dir,
+            device,
+            config_extension={"ExcludePatternsFile": EXCLUDE_FILE},
         )
-        backend = bb.BackupBackend.from_config(config)
-        backend.do_backup(device)
     result_content = get_result_content(config, device)
     expected_content = get_expected_content(config, exclude_to_ignore_file=True)
     assert result_content == expected_content
@@ -216,16 +230,13 @@ def test_do_backup_removes_existing_files_in_exclude_list(
 
     empty_config, device = mounted_device
 
-    first_config = complement_configuration(empty_config, first_source)
-    first_backend = bb.BackupBackend.from_config(first_config)
-    first_backend.do_backup(device)
-
-    second_config = complement_configuration(empty_config, second_source).model_copy(
-        update={"ExcludePatternsFile": EXCLUDE_FILE}
+    run_backup_cycle(empty_config, first_source, device)
+    second_config = run_backup_cycle(
+        empty_config,
+        second_source,
+        device,
+        config_extension={"ExcludePatternsFile": EXCLUDE_FILE},
     )
-    second_backend = bb.BackupBackend.from_config(second_config)
-    second_backend.do_backup(device)
-
     result_content = get_result_content(second_config, device)
     expected_content = get_expected_content(second_config, exclude_to_ignore_file=True)
     assert result_content == expected_content
@@ -254,9 +265,8 @@ def test_btrfs_backend_gracefully_handles_existing_snapshots_owned_by_root(
         # tradeoff to short-circuit the test here.
         return
 
-    first_config = complement_configuration(empty_config, first_source)
-    first_backend = bb.BackupBackend.from_config(first_config)
-    first_backend.do_backup(device)
+    first_config = run_backup_cycle(empty_config, first_source, device)
+    assert isinstance(first_config, cp.BtrFSRsyncConfig)  # for mypy
 
     snapshot_root = device / first_config.BackupRepositoryFolder
     latest_snapshot = sorted(snapshot_root.iterdir())[-1]
@@ -265,12 +275,7 @@ def test_btrfs_backend_gracefully_handles_existing_snapshots_owned_by_root(
         sh.run_cmd(cmd=["sudo", "chown", "root:root", cur])
     sh.run_cmd(cmd=["sudo", "rm", "-rf", latest_snapshot / first_config.FilesDest])
 
-    second_config = complement_configuration(empty_config, second_source).model_copy(
-        update={"ExcludePatternsFile": EXCLUDE_FILE}
-    )
-    second_backend = bb.BackupBackend.from_config(second_config)
-    second_backend.do_backup(device)
-
+    second_config = run_backup_cycle(empty_config, second_source, device)
     result_content = get_result_content(second_config, device)
     expected_content = get_expected_content(second_config, exclude_to_ignore_file=True)
     assert result_content == expected_content
@@ -313,9 +318,7 @@ def test_do_backup_for_restic_adapts_ownership(
         # tradeoff to short-circuit the test here.
         return
     for source_dir in source_directories:
-        config = complement_configuration(empty_config, source_dir)
-        backend = bb.BackupBackend.from_config(config)
-        backend.do_backup(device)
+        config = run_backup_cycle(empty_config, source_dir, device)
 
     expected_user = sh.get_user()
     expected_group = sh.get_group(expected_user)
