@@ -291,12 +291,7 @@ def test_do_backup_for_btrfs_creates_snapshots_with_timestamp_names(
         # Since this simplifies many other tests it seemed to be an acceptable
         # tradeoff to short-circuit the test here.
         return
-    folder_dest_dir = "some-folder-name"
-    config = empty_config.model_copy(
-        update={"Folders": {FIRST_BACKUP: folder_dest_dir}}
-    )
-    backend = bb.BtrFSRsyncBackend(config)
-    backend.do_backup(device)
+    config = run_backup_cycle(empty_config, FIRST_BACKUP, device)
     backup_repository = device / config.BackupRepositoryFolder
     latest_folder = sorted(backup_repository.iterdir())[-1]
     expected_date = dt.date.today().isoformat()
