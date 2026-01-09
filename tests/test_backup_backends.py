@@ -242,7 +242,6 @@ def test_do_backup_removes_existing_files_in_exclude_list(
     assert result_content == expected_content
 
 
-@pytest.mark.xfail(reason="Reproduces a bug for which no fix is yet available.")
 @pytest.mark.parametrize(
     "first_source, second_source",
     [(FIRST_BACKUP, SECOND_BACKUP)],
@@ -277,7 +276,7 @@ def test_btrfs_backend_gracefully_handles_existing_snapshots_owned_by_root(
 
     second_config = run_backup_cycle(empty_config, second_source, device)
     result_content = get_result_content(second_config, device)
-    expected_content = get_expected_content(second_config, exclude_to_ignore_file=True)
+    expected_content = get_expected_content(second_config, exclude_to_ignore_file=False)
     assert result_content == expected_content
 
 
