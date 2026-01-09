@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import overload
 
 import shell_interface as sh
+import storage_device_managers as sdm
 from loguru import logger
 
 from . import config_parser as cp
@@ -124,14 +125,7 @@ class ResticBackend(BackupBackend):
     def adapt_ownership(backup_repository: Path) -> None:
         user = sh.get_user()
         group = sh.get_group(user)
-        chown_cmd: sh.StrPathList = [
-            "sudo",
-            "chown",
-            "-R",
-            f"{user}:{group}",
-            backup_repository,
-        ]
-        sh.run_cmd(cmd=chown_cmd)
+        sdm.chown(backup_repository, user, group, recursive=True)
 
     def copy_files(self, backup_repository: Path) -> None:
         restic_cmd: sh.StrPathList = [
