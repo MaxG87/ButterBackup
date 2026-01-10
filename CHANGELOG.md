@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.2](https://github.com/MaxG87/shell-interface/compare/v1.0.1...v1.0.2) (2026-01-10)
+
+
+### Dependencies
+
+* **dev:** Bump all dev-dependencies to latest version ([12396c6](https://github.com/MaxG87/shell-interface/commit/12396c6da4b2c76b406b6131897952d1d963387d))
+* **dev:** Drop pynvim and jedi ([f6846ad](https://github.com/MaxG87/shell-interface/commit/f6846ad0845a17e41be3d8559dd3f255735b1404))
+
 ## [1.0.1](https://github.com/MaxG87/shell-interface/compare/v1.0.0...v1.0.1) (2025-07-02)
 
 
