@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import overload
 
 import shell_interface as sh
+import storage_device_managers as sdm
 from loguru import logger
 
 from . import config_parser as cp
@@ -44,6 +45,8 @@ class BtrFSRsyncBackend(BackupBackend):
         backup_root = self.snapshot(
             src=src_snapshot, backup_repository=backup_repository
         )
+        self.adapt_ownership(backup_root)
+
         for src, dest_name in self.config.Folders.items():
             dest = backup_root / dest_name
             self.rsync_folder(src, dest, self.config.ExcludePatternsFile)
@@ -58,6 +61,12 @@ class BtrFSRsyncBackend(BackupBackend):
     @staticmethod
     def get_source_snapshot(root: Path) -> Path:
         return max(root.glob("202?-*"))
+
+    @staticmethod
+    def adapt_ownership(snapshot_root: Path) -> None:
+        user = sh.get_user()
+        group = sh.get_group(user)
+        sdm.chown(snapshot_root, user, group, recursive=False)
 
     def snapshot(self, *, src: Path, backup_repository: Path) -> Path:
         timestamp = dt.datetime.now()
@@ -124,14 +133,7 @@ class ResticBackend(BackupBackend):
     def adapt_ownership(backup_repository: Path) -> None:
         user = sh.get_user()
         group = sh.get_group(user)
-        chown_cmd: sh.StrPathList = [
-            "sudo",
-            "chown",
-            "-R",
-            f"{user}:{group}",
-            backup_repository,
-        ]
-        sh.run_cmd(cmd=chown_cmd)
+        sdm.chown(backup_repository, user, group, recursive=True)
 
     def copy_files(self, backup_repository: Path) -> None:
         restic_cmd: sh.StrPathList = [

@@ -1,5 +1,7 @@
 import datetime as dt
+import itertools
 import os
+import typing as t
 from collections import Counter
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -23,6 +25,20 @@ def list_files_recursively(path: Path) -> Iterable[Path]:
     for file_or_folder in path.rglob("*"):
         if file_or_folder.is_file():
             yield file_or_folder
+
+
+def run_backup_cycle(
+    base_config: cp.Configuration,
+    source_dir: Path,
+    device: Path,
+    config_extension: dict[str, t.Any] | None = None,
+) -> cp.Configuration:
+    config = complement_configuration(base_config, source_dir)
+    if config_extension is not None:
+        config = config.model_copy(update=config_extension)
+    backend = bb.BackupBackend.from_config(config)
+    backend.do_backup(device)
+    return config
 
 
 @overload
@@ -166,9 +182,7 @@ def get_result_content_for_restic(
 def test_do_backup(source_directories, mounted_device) -> None:
     empty_config, device = mounted_device
     for source_dir in source_directories:
-        config = complement_configuration(empty_config, source_dir)
-        backend = bb.BackupBackend.from_config(config)
-        backend.do_backup(device)
+        config = run_backup_cycle(empty_config, source_dir, device)
     result_content = get_result_content(config, device)
     expected_content = get_expected_content(config, exclude_to_ignore_file=False)
     assert result_content.keys() == expected_content.keys()
@@ -182,11 +196,12 @@ def test_do_backup(source_directories, mounted_device) -> None:
 def test_do_backup_handles_exclude_list(source_directories, mounted_device) -> None:
     empty_config, device = mounted_device
     for source_dir in source_directories:
-        config = complement_configuration(empty_config, source_dir).model_copy(
-            update={"ExcludePatternsFile": EXCLUDE_FILE}
+        config = run_backup_cycle(
+            empty_config,
+            source_dir,
+            device,
+            config_extension={"ExcludePatternsFile": EXCLUDE_FILE},
         )
-        backend = bb.BackupBackend.from_config(config)
-        backend.do_backup(device)
     result_content = get_result_content(config, device)
     expected_content = get_expected_content(config, exclude_to_ignore_file=True)
     assert result_content == expected_content
@@ -215,18 +230,53 @@ def test_do_backup_removes_existing_files_in_exclude_list(
 
     empty_config, device = mounted_device
 
-    first_config = complement_configuration(empty_config, first_source)
-    first_backend = bb.BackupBackend.from_config(first_config)
-    first_backend.do_backup(device)
-
-    second_config = complement_configuration(empty_config, second_source).model_copy(
-        update={"ExcludePatternsFile": EXCLUDE_FILE}
+    run_backup_cycle(empty_config, first_source, device)
+    second_config = run_backup_cycle(
+        empty_config,
+        second_source,
+        device,
+        config_extension={"ExcludePatternsFile": EXCLUDE_FILE},
     )
-    second_backend = bb.BackupBackend.from_config(second_config)
-    second_backend.do_backup(device)
-
     result_content = get_result_content(second_config, device)
     expected_content = get_expected_content(second_config, exclude_to_ignore_file=True)
+    assert result_content == expected_content
+
+
+@pytest.mark.parametrize(
+    "first_source, second_source",
+    [(FIRST_BACKUP, SECOND_BACKUP)],
+)
+def test_btrfs_backend_gracefully_handles_existing_snapshots_owned_by_root(
+    first_source, second_source, mounted_device
+) -> None:
+    # THIS IS A REGRESSION TEST!
+    #
+    # After the improvements on the handling of single files backups a weird error
+    # ocurred. Sometimes backups would fail due to "PermissionError"s. This happened
+    # when the existing snapshot was owned by root and was missing the single files
+    # target folder. This test reproduces this scenario and ensures that the backup
+    # works correctly, even in this case.
+    empty_config, device = mounted_device
+    if not isinstance(empty_config, cp.BtrFSRsyncConfig):
+        # This test works for BtrfsConfig only. However, encrypted_device on
+        # which mounted_device depends on, is parameterised over all backends.
+        # Since this simplifies many other tests it seemed to be an acceptable
+        # tradeoff to short-circuit the test here.
+        return
+
+    first_config = run_backup_cycle(empty_config, first_source, device)
+    assert isinstance(first_config, cp.BtrFSRsyncConfig)  # for mypy
+
+    snapshot_root = device / first_config.BackupRepositoryFolder
+    latest_snapshot = sorted(snapshot_root.iterdir())[-1]
+    for cur in itertools.chain(snapshot_root.glob("*"), snapshot_root.glob("*/*")):
+        print(f"Changing ownership of {cur} to root:root")
+        sh.run_cmd(cmd=["sudo", "chown", "root:root", cur])
+    sh.run_cmd(cmd=["sudo", "rm", "-rf", latest_snapshot / first_config.FilesDest])
+
+    second_config = run_backup_cycle(empty_config, second_source, device)
+    result_content = get_result_content(second_config, device)
+    expected_content = get_expected_content(second_config, exclude_to_ignore_file=False)
     assert result_content == expected_content
 
 
@@ -240,12 +290,7 @@ def test_do_backup_for_btrfs_creates_snapshots_with_timestamp_names(
         # Since this simplifies many other tests it seemed to be an acceptable
         # tradeoff to short-circuit the test here.
         return
-    folder_dest_dir = "some-folder-name"
-    config = empty_config.model_copy(
-        update={"Folders": {FIRST_BACKUP: folder_dest_dir}}
-    )
-    backend = bb.BtrFSRsyncBackend(config)
-    backend.do_backup(device)
+    config = run_backup_cycle(empty_config, FIRST_BACKUP, device)
     backup_repository = device / config.BackupRepositoryFolder
     latest_folder = sorted(backup_repository.iterdir())[-1]
     expected_date = dt.date.today().isoformat()
@@ -267,9 +312,7 @@ def test_do_backup_for_restic_adapts_ownership(
         # tradeoff to short-circuit the test here.
         return
     for source_dir in source_directories:
-        config = complement_configuration(empty_config, source_dir)
-        backend = bb.BackupBackend.from_config(config)
-        backend.do_backup(device)
+        config = run_backup_cycle(empty_config, source_dir, device)
 
     expected_user = sh.get_user()
     expected_group = sh.get_group(expected_user)
