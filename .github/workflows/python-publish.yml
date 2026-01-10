@@ -12,16 +12,16 @@ jobs:
   build-dist:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Install uv
-      run: pipx install 'uv==0.5.31'
-    - name: Publish package
-      run: |
-        uv build
-    - uses: actions/upload-artifact@v4
-      with:
-        name: dist
-        path: dist/
+      - uses: actions/checkout@v4
+      - name: Install uv
+        run: pipx install 'uv==0.5.31'
+      - name: Publish package
+        run: |
+          uv build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
 
   pypi-publish:
     name: upload release to PyPI
