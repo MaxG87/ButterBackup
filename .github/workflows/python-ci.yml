@@ -23,9 +23,9 @@ jobs:
       - name: Install dependencies
         run: |
           uv sync ${{ matrix.dependency-extras }}
-      - name: Check formatting with black
+      - name: Check formatting with `ruff format`
         run: |
-          uv run black --check .
+          uv run ruff format --check .
       - name: Check import ordering with ruff
         run: |
           uv run ruff check --output-format=github --select I .

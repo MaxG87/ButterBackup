@@ -22,7 +22,6 @@ logging = [
 
 [dependency-groups]
 dev = [
-    "black>=25.1.0",
     "hypothesis>=6.135.22",
     "jedi>=0.19.2",
     "mypy>=1.16.1",
