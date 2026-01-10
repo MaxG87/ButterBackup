@@ -22,15 +22,12 @@ logging = [
 
 [dependency-groups]
 dev = [
-    "black>=25.1.0",
-    "hypothesis>=6.135.22",
-    "jedi>=0.19.2",
-    "mypy>=1.16.1",
-    "pdbpp>=0.11.6",
-    "pynvim>=0.5.2",
-    "pytest>=8.4.1",
-    "pytest-cov>=6.2.1",
-    "ruff>=0.12.1",
+    "hypothesis>=6.141.1",
+    "mypy>=1.19.1",
+    "pdbpp>=0.11.7",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.14.11",
 ]
 
 [tool.mypy]
