@@ -214,7 +214,8 @@ def format_device(
 
     Es wird dringend angeraten, die Passwörter nicht in der Konfiguration zu
     belassen, sondern in einen Passwortmanager zu tun. Der Autor verwendet
-    `butter-backup` zusammen mit dem Passwortmanager `pass`.
+    `butter-backup` zusammen mit dem Passwortmanager `pass` und 1Passwords
+    Kommandozeilenprogramm.
     """
     setup_logging(verbose)
     config_writer: Callable[[str], Any]

@@ -13,7 +13,7 @@ wheels = [
 
 [[package]]
 name = "butter-backup"
-version = "3.5.3"
+version = "3.5.4"
 source = { editable = "." }
 dependencies = [
     { name = "loguru" },
