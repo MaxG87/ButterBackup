@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.5](https://github.com/MaxG87/ButterBackup/compare/v3.5.4...v3.5.5) (2026-02-21)
+
+
+### Documentation
+
+* Mention use of 1Password ([062172d](https://github.com/MaxG87/ButterBackup/commit/062172dc024ef5a4de6bd60d6a1151f7f0d28d3b))
+
 ## [3.5.4](https://github.com/MaxG87/ButterBackup/compare/v3.5.3...v3.5.4) (2026-01-10)
 
 
