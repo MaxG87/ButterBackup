@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install uv
-        run: pipx install 'uv==0.9.17'
+        run: pipx install 'uv==0.10.12'
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
