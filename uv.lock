@@ -3,6 +3,15 @@ revision = 3
 requires-python = ">=3.10, <4.0.0"
 
 [[package]]
+name = "annotated-doc"
+version = "0.0.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/57/ba/046ceea27344560984e26a590f90bc7f4a75b06701f653222458922b558c/annotated_doc-0.0.4.tar.gz", hash = "sha256:fbcda96e87e9c92ad167c2e53839e57503ecfda18804ea28102353485033faa4", size = 7288, upload-time = "2025-11-10T22:07:42.062Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1e/d3/26bf1008eb3d2daa8ef4cacc7f3bfdc11818d111f7e2d0201bc6e3b49d45/annotated_doc-0.0.4-py3-none-any.whl", hash = "sha256:571ac1dc6991c450b25a9c2d84a3705e2ae7a53467b5d111c24fa8baabbed320", size = 5303, upload-time = "2025-11-10T22:07:40.673Z" },
+]
+
+[[package]]
 name = "annotated-types"
 version = "0.7.0"
 source = { registry = "https://pypi.org/simple" }
@@ -45,9 +54,9 @@ requires-dist = [
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "rich", marker = "extra == 'all'", specifier = ">=13.9.4" },
-    { name = "shell-interface", specifier = ">=1.0.1" },
-    { name = "storage-device-managers", specifier = ">=1.0.0" },
-    { name = "typer", specifier = ">=0.20.0" },
+    { name = "shell-interface", specifier = ">=1.0.2" },
+    { name = "storage-device-managers", specifier = ">=1.0.1" },
+    { name = "typer", specifier = ">=0.24.1" },
 ]
 provides-extras = ["all"]
 
@@ -729,11 +738,11 @@ wheels = [
 
 [[package]]
 name = "shell-interface"
-version = "1.0.1"
+version = "1.0.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/06/7f/f83c0c9338468025caeaf6e5c23b5d91f5788f6ae3f8417996c0838d675d/shell_interface-1.0.1.tar.gz", hash = "sha256:a74b4fa50ecdd7c3090ac00b5f8c60adcdd49381bc4b9bd59b270797ced5102b", size = 15377, upload-time = "2025-07-02T10:04:05.464Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a0/8f/648efc24a3cf77ad2161c8379dcd604e165b3147925d554359d65d42b2e1/shell_interface-1.0.2.tar.gz", hash = "sha256:7120dce6fcf11ab45b2cd24fbcc881666a1861c1b88f53773ec3702646b26856", size = 15331, upload-time = "2026-01-10T11:31:42.136Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1c/5e/56b3437d0de9133183403a6f8616cc6b6fd397ae57955b48c4f43af82aa4/shell_interface-1.0.1-py3-none-any.whl", hash = "sha256:54932255899965ace8bb0f9fcc525d62a19104aa8e69c1424b4f0f06ca07cf4d", size = 16193, upload-time = "2025-07-02T10:04:04.41Z" },
+    { url = "https://files.pythonhosted.org/packages/b6/7a/01f195b3b083f758c3ce797dcbf4f52603bcbdbe1b3397d52d8bb2f99d42/shell_interface-1.0.2-py3-none-any.whl", hash = "sha256:2e8fdd5bfaca5be19caf718122836f4b95b96a8efce4e8942790e350539d9a93", size = 16192, upload-time = "2026-01-10T11:31:40.928Z" },
 ]
 
 [[package]]
@@ -756,15 +765,15 @@ wheels = [
 
 [[package]]
 name = "storage-device-managers"
-version = "1.0.0"
+version = "1.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "loguru" },
     { name = "shell-interface" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e8/2c/0e32b9c613792c550e567ed4ca6d5319aaa7c8eb090d1daf991d51646f3b/storage_device_managers-1.0.0.tar.gz", hash = "sha256:337b45394a0ea46c9c64062ec5762b74ca46c5776f39b33a1ba143256494e8ad", size = 18548, upload-time = "2025-02-15T17:15:41.938Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d7/ad/b7f51314917399a6065815413d7127f25fbbcdb43c97f23b2408fa690a74/storage_device_managers-1.0.1.tar.gz", hash = "sha256:f5bfccf3457b44071b952a886a65366f9b91effeb97c02e9e44be5dae5d90f64", size = 18830, upload-time = "2026-03-22T15:27:10.844Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/71/3e/f47982e9df1b329a5fe6912a30373c216f570396ee2c72c21bd70f57c763/storage_device_managers-1.0.0-py3-none-any.whl", hash = "sha256:157994d9cc2822ee736b7f8e5a6e87d73bebf0bc70c22ec2c4afb280613e958b", size = 19427, upload-time = "2025-02-15T17:15:35.588Z" },
+    { url = "https://files.pythonhosted.org/packages/cb/cd/15ecf4fc9a13fc0215ce022158ebc414992a2b64500808067e09c769f259/storage_device_managers-1.0.1-py3-none-any.whl", hash = "sha256:b30d985a389b91b973eec68696c218b85da16e9209e3b18e40bcb6d1e55dc7f3", size = 19716, upload-time = "2026-03-22T15:27:09.481Z" },
 ]
 
 [[package]]
@@ -823,17 +832,17 @@ wheels = [
 
 [[package]]
 name = "typer"
-version = "0.20.0"
+version = "0.24.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "annotated-doc" },
     { name = "click" },
     { name = "rich" },
     { name = "shellingham" },
-    { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8f/28/7c85c8032b91dbe79725b6f17d2fffc595dff06a35c7a30a37bef73a1ab4/typer-0.20.0.tar.gz", hash = "sha256:1aaf6494031793e4876fb0bacfa6a912b551cf43c1e63c800df8b1a866720c37", size = 106492, upload-time = "2025-10-20T17:03:49.445Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f5/24/cb09efec5cc954f7f9b930bf8279447d24618bb6758d4f6adf2574c41780/typer-0.24.1.tar.gz", hash = "sha256:e39b4732d65fbdcde189ae76cf7cd48aeae72919dea1fdfc16593be016256b45", size = 118613, upload-time = "2026-02-21T16:54:40.609Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/78/64/7713ffe4b5983314e9d436a90d5bd4f63b6054e2aca783a3cfc44cb95bbf/typer-0.20.0-py3-none-any.whl", hash = "sha256:5b463df6793ec1dca6213a3cf4c0f03bc6e322ac5e16e13ddd622a889489784a", size = 47028, upload-time = "2025-10-20T17:03:47.617Z" },
+    { url = "https://files.pythonhosted.org/packages/4a/91/48db081e7a63bb37284f9fbcefda7c44c277b18b0e13fbc36ea2335b71e6/typer-0.24.1-py3-none-any.whl", hash = "sha256:112c1f0ce578bfb4cab9ffdabc68f031416ebcc216536611ba21f04e9aa84c9e", size = 56085, upload-time = "2026-02-21T16:54:41.616Z" },
 ]
 
 [[package]]

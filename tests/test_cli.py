@@ -303,7 +303,6 @@ def test_do_backup_refuses_backup_when_device_is_already_open(
     assert expected_msg in result.stderr
 
 
-@pytest.mark.xfail
 def test_unmount_error_does_not_cause_content_deletion(
     runner: CliRunner, encrypted_device: cp.Configuration, tmp_path: Path, mocker
 ) -> None:
