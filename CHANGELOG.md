@@ -1,5 +1,23 @@
 # Changelog
 
+## [3.5.5](https://github.com/MaxG87/ButterBackup/compare/v3.5.4...v3.5.5) (2026-03-24)
+
+
+### Bug Fixes
+
+* Fix backup deleting bug by bumping storage_device_managers to v1.0.1 ([a46acb4](https://github.com/MaxG87/ButterBackup/commit/a46acb465155b92820af1271822b302fd54a82c0))
+
+
+### Dependencies
+
+* **dev:** Add pytest-mock ([d1a4960](https://github.com/MaxG87/ButterBackup/commit/d1a4960b5243ddfd98c3e1ff6977ea7af3d9b207))
+* **dev:** Bump all dev-dependencies ([a74a8d1](https://github.com/MaxG87/ButterBackup/commit/a74a8d165adb7dc492670c471d518f872ae9ab1c))
+
+
+### Documentation
+
+* Mention use of 1Password ([062172d](https://github.com/MaxG87/ButterBackup/commit/062172dc024ef5a4de6bd60d6a1151f7f0d28d3b))
+
 ## [3.5.4](https://github.com/MaxG87/ButterBackup/compare/v3.5.3...v3.5.4) (2026-01-10)
 
 
