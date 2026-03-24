@@ -9,9 +9,9 @@ requires-python = ">=3.10,<4.0.0"
 dependencies = [
     "loguru>=0.7.3",
     "pydantic>=2.12.5",
-    "shell-interface>=1.0.1",
-    "storage-device-managers>=1.0.0",
-    "typer>=0.20.0",
+    "shell-interface>=1.0.2",
+    "storage-device-managers>=1.0.1",
+    "typer>=0.24.1",
 ]
 
 [project.urls]
@@ -31,13 +31,14 @@ butter-backup = "butter_backup.cli:cli"
 
 [dependency-groups]
 dev = [
-    "hypothesis>=6.148.7",
-    "mypy>=1.19.0",
-    "pdbpp>=0.11.7",
+    "hypothesis>=6.151.9",
+    "mypy>=1.19.1",
+    "pdbpp>=0.12.1",
     "pytest>=9.0.2",
-    "pytest-cov>=7.0.0",
+    "pytest-cov>=7.1.0",
+    "pytest-mock>=3.15.1",
     "pytest-xdist>=3.8.0",
-    "ruff>=0.14.9",
+    "ruff>=0.15.7",
 ]
 
 [tool.mypy]

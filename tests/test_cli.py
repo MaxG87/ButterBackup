@@ -301,3 +301,47 @@ def test_do_backup_refuses_backup_when_device_is_already_open(
 
     assert result.exit_code == 0
     assert expected_msg in result.stderr
+
+
+def test_unmount_error_does_not_cause_content_deletion(
+    runner: CliRunner, encrypted_device: cp.Configuration, tmp_path: Path, mocker
+) -> None:
+    # THIS IS A REGRESSION TEST!
+    #
+    # A previous version of the code had a serious bug, where a failed unmount operation
+    # would cause the content of the mount point (i.e. **the backups**!) to be deleted.
+    # This test ensures that this bug is fixed by provoking an unmount error and
+    # checking that:
+    #
+    # 1. Unmounting indeed failed (exit_code == 1).
+    # 2. The backup repository still exists after the failed unmount operation
+    # 3. The device can be closed successfully after the failed unmount operation
+    #
+    # This test "successfully" provoked the buggy behaviour before the bug was fixed.
+    mocker.patch(
+        "storage_device_managers.unmount_device",
+        side_effect=sdm.UnmountError("Mocked unmount error"),
+    )
+
+    config = complement_configuration(encrypted_device, tmp_path)
+    prepare_tmp_path(config, tmp_path)
+    config_file = tmp_path / "config.json"
+    config_file.write_text(f"[{config.model_dump_json()}]")
+
+    result = runner.invoke(app, ["backup", "--config", str(config_file)])
+    assert result.exit_code == 1
+    # Check that BackupRepositoryFolder still exists after the failed unmount operation.
+    # It is assumed that the device is still mounted, since the unmounting is mocked to
+    # fail.
+    mounts = sdm.get_mounted_devices()
+    mount_of_device = next(iter(mounts[str(config.map_name())]))
+    expected_backup_repository = mount_of_device / config.BackupRepositoryFolder
+    assert expected_backup_repository.exists()
+    assert expected_backup_repository.is_dir()
+    # Check that the device can be closed successfully after the failed unmount
+    # operation.
+    mocker.stopall()
+    result = runner.invoke(app, ["close", "--config", str(config_file)])
+    assert result.exit_code == 0
+    assert not mount_of_device.exists()
+    assert sdm.is_mounted(mount_of_device) is False

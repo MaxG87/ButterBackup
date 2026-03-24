@@ -1,4 +1,5 @@
 import shutil
+import typing as t
 import uuid
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -49,7 +50,9 @@ def _encrypted_btrfs_device_persistent(
 
 
 @pytest.fixture
-def encrypted_btrfs_device(_encrypted_btrfs_device_persistent):
+def encrypted_btrfs_device(
+    _encrypted_btrfs_device_persistent,
+) -> t.Iterator[cp.BtrFSRsyncConfig]:
     """
     Prepare device for ButterBackup and return its config
 
@@ -82,7 +85,9 @@ def _encrypted_restic_device_persistent(_big_file_persistent):
 
 
 @pytest.fixture
-def encrypted_restic_device(_encrypted_restic_device_persistent):
+def encrypted_restic_device(
+    _encrypted_restic_device_persistent,
+) -> t.Iterator[cp.ResticConfig]:
     """
     Prepare device for Restic on BtrFS and return its config
 
@@ -106,13 +111,13 @@ def encrypted_restic_device(_encrypted_restic_device_persistent):
 
 
 @pytest.fixture(params=["encrypted_btrfs_device", "encrypted_restic_device"])
-def encrypted_device(request):
-    config = request.getfixturevalue(request.param)
+def encrypted_device(request) -> cp.Configuration:
+    config: cp.Configuration = request.getfixturevalue(request.param)
     return config
 
 
 @pytest.fixture
-def mounted_device(encrypted_device):
+def mounted_device(encrypted_device) -> t.Iterator[tuple[cp.Configuration, Path]]:
     config = encrypted_device
     with sdm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted:
         with sdm.mounted_device(decrypted, config.Compression) as mounted_device:
