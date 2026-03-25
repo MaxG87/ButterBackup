@@ -37,12 +37,14 @@ def test_parse_configuration_warns_on_non_dict_item() -> None:
 @given(
     backup_dest_dirs=st.lists(st.text(), min_size=2, max_size=2, unique=True),
     backup_repository_folder=st.text(),
+    name=st.text(),
     pass_cmd=st.text(),
     uuid=st.uuids(),
 )
 def test_parse_configuration_parses_btrfs_config(
     backup_dest_dirs: list[str],
     backup_repository_folder: str,
+    name: str,
     pass_cmd: str,
     uuid: UUID,
 ) -> None:
@@ -53,6 +55,7 @@ def test_parse_configuration_parses_btrfs_config(
             Files=set(),
             FilesDest=backup_dest_dirs[1],
             Folders={Path(source): backup_dest_dirs[0]},
+            Name=name,
             UUID=uuid,
         )
         cfg_lst = cp.parse_configuration(f"[{btrfs_cfg.model_dump_json()}]")
@@ -63,13 +66,15 @@ def test_parse_configuration_parses_btrfs_config(
     backup_dest_dirs=st.lists(st.text(), min_size=2, max_size=2, unique=True),
     backup_repository_folder=st.text(),
     device_pass_cmd=st.text(),
+    name=st.text(),
     repository_pass_cmd=st.text(),
     uuid=st.uuids(),
 )
-def test_load_configuration_parses_restic_config(
+def test_load_configuration_parses_restic_config(  # noqa: PLR0913
     backup_dest_dirs: list[str],
     backup_repository_folder: str,
     device_pass_cmd: str,
+    name: str,
     repository_pass_cmd: str,
     uuid: UUID,
 ) -> None:
@@ -78,6 +83,7 @@ def test_load_configuration_parses_restic_config(
             BackupRepositoryFolder=backup_repository_folder,
             DevicePassCmd=device_pass_cmd,
             FilesAndFolders={Path(source)},
+            Name=name,
             RepositoryPassCmd=repository_pass_cmd,
             UUID=uuid,
         )

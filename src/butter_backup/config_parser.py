@@ -3,7 +3,7 @@ import sys
 import uuid
 from collections import Counter
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from pydantic import (
     BaseModel,
@@ -37,6 +37,16 @@ class BaseConfig(BaseModel):
     ExcludePatternsFile: FilePath | None = None
     UUID: uuid.UUID
     Compression: ValidCompressions | None = None
+    Name: str
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_default_name(cls, data: Any) -> Any:
+        if isinstance(data, dict) and not data.get("name"):
+            uuid_val = data.get("UUID")
+            if uuid_val is not None:
+                return data | {"name": str(uuid_val)}
+        return data
 
     @field_validator("ExcludePatternsFile", mode="before")
     def expand_tilde_in_exclude_patterns_file_name(

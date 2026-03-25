@@ -38,7 +38,7 @@ class BtrFSRsyncBackend(BackupBackend):
     config: cp.BtrFSRsyncConfig
 
     def do_backup(self, mount_dir: Path) -> None:
-        logger.info(f"Beginne mit BtrFS-Backup für Speichermedium {self.config.UUID}.")
+        logger.info(f"Beginne mit BtrFS-Backup für Speichermedium {self.config.Name}.")
         backup_repository = mount_dir / self.config.BackupRepositoryFolder
         src_snapshot = self.get_source_snapshot(backup_repository)
         logger.info(f"Basis-Sicherungskopie: {src_snapshot}.")
@@ -130,7 +130,7 @@ class ResticBackend(BackupBackend):
     config: cp.ResticConfig
 
     def do_backup(self, mount_dir: Path) -> None:
-        logger.info(f"Beginne mit Restic-Backup für Speichermedium {self.config.UUID}.")
+        logger.info(f"Beginne mit Restic-Backup für Speichermedium {self.config.Name}.")
         backup_repository = mount_dir / self.config.BackupRepositoryFolder
         self.copy_files(backup_repository)
         self.adapt_ownership(backup_repository)

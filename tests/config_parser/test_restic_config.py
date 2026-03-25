@@ -55,6 +55,22 @@ def test_restic_config_expands_user(base_config):
 
 
 @given(base_config=valid_unparsed_empty_restic_config())
+def test_restic_config_name_defaults_to_uuid(base_config) -> None:
+    base_config.pop("name", None)
+    cfg = cp.ResticConfig.model_validate(base_config)
+    assert cfg.Name == base_config["UUID"]
+
+
+@given(
+    base_config=valid_unparsed_empty_restic_config(), custom_name=st.text(min_size=1)
+)
+def test_restic_config_accepts_custom_name(base_config, custom_name: str) -> None:
+    base_config["name"] = custom_name
+    cfg = cp.ResticConfig.model_validate(base_config)
+    assert cfg.Name == custom_name
+
+
+@given(base_config=valid_unparsed_empty_restic_config())
 def test_restic_config_uuid_is_mapname(base_config) -> None:
     cfg = cp.ResticConfig.model_validate(base_config)
     assert base_config["UUID"] == str(cfg.UUID)
