@@ -66,6 +66,12 @@ class BtrFSRsyncBackend(BackupBackend):
     def adapt_ownership(snapshot_root: Path) -> None:
         user = sh.get_user()
         group = sh.get_group(user)
+        logger.debug(
+            "Übertrage Besitzrechte von {backup_root} nicht-rekursiv an {user}:{group}.",
+            backup_root=snapshot_root,
+            user=user,
+            group=group,
+        )
         sdm.chown(snapshot_root, user, group, recursive=False)
 
     def snapshot(self, *, src: Path, backup_repository: Path) -> Path:
@@ -133,6 +139,12 @@ class ResticBackend(BackupBackend):
     def adapt_ownership(backup_repository: Path) -> None:
         user = sh.get_user()
         group = sh.get_group(user)
+        logger.debug(
+            "Übertrage Besitzrechte von {backup_root} rekursiv an {user}:{group}.",
+            backup_root=backup_repository,
+            user=user,
+            group=group,
+        )
         sdm.chown(backup_repository, user, group, recursive=True)
 
     def copy_files(self, backup_repository: Path) -> None:
