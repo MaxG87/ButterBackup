@@ -42,11 +42,20 @@ class BaseConfig(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def set_default_name(cls, data: Any) -> Any:
-        if isinstance(data, dict) and not data.get("name"):
-            uuid_val = data.get("UUID")
-            if uuid_val is not None:
-                return data | {"name": str(uuid_val)}
-        return data
+        if not isinstance(data, dict):
+            return data
+
+        maybe_name = data.get("Name")
+        if maybe_name is not None:
+            return data
+
+        try:
+            uuid_val = data["UUID"]
+            return data | {"Name": str(uuid_val)}
+        except KeyError:
+            raise ValueError(
+                "Obligatorisches UUID-Feld fehlt in der Konfiguration!"
+            ) from None
 
     @field_validator("ExcludePatternsFile", mode="before")
     def expand_tilde_in_exclude_patterns_file_name(
