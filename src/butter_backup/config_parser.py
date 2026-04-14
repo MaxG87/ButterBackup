@@ -3,7 +3,7 @@ import sys
 import uuid
 from collections import Counter
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from pydantic import (
     BaseModel,
@@ -37,6 +37,25 @@ class BaseConfig(BaseModel):
     ExcludePatternsFile: FilePath | None = None
     UUID: uuid.UUID
     Compression: ValidCompressions | None = None
+    Name: str
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_default_name(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+
+        maybe_name = data.get("Name")
+        if maybe_name is not None:
+            return data
+
+        try:
+            uuid_val = data["UUID"]
+            return data | {"Name": str(uuid_val)}
+        except KeyError:
+            raise ValueError(
+                "Obligatorisches UUID-Feld fehlt in der Konfiguration!"
+            ) from None
 
     @field_validator("ExcludePatternsFile", mode="before")
     def expand_tilde_in_exclude_patterns_file_name(

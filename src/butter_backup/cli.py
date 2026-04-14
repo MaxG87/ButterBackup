@@ -109,7 +109,7 @@ def open(  # noqa: A001
         if _skip_device(
             cfg,
             log_opened=lambda cfg: logger.warning(
-                f"Speichermedium {cfg.UUID} ist bereits geöffnet. Es wird übersprungen."
+                f"Speichermedium {cfg.Name} ist bereits geöffnet. Es wird übersprungen."
             ),
         ):
             continue
@@ -118,7 +118,7 @@ def open(  # noqa: A001
         sdm.mount_btrfs_device(
             decrypted, mount_dir=mount_dir, compression=cfg.Compression
         )
-        typer.echo(f"Speichermedium {cfg.UUID} wurde in {mount_dir} geöffnet.")
+        typer.echo(f"Speichermedium {cfg.Name} wurde in {mount_dir} geöffnet.")
 
 
 @app.command()
@@ -174,10 +174,10 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> Non
         if _skip_device(
             cfg,
             log_missing=lambda cfg: logger.info(
-                f"Speichermedium {cfg.UUID} existiert nicht. Es wird kein Backup angelegt."
+                f"Speichermedium {cfg.Name} existiert nicht. Es wird kein Backup angelegt."
             ),
             log_opened=lambda cfg: logger.warning(
-                f"Speichermedium {cfg.UUID} ist bereits geöffnet. Es wird übersprungen."
+                f"Speichermedium {cfg.Name} ist bereits geöffnet. Es wird übersprungen."
             ),
         ):
             continue

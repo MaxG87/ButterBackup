@@ -106,6 +106,20 @@ def test_btrfs_config_rejects_duplicate_dest(base_config, folder_dest: str):
 
 
 @given(base_config=valid_unparsed_empty_btrfs_config())
+def test_btrfs_config_name_defaults_to_uuid(base_config) -> None:
+    base_config.pop("Name", None)
+    cfg = cp.BtrFSRsyncConfig.model_validate(base_config)
+    assert cfg.Name == base_config["UUID"]
+
+
+@given(base_config=valid_unparsed_empty_btrfs_config(), custom_name=st.text(min_size=1))
+def test_btrfs_config_accepts_custom_name(base_config, custom_name: str) -> None:
+    base_config["Name"] = custom_name
+    cfg = cp.BtrFSRsyncConfig.model_validate(base_config)
+    assert cfg.Name == custom_name
+
+
+@given(base_config=valid_unparsed_empty_btrfs_config())
 def test_btrfs_config_uuid_is_mapname(base_config) -> None:
     cfg = cp.BtrFSRsyncConfig.model_validate(base_config)
     assert base_config["UUID"] == str(cfg.UUID)

@@ -41,6 +41,7 @@ def prepare_device_for_butterbackend(device: Path) -> cp.BtrFSRsyncConfig:
         Files=set(),
         FilesDest="Einzeldateien",
         Folders={},
+        Name="BTRFS-RSYNC-Backup",
         UUID=volume_uuid,
     )
     return config
@@ -74,6 +75,7 @@ def prepare_device_for_resticbackend(device: Path) -> cp.ResticConfig:
         Compression=compression,
         DevicePassCmd=device_passcmd,
         FilesAndFolders=set(),
+        Name="Restic-Backup",
         RepositoryPassCmd=repository_passcmd,
         UUID=volume_uuid,
     )

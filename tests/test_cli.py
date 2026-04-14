@@ -206,7 +206,7 @@ def test_open_close_roundtrip(runner, encrypted_device) -> None:
         config_file.write_text(f"[{config.model_dump_json()}]")
         open_result = runner.invoke(app, ["open", "--config", str(config_file)])
         expected_msg = (
-            f"Speichermedium {config.UUID} wurde in (?P<mount_dest>/[^ ]+) geöffnet."
+            f"Speichermedium {config.Name} wurde in (?P<mount_dest>/[^ ]+) geöffnet."
         )
         match = re.fullmatch(expected_msg, open_result.stdout.strip())
         assert match is not None
@@ -238,6 +238,7 @@ def test_format_device(runner, backend: str, big_file: Path) -> None:
     config_lst = list(cp.parse_configuration(serialised_config))
     assert len(config_lst) == 1
     device_uuid = config_lst[0].UUID
+    device_name = config_lst[0].Name
     link_dest = Path(f"/dev/disk/by-uuid/{device_uuid}")
     wait_until_gone(link_dest, dt.timedelta(seconds=3))
     with NamedTemporaryFile("w") as fh:
@@ -249,7 +250,7 @@ def test_format_device(runner, backend: str, big_file: Path) -> None:
     assert format_result.exit_code == 0
     assert open_result.exit_code == 0
     assert close_result.exit_code == 0
-    assert str(device_uuid) in open_result.stdout
+    assert str(device_name) in open_result.stdout
 
 
 @pytest.mark.parametrize("backend", ["restic", "btrfs-rsync"])
@@ -296,7 +297,7 @@ def test_do_backup_refuses_backup_when_device_is_already_open(
     runner.invoke(app, ["open", "--config", str(config_file)])
     result = runner.invoke(app, [subprogram, "--config", str(config_file)])
     expected_msg = (
-        f"Speichermedium {config.UUID} ist bereits geöffnet. Es wird übersprungen."
+        f"Speichermedium {config.Name} ist bereits geöffnet. Es wird übersprungen."
     )
 
     assert result.exit_code == 0
