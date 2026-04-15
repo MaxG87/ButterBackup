@@ -55,7 +55,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "rich", marker = "extra == 'all'", specifier = ">=13.9.4" },
     { name = "shell-interface", specifier = ">=1.0.2" },
-    { name = "storage-device-managers", specifier = ">=1.0.1" },
+    { name = "storage-device-managers", specifier = ">=1.0.2" },
     { name = "typer", specifier = ">=0.24.1" },
 ]
 provides-extras = ["all"]
@@ -765,15 +765,15 @@ wheels = [
 
 [[package]]
 name = "storage-device-managers"
-version = "1.0.1"
+version = "1.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "loguru" },
     { name = "shell-interface" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d7/ad/b7f51314917399a6065815413d7127f25fbbcdb43c97f23b2408fa690a74/storage_device_managers-1.0.1.tar.gz", hash = "sha256:f5bfccf3457b44071b952a886a65366f9b91effeb97c02e9e44be5dae5d90f64", size = 18830, upload-time = "2026-03-22T15:27:10.844Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e4/71/ba5fa0f430f798d71e7e694f2f3a379e0c1f1b21014f79484cbc7ee6417b/storage_device_managers-1.0.2.tar.gz", hash = "sha256:9284f00d6787168e8a1da75798cddc233ff178b412c7447290ba72f3a9658dbd", size = 18826, upload-time = "2026-04-15T19:15:02.33Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cb/cd/15ecf4fc9a13fc0215ce022158ebc414992a2b64500808067e09c769f259/storage_device_managers-1.0.1-py3-none-any.whl", hash = "sha256:b30d985a389b91b973eec68696c218b85da16e9209e3b18e40bcb6d1e55dc7f3", size = 19716, upload-time = "2026-03-22T15:27:09.481Z" },
+    { url = "https://files.pythonhosted.org/packages/af/b8/024f95dadeb006a354d207b56f5cc603009cf43e90eee29e2fa58e82d945/storage_device_managers-1.0.2-py3-none-any.whl", hash = "sha256:562295c8c2f7bb8edd5420d07ee03fc0928a7437847d08f5250eab5ac3983678", size = 19714, upload-time = "2026-04-15T19:15:01.215Z" },
 ]
 
 [[package]]
