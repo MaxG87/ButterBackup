@@ -1,5 +1,25 @@
 # Changelog
 
+## [3.6.0](https://github.com/MaxG87/ButterBackup/compare/v3.5.5...v3.6.0) (2026-04-15)
+
+
+### Features
+
+* Add name attribute to ButterBackup configuration ([239af34](https://github.com/MaxG87/ButterBackup/commit/239af34d0c1fa94d3fb9a21a01089e6ef11304d7))
+* Log that chown is about to take place ([5d44acc](https://github.com/MaxG87/ButterBackup/commit/5d44acc517e2310acf55332571fcc882efe7d49f))
+
+
+### Bug Fixes
+
+* Avoid changing ownership recursively in BtrFS backend ([77603df](https://github.com/MaxG87/ButterBackup/commit/77603df8021a3fbbf2d2da31b62ef09dd0ae9d90))
+* **build:** Rebuild lockfile ([daaee11](https://github.com/MaxG87/ButterBackup/commit/daaee1197c578af507639b5d02e0eabea95ec95f))
+* Fix spurious unmount errors by synchronising changes first ([00ac2a3](https://github.com/MaxG87/ButterBackup/commit/00ac2a36762f01c23723c13031f9f0bac3fbc5da))
+
+
+### Documentation
+
+* Add name entry to example configuration file ([15f59b2](https://github.com/MaxG87/ButterBackup/commit/15f59b2287e74be6a9aa98822335cb0be8bf8603))
+
 ## [3.5.5](https://github.com/MaxG87/ButterBackup/compare/v3.5.4...v3.5.5) (2026-03-24)
 
 
