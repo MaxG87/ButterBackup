@@ -8,7 +8,7 @@ readme = "README.md"
 requires-python = ">=3.10,<4.0.0"
 dependencies = [
     "loguru>=0.7.3",
-    "pydantic>=2.12.5",
+    "pydantic>=2.13.1",
     "shell-interface>=1.0.2",
     "storage-device-managers>=1.0.2",
     "typer>=0.24.1",
@@ -31,14 +31,14 @@ butter-backup = "butter_backup.cli:cli"
 
 [dependency-groups]
 dev = [
-    "hypothesis>=6.151.9",
-    "mypy>=1.19.1",
+    "hypothesis>=6.152.1",
+    "mypy>=1.20.1",
     "pdbpp>=0.12.1",
-    "pytest>=9.0.2",
+    "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.1",
     "pytest-xdist>=3.8.0",
-    "ruff>=0.15.7",
+    "ruff>=0.15.10",
 ]
 
 [tool.mypy]
