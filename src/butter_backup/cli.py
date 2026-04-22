@@ -58,6 +58,18 @@ def setup_logging(verbosity: int) -> None:
     logger.add(sys.stderr, level=available_levels[level])
 
 
+def _get_default_file_system(backend: ValidBackends) -> ValidFileSystems:
+    match backend:
+        case ValidBackends.btrfs_rsync:
+            return ValidFileSystems.btrfs
+        case ValidBackends.restic:
+            return ValidFileSystems.ext4
+    # TODO: Use t.assert_never when Python 3.11 is the minimum version!
+    raise ValueError(
+        f"Unsupported backend: {backend}. Expected one of: {list(ValidBackends)}"
+    )
+
+
 def _skip_device(
     config: cp.BaseConfig,
     *,
@@ -198,8 +210,8 @@ def format_device(
     device: Path = typer.Argument(  # noqa: B008
         ..., exists=True, dir_okay=False, readable=False
     ),
-    file_system: ValidFileSystems = typer.Option(  # noqa: B008
-        ValidFileSystems.btrfs,
+    file_system: ValidFileSystems | None = typer.Option(  # noqa: B008
+        None,
         "--file-system",
         help="Dateisystem für das Restic-Backend. Andere Werte als `btrfs` nur für das"
         "Restic-Backend gültig. Unterstützte Dateisysteme: btrfs, ext4.",
@@ -229,6 +241,8 @@ def format_device(
     Kommandozeilenprogramm.
     """
     setup_logging(verbose)
+    file_system = file_system or _get_default_file_system(backend)
+
     if file_system != ValidFileSystems.btrfs and backend != ValidBackends.restic:
         raise typer.BadParameter(
             "Andere Dateisysteme als BtrFS sind nur für das Restic-Backend gültig.",
