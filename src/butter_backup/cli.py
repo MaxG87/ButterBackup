@@ -29,6 +29,11 @@ class ValidBackends(enum.Enum):
     btrfs_rsync = "btrfs-rsync"
 
 
+class ValidFileSystems(enum.Enum):
+    btrfs = "btrfs"
+    ext4 = "ext4"
+
+
 def get_default_config_path() -> str:
     config_dir = Path(os.getenv("XDG_CONFIG_HOME", DEFAULT_CONFIG_DIR))
     config_file = config_dir / DEFAULT_CONFIG_NAME
@@ -193,6 +198,12 @@ def format_device(
     device: Path = typer.Argument(  # noqa: B008
         ..., exists=True, dir_okay=False, readable=False
     ),
+    file_system: ValidFileSystems | None = typer.Option(  # noqa: B008
+        None,
+        "--file-system",
+        help="Dateisystem für das Restic-Backend. Nur für das Restic-Backend"
+        " gültig. Unterstützte Dateisysteme: btrfs, ext4.",
+    ),
     config_to: Path | None = typer.Option(  # noqa: B008
         None,
         help="Datei, in welche die generierte Konfiguration geschrieben werden"
@@ -218,6 +229,11 @@ def format_device(
     Kommandozeilenprogramm.
     """
     setup_logging(verbose)
+    if file_system is not None and backend != ValidBackends.restic:
+        raise typer.BadParameter(
+            "Das Dateisystem-Argument ist nur für das Restic-Backend gültig.",
+            param_hint="'--file-system'",
+        )
     config_writer: Callable[[str], Any]
     if config_to is None:
         config_writer = typer.echo

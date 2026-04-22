@@ -1,6 +1,7 @@
 import datetime as dt
 import re
 import time
+import uuid
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from unittest import mock
@@ -229,6 +230,47 @@ def test_format_device_refuses_incorrect_backend(runner, backend: str) -> None:
     with NamedTemporaryFile() as tempf:
         result = runner.invoke(app, ["format-device", tempf.name, backend])
         assert result.exit_code != 0
+
+
+@pytest.mark.parametrize("file_system", ["btrfs", "ext4"])
+def test_format_device_accepts_file_system_for_restic(
+    runner, file_system: str, big_file: Path, mocker
+) -> None:
+    fake_config = cp.ResticConfig(
+        BackupRepositoryFolder="ResticBackupRepository",
+        DevicePassCmd="echo password",
+        FilesAndFolders=set(),
+        Name="Restic-Backup",
+        RepositoryPassCmd="echo repopassword",
+        UUID=uuid.uuid4(),
+    )
+    mocker.patch(
+        "butter_backup.cli.prepare_device_for_resticbackend", return_value=fake_config
+    )
+    result = runner.invoke(
+        app,
+        ["format-device", "restic", str(big_file), "--file-system", file_system],
+    )
+    assert result.exit_code == 0
+
+
+@pytest.mark.parametrize("file_system", ["btrfs", "ext4"])
+def test_format_device_refuses_file_system_for_btrfs_rsync(
+    runner, file_system: str, big_file: Path
+) -> None:
+    result = runner.invoke(
+        app,
+        ["format-device", "btrfs-rsync", str(big_file), "--file-system", file_system],
+    )
+    assert result.exit_code != 0
+
+
+def test_format_device_refuses_invalid_file_system(runner, big_file: Path) -> None:
+    result = runner.invoke(
+        app,
+        ["format-device", "restic", str(big_file), "--file-system", "xfs"],
+    )
+    assert result.exit_code != 0
 
 
 @pytest.mark.parametrize("backend", ["restic", "btrfs-rsync"])
