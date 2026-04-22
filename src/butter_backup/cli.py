@@ -29,6 +29,11 @@ class ValidBackends(enum.Enum):
     btrfs_rsync = "btrfs-rsync"
 
 
+class ValidFileSystems(enum.Enum):
+    btrfs = "btrfs"
+    ext4 = "ext4"
+
+
 def get_default_config_path() -> str:
     config_dir = Path(os.getenv("XDG_CONFIG_HOME", DEFAULT_CONFIG_DIR))
     config_file = config_dir / DEFAULT_CONFIG_NAME
@@ -51,6 +56,18 @@ def setup_logging(verbosity: int) -> None:
     ]
     level = min(verbosity, len(available_levels) - 1)
     logger.add(sys.stderr, level=available_levels[level])
+
+
+def _get_default_file_system(backend: ValidBackends) -> ValidFileSystems:
+    match backend:
+        case ValidBackends.btrfs_rsync:
+            return ValidFileSystems.btrfs
+        case ValidBackends.restic:
+            return ValidFileSystems.ext4
+    # TODO: Use t.assert_never when Python 3.11 is the minimum version!
+    raise ValueError(
+        f"Unsupported backend: {backend}. Expected one of: {list(ValidBackends)}"
+    )
 
 
 def _skip_device(
@@ -193,6 +210,12 @@ def format_device(
     device: Path = typer.Argument(  # noqa: B008
         ..., exists=True, dir_okay=False, readable=False
     ),
+    file_system: ValidFileSystems | None = typer.Option(  # noqa: B008
+        None,
+        "--file-system",
+        help="Dateisystem für das Restic-Backend. Andere Werte als `btrfs` nur für das"
+        "Restic-Backend gültig. Unterstützte Dateisysteme: btrfs, ext4.",
+    ),
     config_to: Path | None = typer.Option(  # noqa: B008
         None,
         help="Datei, in welche die generierte Konfiguration geschrieben werden"
@@ -218,6 +241,13 @@ def format_device(
     Kommandozeilenprogramm.
     """
     setup_logging(verbose)
+    file_system = file_system or _get_default_file_system(backend)
+
+    if file_system != ValidFileSystems.btrfs and backend != ValidBackends.restic:
+        raise typer.BadParameter(
+            "Andere Dateisysteme als BtrFS sind nur für das Restic-Backend gültig.",
+            param_hint="'--file-system'",
+        )
     config_writer: Callable[[str], Any]
     if config_to is None:
         config_writer = typer.echo
