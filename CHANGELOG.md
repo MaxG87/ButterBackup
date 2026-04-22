@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.7.0](https://github.com/MaxG87/ButterBackup/compare/v3.6.0...v3.7.0) (2026-04-22)
+
+
+### Features
+
+* Add --file-system option to format-device CLI command ([442ecc4](https://github.com/MaxG87/ButterBackup/commit/442ecc4b4dda8db1dd5b4ad62dd440cb8e339a02))
+* Allow btrfs file system argument for BtrFS-Rsync too ([f6ff28c](https://github.com/MaxG87/ButterBackup/commit/f6ff28c398527a9b12a12cd5cda68e56d2df186c))
+* Change default file system for restic to ext4 ([6f504c5](https://github.com/MaxG87/ButterBackup/commit/6f504c5892f1e08efdb251bd684ae35026494041))
+
+
+### Dependencies
+
+* Bump all dependencies - prod and dev ([f6a03b2](https://github.com/MaxG87/ButterBackup/commit/f6a03b2a1903c659bfd1a365d94e2b124da5a1ab))
+
 ## [3.6.0](https://github.com/MaxG87/ButterBackup/compare/v3.5.5...v3.6.0) (2026-04-15)
 
 
