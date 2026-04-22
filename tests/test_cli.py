@@ -275,6 +275,31 @@ def test_format_device_refuses_invalid_file_system(
     assert result.exit_code != 0
 
 
+@pytest.mark.parametrize(
+    "file_system",
+    ["btrfs", "ext4"],
+)
+def test_format_device_creates_expected_file_system(
+    runner, big_file: Path, file_system: str
+) -> None:
+    format_result = runner.invoke(
+        app,
+        ["format-device", "restic", str(big_file), "--file-system", file_system],
+    )
+    assert format_result.exit_code == 0
+    serialised_config = format_result.stdout
+    config_lst = list(cp.parse_configuration(serialised_config))
+    assert len(config_lst) == 1
+    config = config_lst[0]
+    with sdm.decrypted_device(big_file, config.DevicePassCmd) as decrypted:
+        blkid_result = sh.run_cmd(
+            cmd=["sudo", "blkid", "-o", "value", "-s", "TYPE", str(decrypted)],
+            capture_output=True,
+        )
+    actual_fs = blkid_result.stdout.decode().strip()
+    assert actual_fs == file_system
+
+
 @pytest.mark.parametrize("backend", ["restic", "btrfs-rsync"])
 def test_format_device(runner, backend: str, big_file: Path) -> None:
     format_result = runner.invoke(app, ["format-device", backend, str(big_file)])
@@ -308,7 +333,7 @@ def test_format_device_chowns_filesystem_to_user(
     config = config_lst[0]
 
     with sdm.decrypted_device(big_file, config.DevicePassCmd) as decrypted:
-        with sdm.mounted_device(decrypted, sdm.ValidCompressions.ZLIB1) as mounted:
+        with sdm.mounted_device(decrypted) as mounted:
             owner = mounted.owner()
             group = mounted.group()
     expected_user = sh.get_user()

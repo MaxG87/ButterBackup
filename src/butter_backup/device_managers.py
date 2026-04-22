@@ -47,7 +47,9 @@ def prepare_device_for_butterbackend(device: Path) -> cp.BtrFSRsyncConfig:
     return config
 
 
-def prepare_device_for_resticbackend(device: Path) -> cp.ResticConfig:
+def prepare_device_for_resticbackend(
+    device: Path, file_system: str = "btrfs"
+) -> cp.ResticConfig:
     device_passcmd = sdm.generate_passcmd()
     repository_passcmd = sdm.generate_passcmd()
     backup_repository_folder = "ResticBackupRepository"
@@ -56,7 +58,11 @@ def prepare_device_for_resticbackend(device: Path) -> cp.ResticConfig:
     user = sh.get_user()
     group = sh.get_group(user)
     with sdm.decrypted_device(device, device_passcmd) as decrypted:
-        sdm.mkfs_btrfs(decrypted)
+        if file_system == "ext4":
+            mkfs_cmd: sh.StrPathList = ["sudo", "mkfs.ext4", "-F", decrypted]
+            sh.run_cmd(cmd=mkfs_cmd)
+        else:
+            sdm.mkfs_btrfs(decrypted)
         with sdm.mounted_device(decrypted) as mounted:
             backup_repo = mounted / backup_repository_folder
             mkdir_repo: sh.StrPathList = ["sudo", "mkdir", backup_repo]

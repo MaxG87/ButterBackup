@@ -257,12 +257,10 @@ def format_device(
                 "Zieldatei für ButterBackup-Konfiguration existiert schon!"
             )
         config_writer = config_to.write_text
-    formatter = (
-        prepare_device_for_butterbackend
-        if backend == ValidBackends.btrfs_rsync
-        else prepare_device_for_resticbackend
-    )
-    config = formatter(device)
+    if backend == ValidBackends.btrfs_rsync:
+        config = prepare_device_for_butterbackend(device)
+    else:
+        config = prepare_device_for_resticbackend(device, file_system.value)
     json_serialisable = json.loads(config.model_dump_json(exclude_none=True))
     config_writer(json.dumps([json_serialisable], indent=4, sort_keys=True))
 

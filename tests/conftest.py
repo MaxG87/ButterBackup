@@ -75,12 +75,12 @@ def encrypted_btrfs_device(
             yield config
 
 
-@pytest.fixture(scope="session")
-def _encrypted_restic_device_persistent(_big_file_persistent):
+@pytest.fixture(scope="session", params=["ext4", "btrfs"])
+def _encrypted_restic_device_persistent(_big_file_persistent, request):
     with NamedTemporaryFile() as ntf:
         big_file = Path(ntf.name)
         shutil.copy(_big_file_persistent, big_file)
-        config = dm.prepare_device_for_resticbackend(big_file)
+        config = dm.prepare_device_for_resticbackend(big_file, request.param)
         yield big_file, config
 
 
