@@ -7,6 +7,11 @@ import storage_device_managers as sdm
 from . import config_parser as cp
 
 
+def mkfs_ext4(device: Path) -> None:
+    mkfs_cmd: sh.StrPathList = ["sudo", "mkfs.ext4", "-F", device]
+    sh.run_cmd(cmd=mkfs_cmd)
+
+
 def prepare_device_for_butterbackend(device: Path) -> cp.BtrFSRsyncConfig:
     password_cmd = sdm.generate_passcmd()
     backup_repository_folder = "ButterBackupRepository"
@@ -59,8 +64,7 @@ def prepare_device_for_resticbackend(
     group = sh.get_group(user)
     with sdm.decrypted_device(device, device_passcmd) as decrypted:
         if file_system == "ext4":
-            mkfs_cmd: sh.StrPathList = ["sudo", "mkfs.ext4", "-F", decrypted]
-            sh.run_cmd(cmd=mkfs_cmd)
+            mkfs_ext4(decrypted)
         else:
             sdm.mkfs_btrfs(decrypted)
         with sdm.mounted_device(decrypted) as mounted:
