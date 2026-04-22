@@ -1,3 +1,4 @@
+import typing as t
 from datetime import date
 from pathlib import Path
 
@@ -5,6 +6,21 @@ import shell_interface as sh
 import storage_device_managers as sdm
 
 from . import config_parser as cp
+
+ValidFileSystems = t.Literal["ext4", "btrfs"]
+
+
+def format_device(device: Path, file_system: ValidFileSystems) -> None:
+    match file_system:
+        case "ext4":
+            mkfs_ext4(device)
+        case "btrfs":
+            sdm.mkfs_btrfs(device)
+        case _:
+            # TODO: Use t.assert_never when Python 3.11 is the minimum version!
+            raise ValueError(
+                f"Unsupported file system {file_system} for Restic backend."
+            )
 
 
 def mkfs_ext4(device: Path) -> None:
@@ -20,7 +36,7 @@ def prepare_device_for_butterbackend(device: Path) -> cp.BtrFSRsyncConfig:
     user = sh.get_user()
     group = sh.get_group(user)
     with sdm.decrypted_device(device, password_cmd) as decrypted:
-        sdm.mkfs_btrfs(decrypted)
+        format_device(decrypted, "btrfs")
         with sdm.mounted_device(decrypted) as mounted:
             backup_repository = mounted / backup_repository_folder
             mkdir_cmd: sh.StrPathList = ["sudo", "mkdir", backup_repository]
@@ -53,7 +69,7 @@ def prepare_device_for_butterbackend(device: Path) -> cp.BtrFSRsyncConfig:
 
 
 def prepare_device_for_resticbackend(
-    device: Path, file_system: str = "btrfs"
+    device: Path, file_system: ValidFileSystems
 ) -> cp.ResticConfig:
     device_passcmd = sdm.generate_passcmd()
     repository_passcmd = sdm.generate_passcmd()
@@ -63,10 +79,7 @@ def prepare_device_for_resticbackend(
     user = sh.get_user()
     group = sh.get_group(user)
     with sdm.decrypted_device(device, device_passcmd) as decrypted:
-        if file_system == "ext4":
-            mkfs_ext4(decrypted)
-        else:
-            sdm.mkfs_btrfs(decrypted)
+        format_device(decrypted, file_system)
         with sdm.mounted_device(decrypted) as mounted:
             backup_repo = mounted / backup_repository_folder
             mkdir_repo: sh.StrPathList = ["sudo", "mkdir", backup_repo]
