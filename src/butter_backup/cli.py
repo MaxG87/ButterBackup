@@ -198,11 +198,11 @@ def format_device(
     device: Path = typer.Argument(  # noqa: B008
         ..., exists=True, dir_okay=False, readable=False
     ),
-    file_system: ValidFileSystems | None = typer.Option(  # noqa: B008
-        None,
+    file_system: ValidFileSystems = typer.Option(  # noqa: B008
+        ValidFileSystems.btrfs,
         "--file-system",
-        help="Dateisystem für das Restic-Backend. Nur für das Restic-Backend"
-        " gültig. Unterstützte Dateisysteme: btrfs, ext4.",
+        help="Dateisystem für das Restic-Backend. Andere Werte als `btrfs` nur für das"
+        "Restic-Backend gültig. Unterstützte Dateisysteme: btrfs, ext4.",
     ),
     config_to: Path | None = typer.Option(  # noqa: B008
         None,
@@ -229,9 +229,9 @@ def format_device(
     Kommandozeilenprogramm.
     """
     setup_logging(verbose)
-    if file_system is not None and backend != ValidBackends.restic:
+    if file_system != ValidFileSystems.btrfs and backend != ValidBackends.restic:
         raise typer.BadParameter(
-            "Das Dateisystem-Argument ist nur für das Restic-Backend gültig.",
+            "Andere Dateisysteme als BtrFS sind nur für das Restic-Backend gültig.",
             param_hint="'--file-system'",
         )
     config_writer: Callable[[str], Any]
