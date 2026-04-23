@@ -12,6 +12,24 @@ from butter_backup import config_parser as cp
 
 SUCCESS_CODES = {0, None}
 
+EXAMPLES_DIR = Path(__file__).parent.parent.parent / "examples"
+
+
+@pytest.mark.parametrize(
+    "example_file",
+    [
+        EXAMPLES_DIR / "json.cfg",
+        EXAMPLES_DIR / "json5.cfg",
+        EXAMPLES_DIR / "toml.cfg",
+        EXAMPLES_DIR / "yaml.cfg",
+    ],
+)
+def test_example_files_can_be_parsed(example_file: Path) -> None:
+    content = example_file.read_text()
+    result = cp.parse_configuration(content)
+    expected_names = ["BtrFS Backup Example", "Restic Backup Example"]
+    assert [cfg.Name for cfg in result] == expected_names
+
 
 def test_parse_configuration_rejects_empty_list() -> None:
     with pytest.raises(SystemExit) as sysexit:
@@ -63,15 +81,13 @@ def test_parse_configuration_parses_btrfs_config(
 
 
 @given(
-    backup_dest_dirs=st.lists(st.text(), min_size=2, max_size=2, unique=True),
     backup_repository_folder=st.text(),
     device_pass_cmd=st.text(),
     name=st.text(),
     repository_pass_cmd=st.text(),
     uuid=st.uuids(),
 )
-def test_load_configuration_parses_restic_config(  # noqa: PLR0913
-    backup_dest_dirs: list[str],
+def test_load_configuration_parses_restic_config(
     backup_repository_folder: str,
     device_pass_cmd: str,
     name: str,

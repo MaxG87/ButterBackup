@@ -1,10 +1,13 @@
 import json
 import sys
+import tomllib
 import uuid
 from collections import Counter
 from pathlib import Path
 from typing import Any, ClassVar
 
+import json5
+import yaml
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -142,9 +145,42 @@ class ResticConfig(BaseConfig):
 Configuration = BtrFSRsyncConfig | ResticConfig
 
 
+def _parse_as_json(content: str) -> Any:
+    return json.loads(content)
+
+
+def _parse_as_json5(content: str) -> Any:
+    return json5.loads(content)
+
+
+def _parse_as_toml(content: str) -> Any:
+    data = tomllib.loads(content)
+    return data["DEVICE_CONFIGURATION"]
+
+
+def _parse_as_yaml(content: str) -> Any:
+    return yaml.safe_load(content)
+
+
+_PARSERS: list[tuple[Any, type[Exception] | tuple[type[Exception], ...]]] = [
+    (_parse_as_json, json.JSONDecodeError),
+    (_parse_as_json5, ValueError),
+    (_parse_as_toml, (tomllib.TOMLDecodeError, KeyError)),
+    (_parse_as_yaml, yaml.YAMLError),
+]
+
+
 def parse_configuration(content: str) -> list[Configuration]:
     ConfigList = TypeAdapter(list[Configuration])
-    config_lst = ConfigList.validate_json(content)
-    if len(config_lst) == 0:
-        sys.exit("Leere Konfigurationsdateien sind nicht erlaubt.\n")
-    return config_lst
+
+    for parse_fn, exc_type in _PARSERS:
+        try:
+            raw = parse_fn(content)
+        except exc_type:
+            continue
+        config_lst = ConfigList.validate_python(raw)
+        if len(config_lst) == 0:
+            sys.exit("Leere Konfigurationsdateien sind nicht erlaubt.\n")
+        return config_lst
+
+    sys.exit("Konfigurationsdatei konnte nicht gelesen werden.\n")
