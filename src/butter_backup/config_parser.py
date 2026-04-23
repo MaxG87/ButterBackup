@@ -155,17 +155,17 @@ def _parse_as_json5(content: str) -> Any:
 
 def _parse_as_toml(content: str) -> Any:
     data = tomllib.loads(content)
-    return data.get("backups", [])
+    return data["DEVICE_CONFIGURATION"]
 
 
 def _parse_as_yaml(content: str) -> Any:
     return yaml.safe_load(content)
 
 
-_PARSERS: list[tuple[Any, type[Exception]]] = [
+_PARSERS: list[tuple[Any, type[Exception] | tuple[type[Exception], ...]]] = [
     (_parse_as_json, json.JSONDecodeError),
     (_parse_as_json5, ValueError),
-    (_parse_as_toml, tomllib.TOMLDecodeError),
+    (_parse_as_toml, (tomllib.TOMLDecodeError, KeyError)),
     (_parse_as_yaml, yaml.YAMLError),
 ]
 

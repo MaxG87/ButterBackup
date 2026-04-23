@@ -1,7 +1,7 @@
 # TOML configuration for butter-backup
-# Each [[backups]] section defines one backup configuration
+# Each [[DEVICE_CONFIGURATION]] section defines one device configuration
 
-[[backups]]
+[[DEVICE_CONFIGURATION]]
 Name = "BtrFS Backup Example"
 UUID = "12345678-1234-5678-1234-567812345678"
 DevicePassCmd = "echo device-password"
@@ -10,10 +10,10 @@ Compression = "zstd:3"
 Files = []
 FilesDest = "single-files"
 
-[backups.Folders]
+[DEVICE_CONFIGURATION.Folders]
 "/tmp" = "temp-files"
 
-[[backups]]
+[[DEVICE_CONFIGURATION]]
 Name = "Restic Backup Example"
 UUID = "87654321-4321-8765-4321-876543218765"
 DevicePassCmd = "echo device-password"
