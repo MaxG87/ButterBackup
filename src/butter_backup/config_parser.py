@@ -178,10 +178,7 @@ def parse_configuration(content: str) -> list[Configuration]:
             raw = parse_fn(content)
         except exc_type:
             continue
-        if parse_fn is _parse_as_json:
-            config_lst = ConfigList.validate_json(content)
-        else:
-            config_lst = ConfigList.validate_python(raw)
+        config_lst = ConfigList.validate_python(raw)
         if len(config_lst) == 0:
             sys.exit("Leere Konfigurationsdateien sind nicht erlaubt.\n")
         return config_lst

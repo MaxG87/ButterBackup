@@ -27,7 +27,8 @@ EXAMPLES_DIR = Path(__file__).parent.parent.parent / "examples"
 def test_example_files_can_be_parsed(example_file: Path) -> None:
     content = example_file.read_text()
     result = cp.parse_configuration(content)
-    assert len(result) > 0
+    expected_names = ["BtrFS Backup Example", "Restic Backup Example"]
+    assert [cfg.Name for cfg in result] == expected_names
 
 
 def test_parse_configuration_rejects_empty_list() -> None:
