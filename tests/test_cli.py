@@ -450,14 +450,14 @@ def test_open_with_dest_dir_skips_non_empty_device_folder(
     config_file.write_text(json.dumps([_make_btrfs_config_json(device_name)]))
 
     mocker.patch("butter_backup.cli._skip_device", return_value=False)
-    mocker.patch("storage_device_managers.open_encrypted_device")
+    mock_open_device = mocker.patch("storage_device_managers.open_encrypted_device")
     mocker.patch("storage_device_managers.mount_btrfs_device")
 
     result = runner.invoke(app, ["open", "--config", str(config_file), str(dest_dir)])
 
     assert result.exit_code == 0
     # Device was skipped: no mount was attempted
-    sdm.open_encrypted_device.assert_not_called()  # type: ignore[attr-defined]
+    mock_open_device.assert_not_called()
     assert device_name in result.stderr
 
 
@@ -509,6 +509,8 @@ def test_open_with_dest_dir_skips_duplicate_names(runner, mocker, tmp_path) -> N
 
     assert result.exit_code == 0
     # First device opened, second skipped: only one named subdir exists
-    assert list(dest_dir.iterdir()) == [dest_dir / device_name]
+    subdirs = list(dest_dir.iterdir())
+    assert len(subdirs) == 1
+    assert dest_dir / device_name in subdirs
     # ERROR message must appear in stderr
     assert device_name in result.stderr
