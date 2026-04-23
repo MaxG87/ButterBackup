@@ -80,7 +80,7 @@ def _encrypted_restic_device_persistent(_big_file_persistent):
     with NamedTemporaryFile() as ntf:
         big_file = Path(ntf.name)
         shutil.copy(_big_file_persistent, big_file)
-        config = dm.prepare_device_for_resticbackend(big_file)
+        config = dm.prepare_device_for_resticbackend(big_file, "ext4")
         yield big_file, config
 
 

@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv sync ${{ matrix.dependency-extras }}
-          sudo apt install restic
+          sudo apt install e2fsprogs restic
       - name: Check formatting with ruff format
         run: |
           uv run ruff format --check
