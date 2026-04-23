@@ -12,6 +12,23 @@ from butter_backup import config_parser as cp
 
 SUCCESS_CODES = {0, None}
 
+EXAMPLES_DIR = Path(__file__).parent.parent.parent / "examples"
+
+
+@pytest.mark.parametrize(
+    "example_file",
+    [
+        EXAMPLES_DIR / "example.json",
+        EXAMPLES_DIR / "example.json5",
+        EXAMPLES_DIR / "example.toml",
+        EXAMPLES_DIR / "example.yaml",
+    ],
+)
+def test_example_files_can_be_parsed(example_file: Path) -> None:
+    content = example_file.read_text()
+    result = cp.parse_configuration(content)
+    assert len(result) > 0
+
 
 def test_parse_configuration_rejects_empty_list() -> None:
     with pytest.raises(SystemExit) as sysexit:
