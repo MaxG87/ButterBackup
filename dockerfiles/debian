@@ -3,7 +3,7 @@ FROM debian:trixie-slim
 # Provide excecutables
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update \
-    && apt install -y btrfs-progs cryptsetup make python3 pipx restic rsync sudo \
+    && apt install -y btrfs-progs cryptsetup e2fsprogs make python3 pipx restic rsync sudo \
     && apt autoclean
 
 ENV PATH="/root/.local/bin:$PATH"

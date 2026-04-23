@@ -3,7 +3,7 @@ FROM python:3.10
 # Provide excecutables
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update && \
-    apt install -y btrfs-progs cryptsetup make restic rsync sudo && \
+    apt install -y btrfs-progs cryptsetup e2fsprogs make restic rsync sudo && \
     apt autoclean
 
 # Setup uv

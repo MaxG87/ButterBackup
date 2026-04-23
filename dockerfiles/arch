@@ -9,6 +9,7 @@ RUN pacman-key --populate archlinux
 RUN pacman -Sy --noconfirm \
     btrfs-progs \
     cryptsetup \
+    e2fsprogs \
     make \
     python \
     python-pipx \
