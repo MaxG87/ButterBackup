@@ -104,7 +104,15 @@ VERBOSITY_OPTION = typer.Option(0, "--verbose", "-v", count=True)
 
 @app.command()
 def open(  # noqa: A001
-    config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION
+    config: Path = CONFIG_OPTION,
+    dest_dir: Path | None = typer.Argument(  # noqa: B008
+        None,
+        exists=True,
+        file_okay=False,
+        help="Optionaler Pfad zu einem leeren Verzeichnis. Jedes Gerät wird in einem"
+        " Unterordner mit dem Namen des Geräts geöffnet.",
+    ),
+    verbose: int = VERBOSITY_OPTION,
 ) -> None:
     """
     Öffne alle in der Konfiguration gelisteten Speichermedien
@@ -119,9 +127,19 @@ def open(  # noqa: A001
     kann mit den Daten interagiert werden, z.B. durch Öffnen im Dateibrowser
     oder durch Verwendung von `restic`. Nach erfolgreicher Wiederherstellung
     kann das Speichermedium mit `butter-backup close` wieder entfernt werden.
+
+    Falls DEST_DIR angegeben wird, wird jedes Gerät in einem Unterordner mit
+    dem Namen des Geräts geöffnet. DEST_DIR muss ein leeres Verzeichnis sein.
+    Sind die Gerätenamen nicht eindeutig, werden spätere Geräte übersprungen.
     """
     setup_logging(verbose)
+    if dest_dir is not None and any(dest_dir.iterdir()):
+        raise typer.BadParameter(
+            "Das Zielverzeichnis muss leer sein.",
+            param_hint="'DEST_DIR'",
+        )
     configurations = cp.parse_configuration(config.read_text())
+    seen_names: set[str] = set()
     for cfg in configurations:
         if _skip_device(
             cfg,
@@ -130,7 +148,17 @@ def open(  # noqa: A001
             ),
         ):
             continue
-        mount_dir = Path(mkdtemp())
+        if dest_dir is not None:
+            if cfg.Name in seen_names:
+                logger.error(
+                    f"Gerätename {cfg.Name} ist nicht eindeutig. Das Gerät wird übersprungen."
+                )
+                continue
+            seen_names.add(cfg.Name)
+            mount_dir = dest_dir / cfg.Name
+            mount_dir.mkdir()
+        else:
+            mount_dir = Path(mkdtemp())
         decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
         sdm.mount_btrfs_device(
             decrypted, mount_dir=mount_dir, compression=cfg.Compression

@@ -1,6 +1,8 @@
 import datetime as dt
+import json
 import re
 import time
+import uuid
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from unittest import mock
@@ -415,3 +417,85 @@ def test_unmount_error_does_not_cause_content_deletion(
     assert result.exit_code == 0
     assert not mount_of_device.exists()
     assert sdm.is_mounted(mount_of_device) is False
+
+
+def _make_btrfs_config_json(
+    name: str, device_uuid: uuid.UUID | None = None
+) -> dict[str, object]:
+    """Return a JSON-serialisable dict for a minimal BtrFSRsyncConfig."""
+    if device_uuid is None:
+        device_uuid = uuid.uuid4()
+    return {
+        "BackupRepositoryFolder": "repo",
+        "DevicePassCmd": "echo pass",
+        "Files": [],
+        "FilesDest": "files",
+        "Folders": {},
+        "Name": name,
+        "UUID": str(device_uuid),
+    }
+
+
+def test_open_refuses_non_empty_dest_dir(runner, tmp_path) -> None:
+    dest_dir = tmp_path / "dest"
+    dest_dir.mkdir()
+    (dest_dir / "some_file").touch()
+
+    config_file = tmp_path / "config.json"
+    config_file.write_text(json.dumps([_make_btrfs_config_json("Device")]))
+
+    result = runner.invoke(app, ["open", "--config", str(config_file), str(dest_dir)])
+    assert result.exit_code != 0
+
+
+def test_open_with_dest_dir_mounts_to_named_subdir(runner, mocker, tmp_path) -> None:
+    device_name = "TestDevice"
+    dest_dir = tmp_path / "dest"
+    dest_dir.mkdir()
+
+    config_file = tmp_path / "config.json"
+    config_file.write_text(json.dumps([_make_btrfs_config_json(device_name)]))
+
+    mocker.patch("butter_backup.cli._skip_device", return_value=False)
+    mocker.patch(
+        "storage_device_managers.open_encrypted_device",
+        return_value=Path("/dev/mapper/fake"),
+    )
+    mocker.patch("storage_device_managers.mount_btrfs_device")
+
+    result = runner.invoke(app, ["open", "--config", str(config_file), str(dest_dir)])
+
+    assert result.exit_code == 0
+    assert (dest_dir / device_name).is_dir()
+    assert str(dest_dir / device_name) in result.stdout
+
+
+def test_open_with_dest_dir_skips_duplicate_names(runner, mocker, tmp_path) -> None:
+    device_name = "SameDevice"
+    dest_dir = tmp_path / "dest"
+    dest_dir.mkdir()
+
+    config_file = tmp_path / "config.json"
+    config_file.write_text(
+        json.dumps(
+            [
+                _make_btrfs_config_json(device_name),
+                _make_btrfs_config_json(device_name),
+            ]
+        )
+    )
+
+    mocker.patch("butter_backup.cli._skip_device", return_value=False)
+    mocker.patch(
+        "storage_device_managers.open_encrypted_device",
+        return_value=Path("/dev/mapper/fake"),
+    )
+    mocker.patch("storage_device_managers.mount_btrfs_device")
+
+    result = runner.invoke(app, ["open", "--config", str(config_file), str(dest_dir)])
+
+    assert result.exit_code == 0
+    # First device opened, second skipped: only one named subdir exists
+    assert list(dest_dir.iterdir()) == [dest_dir / device_name]
+    # ERROR message must appear in stderr
+    assert device_name in result.stderr
