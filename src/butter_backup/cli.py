@@ -109,7 +109,7 @@ def open(  # noqa: A001
         None,
         exists=True,
         file_okay=False,
-        help="Optionaler Pfad zu einem leeren Verzeichnis. Jedes Gerät wird in einem"
+        help="Optionaler Pfad zu einem Verzeichnis. Jedes Gerät wird in einem"
         " Unterordner mit dem Namen des Geräts geöffnet.",
     ),
     verbose: int = VERBOSITY_OPTION,
@@ -129,15 +129,11 @@ def open(  # noqa: A001
     kann das Speichermedium mit `butter-backup close` wieder entfernt werden.
 
     Falls DEST_DIR angegeben wird, wird jedes Gerät in einem Unterordner mit
-    dem Namen des Geräts geöffnet. DEST_DIR muss ein leeres Verzeichnis sein.
-    Sind die Gerätenamen nicht eindeutig, werden spätere Geräte übersprungen.
+    dem Namen des Geräts geöffnet. Ist der Unterordner bereits vorhanden und
+    nicht leer, wird das Gerät übersprungen. Sind die Gerätenamen nicht
+    eindeutig, werden spätere Geräte übersprungen.
     """
     setup_logging(verbose)
-    if dest_dir is not None and any(dest_dir.iterdir()):
-        raise typer.BadParameter(
-            "Das Zielverzeichnis muss leer sein.",
-            param_hint="'DEST_DIR'",
-        )
     configurations = cp.parse_configuration(config.read_text())
     seen_names: set[str] = set()
     for cfg in configurations:
@@ -156,7 +152,12 @@ def open(  # noqa: A001
                 continue
             seen_names.add(cfg.Name)
             mount_dir = dest_dir / cfg.Name
-            mount_dir.mkdir()
+            if mount_dir.exists() and any(mount_dir.iterdir()):
+                logger.warning(
+                    f"Zielordner {mount_dir} ist nicht leer. Das Gerät {cfg.Name} wird übersprungen."
+                )
+                continue
+            mount_dir.mkdir(exist_ok=True)
         else:
             mount_dir = Path(mkdtemp())
         decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)

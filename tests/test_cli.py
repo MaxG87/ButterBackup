@@ -436,16 +436,29 @@ def _make_btrfs_config_json(
     }
 
 
-def test_open_refuses_non_empty_dest_dir(runner, tmp_path) -> None:
+def test_open_with_dest_dir_skips_non_empty_device_folder(
+    runner, mocker, tmp_path
+) -> None:
+    device_name = "TestDevice"
     dest_dir = tmp_path / "dest"
     dest_dir.mkdir()
-    (dest_dir / "some_file").touch()
+    device_folder = dest_dir / device_name
+    device_folder.mkdir()
+    (device_folder / "existing_file").touch()
 
     config_file = tmp_path / "config.json"
-    config_file.write_text(json.dumps([_make_btrfs_config_json("Device")]))
+    config_file.write_text(json.dumps([_make_btrfs_config_json(device_name)]))
+
+    mocker.patch("butter_backup.cli._skip_device", return_value=False)
+    mocker.patch("storage_device_managers.open_encrypted_device")
+    mocker.patch("storage_device_managers.mount_btrfs_device")
 
     result = runner.invoke(app, ["open", "--config", str(config_file), str(dest_dir)])
-    assert result.exit_code != 0
+
+    assert result.exit_code == 0
+    # Device was skipped: no mount was attempted
+    sdm.open_encrypted_device.assert_not_called()  # type: ignore[attr-defined]
+    assert device_name in result.stderr
 
 
 def test_open_with_dest_dir_mounts_to_named_subdir(runner, mocker, tmp_path) -> None:
