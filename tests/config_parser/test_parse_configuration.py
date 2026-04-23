@@ -81,15 +81,13 @@ def test_parse_configuration_parses_btrfs_config(
 
 
 @given(
-    backup_dest_dirs=st.lists(st.text(), min_size=2, max_size=2, unique=True),
     backup_repository_folder=st.text(),
     device_pass_cmd=st.text(),
     name=st.text(),
     repository_pass_cmd=st.text(),
     uuid=st.uuids(),
 )
-def test_load_configuration_parses_restic_config(  # noqa: PLR0913
-    backup_dest_dirs: list[str],
+def test_load_configuration_parses_restic_config(
     backup_repository_folder: str,
     device_pass_cmd: str,
     name: str,
