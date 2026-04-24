@@ -4,17 +4,16 @@ import tomllib
 import uuid
 from collections import Counter
 from pathlib import Path
-from typing import Annotated, Any, ClassVar
+from typing import Any, ClassVar
 
 import json5
 import yaml
 from pydantic import (
-    AfterValidator,
     BaseModel,
     ConfigDict,
     DirectoryPath,
     FilePath,
-    TypeAdapter,
+    RootModel,
     field_validator,
     model_validator,
 )
@@ -146,17 +145,18 @@ class ResticConfig(BaseConfig):
 Configuration = BtrFSRsyncConfig | ResticConfig
 
 
-def _check_unique_names(configs: list[Configuration]) -> list[Configuration]:
-    name_counts = Counter(cfg.Name for cfg in configs)
-    duplicates = [name for name, count in name_counts.items() if count > 1]
-    if duplicates:
-        raise ValueError(
-            f"Duplikate in Gerätenamen entdeckt. Folgende Namen kommen doppelt vor: {' '.join(duplicates)}"
-        )
-    return configs
+class ConfigurationList(RootModel[list[Configuration]]):
+    root: list[Configuration]
 
-
-ConfigurationList = Annotated[list[Configuration], AfterValidator(_check_unique_names)]
+    @model_validator(mode="after")
+    def check_unique_names(self) -> "ConfigurationList":
+        name_counts = Counter(cfg.Name for cfg in self.root)
+        duplicates = [name for name, count in name_counts.items() if count > 1]
+        if duplicates:
+            raise ValueError(
+                f"Duplikate in Gerätenamen entdeckt. Folgende Namen kommen doppelt vor: {' '.join(duplicates)}"
+            )
+        return self
 
 
 def _parse_as_json(content: str) -> Any:
@@ -185,16 +185,14 @@ _PARSERS: list[tuple[Any, type[Exception] | tuple[type[Exception], ...]]] = [
 
 
 def parse_configuration(content: str) -> list[Configuration]:
-    ConfigList = TypeAdapter(ConfigurationList)
-
     for parse_fn, exc_type in _PARSERS:
         try:
             raw = parse_fn(content)
         except exc_type:
             continue
-        config_lst = ConfigList.validate_python(raw)
-        if len(config_lst) == 0:
+        config_lst = ConfigurationList.model_validate(raw)
+        if len(config_lst.root) == 0:
             sys.exit("Leere Konfigurationsdateien sind nicht erlaubt.\n")
-        return config_lst
+        return config_lst.root
 
     sys.exit("Konfigurationsdatei konnte nicht gelesen werden.\n")
