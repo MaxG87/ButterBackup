@@ -4,11 +4,12 @@ import tomllib
 import uuid
 from collections import Counter
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import Annotated, Any, ClassVar
 
 import json5
 import yaml
 from pydantic import (
+    AfterValidator,
     BaseModel,
     ConfigDict,
     DirectoryPath,
@@ -145,6 +146,19 @@ class ResticConfig(BaseConfig):
 Configuration = BtrFSRsyncConfig | ResticConfig
 
 
+def _check_unique_names(configs: list[Configuration]) -> list[Configuration]:
+    name_counts = Counter(cfg.Name for cfg in configs)
+    duplicates = [name for name, count in name_counts.items() if count > 1]
+    if duplicates:
+        raise ValueError(
+            f"Duplikate in Gerätenamen entdeckt. Folgende Namen kommen doppelt vor: {' '.join(duplicates)}"
+        )
+    return configs
+
+
+ConfigurationList = Annotated[list[Configuration], AfterValidator(_check_unique_names)]
+
+
 def _parse_as_json(content: str) -> Any:
     return json.loads(content)
 
@@ -171,7 +185,7 @@ _PARSERS: list[tuple[Any, type[Exception] | tuple[type[Exception], ...]]] = [
 
 
 def parse_configuration(content: str) -> list[Configuration]:
-    ConfigList = TypeAdapter(list[Configuration])
+    ConfigList = TypeAdapter(ConfigurationList)
 
     for parse_fn, exc_type in _PARSERS:
         try:

@@ -31,6 +31,21 @@ def test_example_files_can_be_parsed(example_file: Path) -> None:
     assert [cfg.Name for cfg in result] == expected_names
 
 
+def test_parse_configuration_rejects_duplicate_names() -> None:
+    with TemporaryDirectory() as source:
+        cfg = cp.ResticConfig(
+            BackupRepositoryFolder="some-repo",
+            DevicePassCmd="echo pass",
+            FilesAndFolders={Path(source)},
+            Name="duplicate-name",
+            RepositoryPassCmd="echo repo-pass",
+            UUID="12345678-1234-5678-1234-567812345678",
+        )
+        cfg_json = cfg.model_dump_json()
+        with pytest.raises(ValidationError):
+            cp.parse_configuration(f"[{cfg_json}, {cfg_json}]")
+
+
 def test_parse_configuration_rejects_empty_list() -> None:
     with pytest.raises(SystemExit) as sysexit:
         cp.parse_configuration("[]")
