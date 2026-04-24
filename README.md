@@ -69,6 +69,67 @@ Hier steht nach `butter-backup open` nur ein einzelnes Verzeichnis zur
 Verfügung, in dem alle Sicherungskopien von `restic` enthalten sind. Der
 Zugriff auf einzelne Sicherungskopien erfolgt über die `restic`-Kommandozeile.
 
+## Konfigurationsdateien
+
+### Erlaubte Dateiformate
+
+ButterBackup akzeptiert Konfigurationsdateien in den folgenden Formaten:
+
+- **JSON** – Standard-JSON ohne Kommentare
+- **JSON5** – JSON-Erweiterung mit Kommentaren und abschließenden Kommas
+- **TOML** – die Gerätekonfigurationen müssen unter dem Schlüssel
+  `[[DEVICE_CONFIGURATION]]` abgelegt werden
+- **YAML** – Standard-YAML
+
+Beispielkonfigurationen für alle vier Formate befinden sich im Verzeichnis
+`examples/`.
+
+### Aufbau und Einschränkungen
+
+Eine Konfigurationsdatei enthält eine **nicht-leere Liste** von
+Gerätekonfigurationen. Jede Konfiguration beschreibt genau ein
+Sicherungsgerät und gehört zu einem der beiden verfügbaren Module
+(BtrFSRsync oder Restic).
+
+Folgende Einschränkungen gelten für die gesamte Liste:
+
+- Die Liste darf **nicht leer** sein.
+- Das Feld `Name` muss innerhalb der Liste **eindeutig** sein.
+
+#### Gemeinsame Felder
+
+Alle Gerätekonfigurationen teilen die folgenden Felder:
+
+| Feld                     | Pflichtfeld | Beschreibung                                                                                                                                                         |
+| ------------------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UUID`                   | ja          | UUID des Sicherungsgeräts                                                                                                                                            |
+| `DevicePassCmd`          | ja          | Shell-Befehl, der das Passwort zur Geräteverschlüsselung ausgibt                                                                                                     |
+| `BackupRepositoryFolder` | ja          | Name des Verzeichnisses auf dem Gerät, in das gesichert wird                                                                                                         |
+| `Name`                   | nein        | Anzeigename der Konfiguration; muss ein gültiger Pfadbestandteil sein (kein `/`, kein Nullbyte, nicht `.` oder `..`); wird auf `UUID` gesetzt, falls nicht angegeben |
+| `Compression`            | nein        | Gewünschte BtrFS-Kompression, z.B. `zstd:3` (Standard: keine)                                                                                                        |
+| `ExcludePatternsFile`    | nein        | Pfad zu einer Datei mit Ausschlussmustern                                                                                                                            |
+
+#### BtrFSRsync-spezifische Felder
+
+| Feld        | Pflichtfeld | Beschreibung                                                               |
+| ----------- | ----------- | -------------------------------------------------------------------------- |
+| `Folders`   | ja          | Zuordnung von Quellverzeichnissen zu Zielverzeichnisnamen auf dem Gerät    |
+| `Files`     | ja          | Menge von Quelldateien, die einzeln gesichert werden sollen                |
+| `FilesDest` | ja          | Zielverzeichnisname auf dem Gerät, in den die Einzeldateien kopiert werden |
+
+Für das BtrFSRsync-Modul gelten zusätzlich folgende Einschränkungen:
+
+- Die Dateinamen aller Einträge in `Files` müssen **eindeutig** sein.
+- Die Zielverzeichnisnamen in `Folders` müssen **eindeutig** sein.
+- `FilesDest` darf **nicht** mit einem Zielverzeichnisnamen aus `Folders`
+  übereinstimmen.
+
+#### Restic-spezifische Felder
+
+| Feld                | Pflichtfeld | Beschreibung                                                     |
+| ------------------- | ----------- | ---------------------------------------------------------------- |
+| `FilesAndFolders`   | ja          | Menge von Quelldateien und -verzeichnissen, die gesichert werden |
+| `RepositoryPassCmd` | ja          | Shell-Befehl, der das Passwort des Restic-Repositorys ausgibt    |
 
 ## Gefährdungsszenario
 
@@ -123,7 +184,6 @@ Testsuite direkt auszuführen. Dies ist wird im Abschnitt "schnell" erläutert.
 Spätestens vor einem Release sollten aber auch die distributionsübergreifenden
 Tests ausgeführt werden, da diese garantieren, dass ButterBackup auch unter
 Arch und allen unterstützten Pythonversionen funktioniert.
-
 
 ### Schnell
 
