@@ -31,19 +31,61 @@ def test_example_files_can_be_parsed(example_file: Path) -> None:
     assert [cfg.Name for cfg in result] == expected_names
 
 
-def test_parse_configuration_rejects_duplicate_names() -> None:
+@given(
+    backup_dest_dirs=st.lists(st.text(), min_size=2, max_size=2, unique=True),
+    backup_repository_folder=st.text(),
+    name=st.text(),
+    pass_cmd=st.text(),
+    uuid=st.uuids(),
+)
+def test_parse_configuration_rejects_duplicate_names_for_brfs_rsync(
+    backup_dest_dirs: list[str],
+    backup_repository_folder: str,
+    name: str,
+    pass_cmd: str,
+    uuid: UUID,
+) -> None:
     with TemporaryDirectory() as source:
-        cfg = cp.ResticConfig(
-            BackupRepositoryFolder="some-repo",
-            DevicePassCmd="echo pass",
-            FilesAndFolders={Path(source)},
-            Name="duplicate-name",
-            RepositoryPassCmd="echo repo-pass",
-            UUID="12345678-1234-5678-1234-567812345678",
+        btrfs_cfg = cp.BtrFSRsyncConfig(
+            BackupRepositoryFolder=backup_repository_folder,
+            DevicePassCmd=pass_cmd,
+            Files=set(),
+            FilesDest=backup_dest_dirs[1],
+            Folders={Path(source): backup_dest_dirs[0]},
+            Name=name,
+            UUID=uuid,
         )
-        cfg_json = cfg.model_dump_json()
+        btrfs_cfg_json = btrfs_cfg.model_dump_json()
         with pytest.raises(ValidationError):
-            cp.parse_configuration(f"[{cfg_json}, {cfg_json}]")
+            cp.parse_configuration(f"[{btrfs_cfg_json}, {btrfs_cfg_json}]")
+
+
+@given(
+    backup_repository_folder=st.text(),
+    device_pass_cmd=st.text(),
+    name=st.text(),
+    repository_pass_cmd=st.text(),
+    uuid=st.uuids(),
+)
+def test_parse_configuration_rejects_duplicate_names_for_restic(
+    backup_repository_folder: str,
+    device_pass_cmd: str,
+    name: str,
+    repository_pass_cmd: str,
+    uuid: UUID,
+) -> None:
+    with TemporaryDirectory() as source:
+        restic_cfg = cp.ResticConfig(
+            BackupRepositoryFolder=backup_repository_folder,
+            DevicePassCmd=device_pass_cmd,
+            FilesAndFolders={Path(source)},
+            Name=name,
+            RepositoryPassCmd=repository_pass_cmd,
+            UUID=uuid,
+        )
+        restic_cfg_json = restic_cfg.model_dump_json()
+        with pytest.raises(ValidationError):
+            cp.parse_configuration(f"[{restic_cfg_json}, {restic_cfg_json}]")
 
 
 def test_parse_configuration_rejects_empty_list() -> None:
