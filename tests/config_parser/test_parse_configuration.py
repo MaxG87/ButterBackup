@@ -9,6 +9,7 @@ from hypothesis import strategies as st
 from pydantic import ValidationError
 
 from butter_backup import config_parser as cp
+from tests import hypothesis_utils as hu
 
 SUCCESS_CODES = {0, None}
 
@@ -29,6 +30,63 @@ def test_example_files_can_be_parsed(example_file: Path) -> None:
     result = cp.parse_configuration(content)
     expected_names = ["BtrFS Backup Example", "Restic Backup Example"]
     assert [cfg.Name for cfg in result] == expected_names
+
+
+@given(
+    backup_dest_dirs=st.lists(st.text(), min_size=2, max_size=2, unique=True),
+    backup_repository_folder=st.text(),
+    name=hu.valid_path_components(),
+    pass_cmd=st.text(),
+    uuid=st.uuids(),
+)
+def test_parse_configuration_rejects_duplicate_names_for_btrfs_rsync(
+    backup_dest_dirs: list[str],
+    backup_repository_folder: str,
+    name: str,
+    pass_cmd: str,
+    uuid: UUID,
+) -> None:
+    with TemporaryDirectory() as source:
+        btrfs_cfg = cp.BtrFSRsyncConfig(
+            BackupRepositoryFolder=backup_repository_folder,
+            DevicePassCmd=pass_cmd,
+            Files=set(),
+            FilesDest=backup_dest_dirs[1],
+            Folders={Path(source): backup_dest_dirs[0]},
+            Name=name,
+            UUID=uuid,
+        )
+        btrfs_cfg_json = btrfs_cfg.model_dump_json()
+        with pytest.raises(ValidationError):
+            cp.parse_configuration(f"[{btrfs_cfg_json}, {btrfs_cfg_json}]")
+
+
+@given(
+    backup_repository_folder=st.text(),
+    device_pass_cmd=st.text(),
+    name=hu.valid_path_components(),
+    repository_pass_cmd=st.text(),
+    uuid=st.uuids(),
+)
+def test_parse_configuration_rejects_duplicate_names_for_restic(
+    backup_repository_folder: str,
+    device_pass_cmd: str,
+    name: str,
+    repository_pass_cmd: str,
+    uuid: UUID,
+) -> None:
+    with TemporaryDirectory() as source:
+        restic_cfg = cp.ResticConfig(
+            BackupRepositoryFolder=backup_repository_folder,
+            DevicePassCmd=device_pass_cmd,
+            FilesAndFolders={Path(source)},
+            Name=name,
+            RepositoryPassCmd=repository_pass_cmd,
+            UUID=uuid,
+        )
+        restic_cfg_json = restic_cfg.model_dump_json()
+        with pytest.raises(ValidationError):
+            cp.parse_configuration(f"[{restic_cfg_json}, {restic_cfg_json}]")
 
 
 def test_parse_configuration_rejects_empty_list() -> None:
@@ -55,7 +113,7 @@ def test_parse_configuration_warns_on_non_dict_item() -> None:
 @given(
     backup_dest_dirs=st.lists(st.text(), min_size=2, max_size=2, unique=True),
     backup_repository_folder=st.text(),
-    name=st.text(),
+    name=hu.valid_path_components(),
     pass_cmd=st.text(),
     uuid=st.uuids(),
 )
@@ -83,7 +141,7 @@ def test_parse_configuration_parses_btrfs_config(
 @given(
     backup_repository_folder=st.text(),
     device_pass_cmd=st.text(),
-    name=st.text(),
+    name=hu.valid_path_components(),
     repository_pass_cmd=st.text(),
     uuid=st.uuids(),
 )

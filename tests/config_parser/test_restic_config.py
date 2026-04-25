@@ -10,6 +10,7 @@ from pydantic import ValidationError
 
 from butter_backup import config_parser as cp
 from tests import get_random_filename
+from tests import hypothesis_utils as hu
 
 TEST_RESOURCES = Path(__file__).parent.parent / "resources"
 EXCLUDE_FILE = TEST_RESOURCES / "exclude-file"
@@ -25,6 +26,7 @@ def valid_unparsed_empty_restic_config(draw):
             ExcludePatternsFile=st.just(str(EXCLUDE_FILE)) | st.none(),
             DevicePassCmd=st.text(),
             FilesAndFolders=st.just([]),
+            Name=hu.valid_path_components(),
             RepositoryPassCmd=st.text(),
             UUID=st.uuids(),
         )
@@ -62,7 +64,8 @@ def test_restic_config_name_defaults_to_uuid(base_config) -> None:
 
 
 @given(
-    base_config=valid_unparsed_empty_restic_config(), custom_name=st.text(min_size=1)
+    base_config=valid_unparsed_empty_restic_config(),
+    custom_name=hu.valid_path_components(),
 )
 def test_restic_config_accepts_custom_name(base_config, custom_name: str) -> None:
     base_config["Name"] = custom_name
@@ -92,3 +95,28 @@ def test_restic_config_json_roundtrip(base_config):
             as_json = cfg.model_dump_json()
             deserialised = cp.ResticConfig.model_validate_json(as_json)
     assert cfg == deserialised
+
+
+@pytest.mark.parametrize(
+    "invalid_name",
+    [
+        "foo/bar",
+        "/absolute",
+        ".",
+        "..",
+        "null\x00byte",
+        "",
+    ],
+)
+def test_restic_config_rejects_invalid_name(invalid_name: str) -> None:
+    with TemporaryDirectory() as source:
+        config = {
+            "BackupRepositoryFolder": "repo",
+            "DevicePassCmd": "echo pass",
+            "FilesAndFolders": [source],
+            "Name": invalid_name,
+            "RepositoryPassCmd": "echo repo-pass",
+            "UUID": "12345678-1234-5678-1234-567812345678",
+        }
+        with pytest.raises(ValidationError):
+            cp.ResticConfig.model_validate(config)

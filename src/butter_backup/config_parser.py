@@ -1,9 +1,11 @@
 import json
 import sys
 import tomllib
+import typing as t
 import uuid
 from collections import Counter
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, ClassVar
 
 import json5
@@ -12,8 +14,9 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     DirectoryPath,
+    Field,
     FilePath,
-    TypeAdapter,
+    RootModel,
     field_validator,
     model_validator,
 )
@@ -40,7 +43,7 @@ class BaseConfig(BaseModel):
     ExcludePatternsFile: FilePath | None = None
     UUID: uuid.UUID
     Compression: ValidCompressions | None = None
-    Name: str
+    Name: t.Annotated[str, Field(min_length=1)]
 
     @model_validator(mode="before")
     @classmethod
@@ -59,6 +62,22 @@ class BaseConfig(BaseModel):
             raise ValueError(
                 "Obligatorisches UUID-Feld fehlt in der Konfiguration!"
             ) from None
+
+    @field_validator("Name")
+    @classmethod
+    def name_must_be_valid_path_component(cls, name: str) -> str:
+        with TemporaryDirectory() as tmpdir:
+            test_dir = Path(tmpdir) / name
+            try:
+                test_dir.mkdir()
+            except Exception:
+                # Known exceptions include FileNotFoundError, PermissionError, and
+                # ValueError. To avoid bad surprises with unsuspected exception types,
+                # Pokémon-style exception handling is used.
+                raise ValueError(
+                    f"Name {name!r} ist ungültig, da er nicht als Verzeichnisname verwendet werden kann."
+                ) from None
+        return name
 
     @field_validator("ExcludePatternsFile", mode="before")
     def expand_tilde_in_exclude_patterns_file_name(
@@ -145,6 +164,20 @@ class ResticConfig(BaseConfig):
 Configuration = BtrFSRsyncConfig | ResticConfig
 
 
+class ConfigurationList(RootModel[list[Configuration]]):
+    root: list[Configuration]
+
+    @model_validator(mode="after")
+    def check_unique_names(self) -> "ConfigurationList":
+        name_counts = Counter(cfg.Name for cfg in self.root)
+        duplicates = [name for name, count in name_counts.items() if count > 1]
+        if duplicates:
+            raise ValueError(
+                f"Duplikate in Gerätenamen entdeckt. Folgende Namen kommen doppelt vor: {' '.join(duplicates)}"
+            )
+        return self
+
+
 def _parse_as_json(content: str) -> Any:
     return json.loads(content)
 
@@ -171,16 +204,14 @@ _PARSERS: list[tuple[Any, type[Exception] | tuple[type[Exception], ...]]] = [
 
 
 def parse_configuration(content: str) -> list[Configuration]:
-    ConfigList = TypeAdapter(list[Configuration])
-
     for parse_fn, exc_type in _PARSERS:
         try:
             raw = parse_fn(content)
         except exc_type:
             continue
-        config_lst = ConfigList.validate_python(raw)
-        if len(config_lst) == 0:
+        config_lst = ConfigurationList.model_validate(raw)
+        if len(config_lst.root) == 0:
             sys.exit("Leere Konfigurationsdateien sind nicht erlaubt.\n")
-        return config_lst
+        return config_lst.root
 
     sys.exit("Konfigurationsdatei konnte nicht gelesen werden.\n")

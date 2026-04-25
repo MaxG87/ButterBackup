@@ -112,7 +112,10 @@ def test_btrfs_config_name_defaults_to_uuid(base_config) -> None:
     assert cfg.Name == base_config["UUID"]
 
 
-@given(base_config=valid_unparsed_empty_btrfs_config(), custom_name=st.text(min_size=1))
+@given(
+    base_config=valid_unparsed_empty_btrfs_config(),
+    custom_name=hu.valid_path_components(),
+)
 def test_btrfs_config_accepts_custom_name(base_config, custom_name: str) -> None:
     base_config["Name"] = custom_name
     cfg = cp.BtrFSRsyncConfig.model_validate(base_config)
@@ -204,3 +207,30 @@ def test_btrfs_config_json_roundtrip(base_config, folder_dest: str):
             as_json = cfg.model_dump_json()
             deserialised = cp.BtrFSRsyncConfig.model_validate_json(as_json)
     assert cfg == deserialised
+
+
+@pytest.mark.parametrize(
+    "invalid_name",
+    [
+        "foo/bar",
+        "/absolute",
+        ".",
+        "..",
+        "null\x00byte",
+        "",
+    ],
+)
+def test_btrfs_config_rejects_invalid_name(
+    invalid_name: str,
+) -> None:
+    config = {
+        "BackupRepositoryFolder": "repo",
+        "DevicePassCmd": "echo pass",
+        "Files": [],
+        "FilesDest": "dest",
+        "Folders": {},
+        "Name": invalid_name,
+        "UUID": "12345678-1234-5678-1234-567812345678",
+    }
+    with pytest.raises(ValidationError):
+        cp.BtrFSRsyncConfig.model_validate(config)
