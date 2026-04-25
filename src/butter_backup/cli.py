@@ -122,7 +122,9 @@ def _open_device(cfg: cp.Configuration, base_dir: Path) -> None:
 
 @app.command()
 def open(  # noqa: A001
-    config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION
+    dest: Path | None = typer.Argument(None),  # noqa: B008
+    config: Path = CONFIG_OPTION,
+    verbose: int = VERBOSITY_OPTION,
 ) -> None:
     """
     Öffne alle in der Konfiguration gelisteten Speichermedien
@@ -137,10 +139,14 @@ def open(  # noqa: A001
     kann mit den Daten interagiert werden, z.B. durch Öffnen im Dateibrowser
     oder durch Verwendung von `restic`. Nach erfolgreicher Wiederherstellung
     kann das Speichermedium mit `butter-backup close` wieder entfernt werden.
+
+    Optional kann ein Zielverzeichnis angegeben werden. Wenn angegeben, werden
+    die Speichermedien in Unterverzeichnissen dieses Verzeichnisses gemountet.
+    Andernfalls wird ein temporäres Verzeichnis erstellt.
     """
     setup_logging(verbose)
     configurations = cp.parse_configuration(config.read_text())
-    tmp_dir = Path(mkdtemp())
+    base_dir = dest if dest is not None else Path(mkdtemp())
     for cfg in configurations:
         if _skip_device(
             cfg,
@@ -149,7 +155,7 @@ def open(  # noqa: A001
             ),
         ):
             continue
-        _open_device(cfg, tmp_dir)
+        _open_device(cfg, base_dir)
 
 
 @app.command()
