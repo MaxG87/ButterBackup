@@ -65,10 +65,8 @@ def _get_default_file_system(backend: ValidBackends) -> ValidFileSystems:
             return ValidFileSystems.btrfs
         case ValidBackends.restic:
             return ValidFileSystems.ext4
-    # TODO: Use t.assert_never when Python 3.11 is the minimum version!
-    raise ValueError(
-        f"Unsupported backend: {backend}. Expected one of: {list(ValidBackends)}"
-    )
+        case _:
+            t.assert_never(backend)
 
 
 def _skip_device(
@@ -271,10 +269,7 @@ def format_device(
         case ValidBackends.restic:
             config = prepare_device_for_resticbackend(device, file_system.value)
         case _:
-            # TODO: Use t.assert_never when Python 3.11 is the minimum version!
-            raise ValueError(
-                f"Unsupported backend: {backend}. Expected one of: {list(ValidBackends)}"
-            )
+            t.assert_never(backend)
     json_serialisable = json.loads(config.model_dump_json(exclude_none=True))
     config_writer(json.dumps([json_serialisable], indent=4, sort_keys=True))
 

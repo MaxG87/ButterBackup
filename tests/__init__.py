@@ -31,21 +31,19 @@ def complement_configuration(
         source_dir / "etc" / "fstab",
         source_dir / "cache" / "randomfile.bin",
     }
-    if isinstance(config, cp.BtrFSRsyncConfig):
-        folder_dest_dir = "some-folder-name"
-        return config.model_copy(
-            update={
-                "Folders": {folders_root: folder_dest_dir},
-                "Files": single_files,
-                "FilesDest": "Einzeldateien",
-            }
-        )
-    if isinstance(config, cp.ResticConfig):
-        return config.model_copy(
-            update={"FilesAndFolders": {folders_root}.union(single_files)}
-        )
-    # TODO: Use t.assert_never when Python 3.11 is the minimum version!
-    raise TypeError(
-        f"Unsupported configuration type: {type(config).__name__}. "
-        "Expected BtrFSRsyncConfig or ResticConfig."
-    )
+    match config:
+        case cp.BtrFSRsyncConfig():
+            folder_dest_dir = "some-folder-name"
+            return config.model_copy(
+                update={
+                    "Folders": {folders_root: folder_dest_dir},
+                    "Files": single_files,
+                    "FilesDest": "Einzeldateien",
+                }
+            )
+        case cp.ResticConfig():
+            return config.model_copy(
+                update={"FilesAndFolders": {folders_root}.union(single_files)}
+            )
+        case _:
+            t.assert_never(config)

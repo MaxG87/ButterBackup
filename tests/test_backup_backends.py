@@ -57,38 +57,32 @@ def get_expected_content(
     config: cp.Configuration,
     exclude_to_ignore_file: bool,
 ) -> Counter[bytes] | dict[Path, bytes]:
-    if isinstance(config, cp.BtrFSRsyncConfig):
-        source_dirs = set(config.Folders)
-        source_files = config.Files
-    elif isinstance(config, cp.ResticConfig):
-        source_dirs = {cur for cur in config.FilesAndFolders if cur.is_dir()}
-        source_files = {cur for cur in config.FilesAndFolders if cur.is_file()}
-    else:
-        # TODO: Use t.assert_never when Python 3.11 is the minimum version!
-        raise TypeError(
-            f"Unsupported configuration type: {type(config).__name__}. "
-            "Expected BtrFSRsyncConfig or ResticConfig."
-        )
+    match config:
+        case cp.BtrFSRsyncConfig():
+            source_dirs = set(config.Folders)
+            source_files = config.Files
+        case cp.ResticConfig():
+            source_dirs = {cur for cur in config.FilesAndFolders if cur.is_dir()}
+            source_files = {cur for cur in config.FilesAndFolders if cur.is_file()}
+        case _:
+            t.assert_never(config)
 
     expected_content_dirs = get_expected_content_recursive_dir(
         source_dirs, exclude_to_ignore_file
     )
     expected_content_files = get_expected_content_single_files(source_files)
-    if isinstance(config, cp.BtrFSRsyncConfig):
-        expected_content_files_by_path = {
-            Path(config.FilesDest) / key: value
-            for key, value in expected_content_files.items()
-        }
-        return expected_content_dirs | expected_content_files_by_path
-    elif isinstance(config, cp.ResticConfig):
-        expected_content = expected_content_dirs | expected_content_files
-        return Counter(expected_content.values())
-    else:
-        # TODO: Use t.assert_never when Python 3.11 is the minimum version!
-        raise TypeError(
-            f"Unsupported configuration type: {type(config).__name__}. "
-            "Expected BtrFSRsyncConfig or ResticConfig."
-        )
+    match config:
+        case cp.BtrFSRsyncConfig():
+            expected_content_files_by_path = {
+                Path(config.FilesDest) / key: value
+                for key, value in expected_content_files.items()
+            }
+            return expected_content_dirs | expected_content_files_by_path
+        case cp.ResticConfig():
+            expected_content = expected_content_dirs | expected_content_files
+            return Counter(expected_content.values())
+        case _:
+            t.assert_never(config)
 
 
 def get_expected_content_recursive_dir(
@@ -124,16 +118,13 @@ def get_result_content(config: cp.ResticConfig, mounted: Path) -> Counter[bytes]
 def get_result_content(
     config: cp.Configuration, mounted: Path
 ) -> Counter[bytes] | dict[Path, bytes]:
-    if isinstance(config, cp.BtrFSRsyncConfig):
-        return get_result_content_for_btrfs(config, mounted)
-    elif isinstance(config, cp.ResticConfig):
-        return get_result_content_for_restic(config, mounted)
-    else:
-        # TODO: Use t.assert_never when Python 3.11 is the minimum version!
-        raise TypeError(
-            f"Unsupported configuration type: {type(config).__name__}. "
-            "Expected BtrFSRsyncConfig or ResticConfig."
-        )
+    match config:
+        case cp.BtrFSRsyncConfig():
+            return get_result_content_for_btrfs(config, mounted)
+        case cp.ResticConfig():
+            return get_result_content_for_restic(config, mounted)
+        case _:
+            t.assert_never(config)
 
 
 def get_result_content_for_btrfs(

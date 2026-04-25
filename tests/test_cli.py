@@ -1,6 +1,7 @@
 import datetime as dt
 import re
 import time
+import typing as t
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from unittest import mock
@@ -21,19 +22,13 @@ def in_docker_container() -> bool:
     return Path("/.dockerenv").exists()
 
 
-def prepare_tmp_path(
-    config: cp.BtrFSRsyncConfig | cp.ResticConfig, parent: Path
-) -> None:
+def prepare_tmp_path(config: cp.Configuration, parent: Path) -> None:
     if isinstance(config, cp.BtrFSRsyncConfig):
         prepare_tmp_path_for_btrfs(config, parent)
     elif isinstance(config, cp.ResticConfig):
         prepare_tmp_path_for_restic(config)
     else:
-        # TODO: Use t.assert_never when Python 3.11 is the minimum version!
-        raise TypeError(
-            f"Unsupported configuration type: {type(config).__name__}. "
-            "Expected BtrFSRsyncConfig or ResticConfig."
-        )
+        t.assert_never(config)
 
 
 def prepare_tmp_path_for_btrfs(config: cp.BtrFSRsyncConfig, parent: Path) -> None:
