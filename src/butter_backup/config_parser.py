@@ -1,6 +1,7 @@
 import json
 import sys
 import tomllib
+import typing as t
 import uuid
 from collections import Counter
 from pathlib import Path
@@ -12,6 +13,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     DirectoryPath,
+    Field,
     FilePath,
     RootModel,
     field_validator,
@@ -40,7 +42,7 @@ class BaseConfig(BaseModel):
     ExcludePatternsFile: FilePath | None = None
     UUID: uuid.UUID
     Compression: ValidCompressions | None = None
-    Name: str
+    Name: t.Annotated[str, Field(min_length=1)]
 
     @model_validator(mode="before")
     @classmethod
