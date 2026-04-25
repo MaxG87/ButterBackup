@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import contextlib
 import enum
 import json
 import os
@@ -101,6 +102,24 @@ CONFIG_OPTION = typer.Option(get_default_config_path(), exists=True, dir_okay=Fa
 VERBOSITY_OPTION = typer.Option(0, "--verbose", "-v", count=True)
 
 
+def _open_device(cfg: cp.Configuration, base_dir: Path) -> None:
+    mount_dir = base_dir / cfg.Name
+    mount_dir.mkdir(exist_ok=True)
+    try:
+        decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
+        sdm.mount_btrfs_device(
+            decrypted, mount_dir=mount_dir, compression=cfg.compression()
+        )
+    except:
+        typer.echo(
+            f"Speichermedium {cfg.Name} konnte nicht geöffnet werden. Es wird übersprungen."
+        )
+        with contextlib.suppress(OSError):
+            mount_dir.rmdir()
+    else:
+        typer.echo(f"Speichermedium {cfg.Name} wurde in {mount_dir} geöffnet.")
+
+
 @app.command()
 def open(  # noqa: A001
     config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION
@@ -121,6 +140,7 @@ def open(  # noqa: A001
     """
     setup_logging(verbose)
     configurations = cp.parse_configuration(config.read_text())
+    tmp_dir = Path(mkdtemp())
     for cfg in configurations:
         if _skip_device(
             cfg,
@@ -129,18 +149,7 @@ def open(  # noqa: A001
             ),
         ):
             continue
-        mount_dir = Path(mkdtemp())
-        decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
-        match cfg:
-            case cp.BtrFSRsyncConfig():
-                sdm.mount_btrfs_device(
-                    decrypted, mount_dir=mount_dir, compression=cfg.Compression
-                )
-            case cp.ResticConfig():
-                sdm.mount_btrfs_device(decrypted, mount_dir=mount_dir)
-            case _:
-                t.assert_never(cfg)
-        typer.echo(f"Speichermedium {cfg.Name} wurde in {mount_dir} geöffnet.")
+        _open_device(cfg, tmp_dir)
 
 
 @app.command()
