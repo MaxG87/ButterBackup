@@ -9,6 +9,7 @@ from hypothesis import strategies as st
 from pydantic import ValidationError
 
 from butter_backup import config_parser as cp
+from tests import hypothesis_utils as hu
 
 SUCCESS_CODES = {0, None}
 
@@ -34,11 +35,11 @@ def test_example_files_can_be_parsed(example_file: Path) -> None:
 @given(
     backup_dest_dirs=st.lists(st.text(), min_size=2, max_size=2, unique=True),
     backup_repository_folder=st.text(),
-    name=st.text(),
+    name=hu.valid_path_components(),
     pass_cmd=st.text(),
     uuid=st.uuids(),
 )
-def test_parse_configuration_rejects_duplicate_names_for_brfs_rsync(
+def test_parse_configuration_rejects_duplicate_names_for_btrfs_rsync(
     backup_dest_dirs: list[str],
     backup_repository_folder: str,
     name: str,
@@ -63,7 +64,7 @@ def test_parse_configuration_rejects_duplicate_names_for_brfs_rsync(
 @given(
     backup_repository_folder=st.text(),
     device_pass_cmd=st.text(),
-    name=st.text(),
+    name=hu.valid_path_components(),
     repository_pass_cmd=st.text(),
     uuid=st.uuids(),
 )
@@ -112,7 +113,7 @@ def test_parse_configuration_warns_on_non_dict_item() -> None:
 @given(
     backup_dest_dirs=st.lists(st.text(), min_size=2, max_size=2, unique=True),
     backup_repository_folder=st.text(),
-    name=st.text(),
+    name=hu.valid_path_components(),
     pass_cmd=st.text(),
     uuid=st.uuids(),
 )
@@ -140,7 +141,7 @@ def test_parse_configuration_parses_btrfs_config(
 @given(
     backup_repository_folder=st.text(),
     device_pass_cmd=st.text(),
-    name=st.text(),
+    name=hu.valid_path_components(),
     repository_pass_cmd=st.text(),
     uuid=st.uuids(),
 )

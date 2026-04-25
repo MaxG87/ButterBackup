@@ -5,6 +5,7 @@ import typing as t
 import uuid
 from collections import Counter
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, ClassVar
 
 import json5
@@ -61,6 +62,22 @@ class BaseConfig(BaseModel):
             raise ValueError(
                 "Obligatorisches UUID-Feld fehlt in der Konfiguration!"
             ) from None
+
+    @field_validator("Name")
+    @classmethod
+    def name_must_be_valid_path_component(cls, name: str) -> str:
+        with TemporaryDirectory() as tmpdir:
+            test_dir = Path(tmpdir) / name
+            try:
+                test_dir.mkdir()
+            except Exception:
+                # Known exceptions include FileNotFoundError, PermissionError, and
+                # ValueError. To avoid bad surprises with unsuspected exception types,
+                # Pokémon-style exception handling is used.
+                raise ValueError(
+                    f"Name {name!r} ist ungültig, da er nicht als Verzeichnisname verwendet werden kann."
+                ) from None
+        return name
 
     @field_validator("ExcludePatternsFile", mode="before")
     def expand_tilde_in_exclude_patterns_file_name(

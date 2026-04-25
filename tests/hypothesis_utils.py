@@ -13,3 +13,13 @@ def filenames(draw, min_size=1) -> str:
         )
     )
     return fname
+
+
+@st.composite
+def valid_path_components(draw, min_size=1) -> str:
+    name: str = draw(
+        st.text(min_size=min_size).filter(
+            lambda n: "/" not in n and "\x00" not in n and n not in {".", ".."}
+        )
+    )
+    return name
