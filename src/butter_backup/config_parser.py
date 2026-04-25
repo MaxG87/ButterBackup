@@ -42,7 +42,6 @@ class BaseConfig(BaseModel):
     DevicePassCmd: str
     ExcludePatternsFile: FilePath | None = None
     UUID: uuid.UUID
-    Compression: ValidCompressions | None = None
     Name: t.Annotated[str, Field(min_length=1)]
 
     @model_validator(mode="before")
@@ -99,6 +98,7 @@ class BtrFSRsyncConfig(BaseConfig):
     Files: set[FilePath]
     FilesDest: str
     Folders: FoldersT
+    Compression: ValidCompressions | None = None
     SubvolTimestampFmt: ClassVar[str] = "%F_%H:%M:%S"
 
     @field_validator("Files")

@@ -3,6 +3,7 @@ import enum
 import json
 import os
 import sys
+import typing as t
 from pathlib import Path
 from tempfile import mkdtemp
 from typing import Any, Callable
@@ -132,9 +133,15 @@ def open(  # noqa: A001
             continue
         mount_dir = Path(mkdtemp())
         decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
-        sdm.mount_btrfs_device(
-            decrypted, mount_dir=mount_dir, compression=cfg.Compression
-        )
+        match cfg:
+            case cp.BtrFSRsyncConfig():
+                sdm.mount_btrfs_device(
+                    decrypted, mount_dir=mount_dir, compression=cfg.Compression
+                )
+            case cp.ResticConfig():
+                sdm.mount_btrfs_device(decrypted, mount_dir=mount_dir)
+            case _:
+                t.assert_never(cfg)
         typer.echo(f"Speichermedium {cfg.Name} wurde in {mount_dir} geöffnet.")
 
 
@@ -200,7 +207,14 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> Non
             continue
         backend = bb.BackupBackend.from_config(cfg)
         with sdm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted:
-            with sdm.mounted_device(decrypted, cfg.Compression) as mount_dir:
+            match cfg:
+                case cp.BtrFSRsyncConfig():
+                    compression = cfg.Compression
+                case cp.ResticConfig():
+                    compression = None
+                case _:
+                    t.assert_never(cfg)
+            with sdm.mounted_device(decrypted, compression) as mount_dir:
                 backend.do_backup(mount_dir)
 
 
