@@ -65,6 +65,13 @@ class BaseConfig(BaseModel):
     @field_validator("Name")
     @classmethod
     def name_must_be_valid_path_component(cls, name: str) -> str:
+        if Path(name).is_absolute():
+            # Appending an absolute path to another path would ignore the other path, so
+            # the combined path would point to the first absolute path and not to a
+            # subdirectory of the other path.
+            raise ValueError(
+                f"Name {name!r} ist ungültig, da er ein absoluter Pfad ist."
+            )
         with TemporaryDirectory() as tmpdir:
             test_dir = Path(tmpdir) / name
             try:
