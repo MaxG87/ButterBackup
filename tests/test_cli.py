@@ -214,7 +214,7 @@ def test_open_close_roundtrip(runner, encrypted_device) -> None:
         runner.invoke(app, ["close", "--config", str(config_file)])
         assert not expected_cryptsetup_map.exists()
         assert not sdm.is_mounted(mount_dest)
-        assert not mount_dest.exists()
+        assert mount_dest.exists()  # Target directory should be kept after closing.
 
 
 @pytest.mark.parametrize(
@@ -408,5 +408,5 @@ def test_unmount_error_does_not_cause_content_deletion(
     mocker.stopall()
     result = runner.invoke(app, ["close", "--config", str(config_file)])
     assert result.exit_code == 0
-    assert not mount_of_device.exists()
+    assert mount_of_device.exists()  # Target directory should be kept after closing.
     assert sdm.is_mounted(mount_of_device) is False

@@ -182,7 +182,6 @@ def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None
             mount_dir = next(iter(mount_dirs))
             sdm.unmount_device(mount_dir)
             sdm.close_decrypted_device(Path(mapped_device))
-            mount_dir.rmdir()
 
 
 @app.command()
