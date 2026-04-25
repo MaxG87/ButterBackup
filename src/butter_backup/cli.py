@@ -207,14 +207,7 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> Non
             continue
         backend = bb.BackupBackend.from_config(cfg)
         with sdm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted:
-            match cfg:
-                case cp.BtrFSRsyncConfig():
-                    compression = cfg.Compression
-                case cp.ResticConfig():
-                    compression = None
-                case _:
-                    t.assert_never(cfg)
-            with sdm.mounted_device(decrypted, compression) as mount_dir:
+            with sdm.mounted_device(decrypted, cfg.compression()) as mount_dir:
                 backend.do_backup(mount_dir)
 
 
