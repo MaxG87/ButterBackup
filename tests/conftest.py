@@ -119,8 +119,13 @@ def encrypted_device(request) -> cp.Configuration:
 @pytest.fixture
 def mounted_device(encrypted_device) -> t.Iterator[tuple[cp.Configuration, Path]]:
     config = encrypted_device
+    match config:
+        case cp.BtrFSRsyncConfig():
+            compression = config.Compression
+        case cp.ResticConfig():
+            compression = None
     with sdm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted:
-        with sdm.mounted_device(decrypted, config.Compression) as mounted_device:
+        with sdm.mounted_device(decrypted, compression) as mounted_device:
             if isinstance(config, cp.BtrFSRsyncConfig):
                 # Ensure `FilesDest` is a file, initially. This ensures correct handling
                 # of single files backup, even if an existing backup suffered from the

@@ -74,7 +74,6 @@ def prepare_device_for_resticbackend(
     device_passcmd = sdm.generate_passcmd()
     repository_passcmd = sdm.generate_passcmd()
     backup_repository_folder = "ResticBackupRepository"
-    compression = None  # Restic encrypts and encrypted data are incompressible
     volume_uuid = sdm.encrypt_device(device, device_passcmd)
     user = sh.get_user()
     group = sh.get_group(user)
@@ -95,7 +94,6 @@ def prepare_device_for_resticbackend(
             sdm.chown(mounted, user, group, recursive=True)
     config = cp.ResticConfig(
         BackupRepositoryFolder=backup_repository_folder,
-        Compression=compression,
         DevicePassCmd=device_passcmd,
         FilesAndFolders=set(),
         Name="Restic-Backup",
