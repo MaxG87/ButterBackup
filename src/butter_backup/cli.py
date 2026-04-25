@@ -72,10 +72,10 @@ def _get_default_file_system(backend: ValidBackends) -> ValidFileSystems:
 
 
 def _skip_device(
-    config: cp.BaseConfig,
+    config: cp.Configuration,
     *,
-    log_missing: Callable[[cp.BaseConfig], None] | None = None,
-    log_opened: Callable[[cp.BaseConfig], None] | None = None,
+    log_missing: Callable[[cp.Configuration], None] | None = None,
+    log_opened: Callable[[cp.Configuration], None] | None = None,
 ) -> bool:
     """
     Helper function to determine whether a device should be skipped.
@@ -264,7 +264,7 @@ def format_device(
                 "Zieldatei für ButterBackup-Konfiguration existiert schon!"
             )
         config_writer = config_to.write_text
-    config: cp.BaseConfig
+    config: cp.Configuration
     match backend:
         case ValidBackends.btrfs_rsync:
             config = prepare_device_for_butterbackend(device)
