@@ -24,10 +24,10 @@ logging = [
 dev = [
     "hypothesis>=6.141.1",
     "mypy>=1.19.1",
-    "pdbpp>=0.11.7",
+    "pdbpp>=0.12.1",
     "pytest>=8.4.2",
-    "pytest-cov>=7.0.0",
-    "ruff>=0.14.11",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.15.12",
 ]
 
 [tool.mypy]
