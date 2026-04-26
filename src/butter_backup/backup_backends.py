@@ -11,6 +11,22 @@ from loguru import logger
 from . import config_parser as cp
 
 
+def sync_before_unmount(
+    config: cp.Configuration, decrypted_device: Path, mount_dir: Path
+) -> None:
+    sync_cmd: sh.StrPathList = ["sudo", "sync", "-f", decrypted_device]
+    sh.run_cmd(cmd=sync_cmd)
+    if isinstance(config, cp.BtrFSRsyncConfig):
+        btrfs_sync_cmd: sh.StrPathList = [
+            "sudo",
+            "btrfs",
+            "filesystem",
+            "sync",
+            mount_dir,
+        ]
+        sh.run_cmd(cmd=btrfs_sync_cmd)
+
+
 class BackupBackend(abc.ABC):
     @abc.abstractmethod
     def do_backup(self, mount_dir: Path) -> None: ...

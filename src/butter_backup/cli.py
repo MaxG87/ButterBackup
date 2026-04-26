@@ -180,6 +180,7 @@ def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None
                     "Got several possible mount points. Expected exactly 1!"
                 )
             mount_dir = next(iter(mount_dirs))
+            bb.sync_before_unmount(cfg, Path(mapped_device), mount_dir)
             sdm.unmount_device(mount_dir)
             sdm.close_decrypted_device(Path(mapped_device))
 
@@ -221,6 +222,7 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> Non
         with sdm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted:
             with sdm.mounted_device(decrypted, cfg.compression()) as mount_dir:
                 backend.do_backup(mount_dir)
+                bb.sync_before_unmount(cfg, decrypted, mount_dir)
 
 
 @app.command()

@@ -6,6 +6,7 @@ from collections import Counter
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Iterable, overload
+from unittest import mock
 
 import pytest
 import shell_interface as sh
@@ -315,3 +316,47 @@ def test_do_backup_for_restic_adapts_ownership(
     }
     assert found_user == {expected_user}
     assert found_group == {expected_group}
+
+
+@pytest.mark.parametrize(
+    "config_spec",
+    [cp.BtrFSRsyncConfig, cp.ResticConfig],
+)
+def test_sync_before_unmount_always_calls_sync_on_device(config_spec, mocker) -> None:
+    mock_run_cmd = mocker.patch("butter_backup.backup_backends.sh.run_cmd")
+    config = mock.MagicMock(spec=config_spec)
+    device = Path("/dev/mapper/some-uuid")
+    mount_dir = Path("/mnt/some-mount")
+
+    bb.sync_before_unmount(config, device, mount_dir)
+
+    sync_call = mock.call(cmd=["sudo", "sync", "-f", device])
+    assert sync_call in mock_run_cmd.call_args_list
+
+
+def test_sync_before_unmount_calls_btrfs_sync_for_btrfs_config(mocker) -> None:
+    mock_run_cmd = mocker.patch("butter_backup.backup_backends.sh.run_cmd")
+    config = mock.MagicMock(spec=cp.BtrFSRsyncConfig)
+    device = Path("/dev/mapper/some-uuid")
+    mount_dir = Path("/mnt/some-mount")
+
+    bb.sync_before_unmount(config, device, mount_dir)
+
+    expected_calls = [
+        mock.call(cmd=["sudo", "sync", "-f", device]),
+        mock.call(cmd=["sudo", "btrfs", "filesystem", "sync", mount_dir]),
+    ]
+    assert mock_run_cmd.call_args_list == expected_calls
+
+
+def test_sync_before_unmount_does_not_call_btrfs_sync_for_restic_config(
+    mocker,
+) -> None:
+    mock_run_cmd = mocker.patch("butter_backup.backup_backends.sh.run_cmd")
+    config = mock.MagicMock(spec=cp.ResticConfig)
+    device = Path("/dev/mapper/some-uuid")
+    mount_dir = Path("/mnt/some-mount")
+
+    bb.sync_before_unmount(config, device, mount_dir)
+
+    mock_run_cmd.assert_called_once_with(cmd=["sudo", "sync", "-f", device])
