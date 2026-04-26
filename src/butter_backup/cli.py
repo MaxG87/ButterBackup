@@ -16,6 +16,8 @@ from . import __version__
 from . import backup_backends as bb
 from . import config_parser as cp
 from .device_managers import (
+    decrypted_device,
+    open_encrypted_device,
     prepare_device_for_butterbackend,
     prepare_device_for_resticbackend,
 )
@@ -132,7 +134,7 @@ def open(  # noqa: A001
         ):
             continue
         mount_dir = Path(mkdtemp())
-        decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
+        decrypted = open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
         match cfg:
             case cp.BtrFSRsyncConfig():
                 sdm.mount_btrfs_device(
@@ -206,7 +208,7 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> Non
         ):
             continue
         backend = bb.BackupBackend.from_config(cfg)
-        with sdm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted:
+        with decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted:
             match cfg:
                 case cp.BtrFSRsyncConfig():
                     compression = cfg.Compression

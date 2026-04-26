@@ -1,3 +1,5 @@
+import contextlib
+import subprocess
 import typing as t
 from datetime import date
 from pathlib import Path
@@ -6,6 +8,49 @@ import shell_interface as sh
 import storage_device_managers as sdm
 
 from . import config_parser as cp
+
+
+class DevicePassCmdError(RuntimeError):
+    """Raised when DevicePassCmd fails to execute successfully."""
+
+
+def open_encrypted_device(device: Path, pass_cmd: str) -> Path:
+    """Open an encrypted device, distinguishing pass_cmd failures from decryption failures.
+
+    Unlike sdm.open_encrypted_device, this function raises DevicePassCmdError
+    when the password command itself fails, and DeviceDecryptionError only when
+    the actual decryption (cryptsetup) fails.
+    """
+    map_name = device.name
+    decrypt_cmd = ["sudo", "cryptsetup", "open", str(device), map_name]
+    try:
+        pwd_proc = subprocess.run(
+            pass_cmd, stdout=subprocess.PIPE, shell=True, check=True
+        )
+    except subprocess.CalledProcessError as e:
+        raise DevicePassCmdError(
+            f"DevicePassCmd '{pass_cmd}' failed to execute."
+        ) from e
+    try:
+        subprocess.run(decrypt_cmd, input=pwd_proc.stdout, check=True)
+    except subprocess.CalledProcessError as e:
+        raise sdm.DeviceDecryptionError() from e
+    return Path("/dev/mapper/") / map_name
+
+
+@contextlib.contextmanager
+def decrypted_device(device: Path, pass_cmd: str) -> t.Iterator[Path]:
+    """Context manager that opens and closes an encrypted device.
+
+    Like sdm.decrypted_device, but distinguishes DevicePassCmdError from
+    DeviceDecryptionError.
+    """
+    decrypted = open_encrypted_device(device, pass_cmd)
+    try:
+        yield decrypted
+    finally:
+        sdm.close_decrypted_device(decrypted)
+
 
 ValidFileSystems = t.Literal["ext4", "btrfs"]
 
