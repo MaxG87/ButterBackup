@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.0.0](https://github.com/MaxG87/shell-interface/compare/v1.0.2...v2.0.0) (2026-04-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* Raise dedicated exception on password command failure
+
+### Features
+
+* Raise dedicated exception on password command failure ([d986436](https://github.com/MaxG87/shell-interface/commit/d98643609b70eb2670eba1aae80e1bb1978f8723))
+
+
+### Dependencies
+
+* **dev:** Bump all development dependencies ([9023a79](https://github.com/MaxG87/shell-interface/commit/9023a79e6c5d0b5d538725559eaa8353383a0883))
+
 ## [1.0.2](https://github.com/MaxG87/shell-interface/compare/v1.0.1...v1.0.2) (2026-01-10)
 
 
