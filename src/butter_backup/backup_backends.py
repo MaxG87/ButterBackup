@@ -153,6 +153,11 @@ class ResticBackend(BackupBackend):
         )
         sdm.chown(backup_repository, user, group, recursive=True)
 
+    @staticmethod
+    def sync_filesystem_changes(mount_dir: Path) -> None:
+        sync_cmd: sh.StrPathList = ["sudo", "sync", "-f", mount_dir]
+        sh.run_cmd(cmd=sync_cmd)
+
     def copy_files(self, backup_repository: Path) -> None:
         restic_cmd: sh.StrPathList = [
             "sudo",
@@ -166,3 +171,4 @@ class ResticBackend(BackupBackend):
             restic_cmd.extend(["--exclude-file", self.config.ExcludePatternsFile])
         restic_cmd.extend(list(self.config.FilesAndFolders))
         sh.pipe_pass_cmd_to_real_cmd(self.config.RepositoryPassCmd, restic_cmd)
+        self.sync_filesystem_changes(backup_repository)
