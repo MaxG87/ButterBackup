@@ -20,6 +20,10 @@ StrPathList = List[Union[str, Path]]
 _CMD_LIST = Union[List[str], List[Path], StrPathList]
 
 
+class PassCmdError(RuntimeError):
+    pass
+
+
 class ShellInterfaceError(RuntimeError):
     pass
 
@@ -82,7 +86,8 @@ def pipe_pass_cmd_to_real_cmd(
 
     This function will run the first command in a shell and pipe its output to
     the second command. The first command must be provided as a string, while
-    the second command must be provided as a list of tokens.
+    the second command must be provided as a list of tokens. This allows to take a plain
+    command as input from a user without having to deal with tokenization.
 
     The return code of both commands is checked. If a non-zero return code is
     encountered, a `ShellInterfaceError` is raised.
@@ -102,14 +107,21 @@ def pipe_pass_cmd_to_real_cmd(
 
     Raises:
     -------
+    PassCmdError
+        if the password command returns a non-zero return code
     ShellInterfaceError
-        if either of the commands returns a non-zero return code
+        if the real command returns a non-zero return code
     """
     logger.debug(f"Shell-Befehl ist `{command}`.")
     try:
         pwd_proc = subprocess.run(
             pass_cmd, stdout=subprocess.PIPE, shell=True, check=True
         )
+    except subprocess.CalledProcessError as e:
+        errmsg = f"Shell-Befehl `{pass_cmd}` ist fehlgeschlagen."
+        logger.error(errmsg)
+        raise PassCmdError(errmsg) from e
+    try:
         completed_process = subprocess.run(command, input=pwd_proc.stdout, check=True)
     except subprocess.CalledProcessError as e:
         errmsg = f"Shell-Befehl `{command}` ist fehlgeschlagen."

@@ -47,10 +47,14 @@ def test_pipe_pass_cmd_to_cmd() -> None:
     assert proc.returncode == 0
 
 
-def test_pipe_pass_cmd_to_cmd_breaks_on_failing_pass_cmd() -> None:
+@pytest.mark.parametrize(
+    "failing_cmd",
+    ["false", "(echo some_password;  false)"],
+)
+def test_pipe_pass_cmd_to_cmd_breaks_on_failing_pass_cmd(failing_cmd: str) -> None:
     pass_cmd = "false"
     real_command: sh.StrPathList = ["true"]
-    with pytest.raises(sh.ShellInterfaceError):
+    with pytest.raises(sh.PassCmdError):
         sh.pipe_pass_cmd_to_real_cmd(pass_cmd, real_command)
 
 

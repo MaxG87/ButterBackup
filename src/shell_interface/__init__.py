@@ -1,6 +1,7 @@
 from importlib import metadata
 
 from .shell_interface import (
+    PassCmdError,
     ShellInterfaceError,
     StrPathList,
     get_group,
@@ -11,6 +12,7 @@ from .shell_interface import (
 
 __version__ = metadata.version(__name__)
 __all__ = [
+    "PassCmdError",
     "ShellInterfaceError",
     "StrPathList",
     "get_group",
