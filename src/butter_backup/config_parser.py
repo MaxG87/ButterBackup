@@ -1,3 +1,4 @@
+import abc
 import json
 import sys
 import tomllib
@@ -37,7 +38,7 @@ def path_aware_restic_json_decoding(
     return json.dumps(as_dict)
 
 
-class BaseConfig(BaseModel):
+class BaseConfig(BaseModel, abc.ABC):
     BackupRepositoryFolder: str
     DevicePassCmd: str
     ExcludePatternsFile: FilePath | None = None
@@ -65,6 +66,13 @@ class BaseConfig(BaseModel):
     @field_validator("Name")
     @classmethod
     def name_must_be_valid_path_component(cls, name: str) -> str:
+        if Path(name).is_absolute():
+            # Appending an absolute path to another path would ignore the other path, so
+            # the combined path would point to the first absolute path and not to a
+            # subdirectory of the other path.
+            raise ValueError(
+                f"Name {name!r} ist ungültig, da er ein absoluter Pfad ist."
+            )
         with TemporaryDirectory() as tmpdir:
             test_dir = Path(tmpdir) / name
             try:
@@ -91,6 +99,9 @@ class BaseConfig(BaseModel):
 
     def map_name(self) -> Path:
         return Path(f"/dev/mapper/{self.UUID}")
+
+    @abc.abstractmethod
+    def compression(self) -> ValidCompressions | None: ...
 
 
 class BtrFSRsyncConfig(BaseConfig):
@@ -149,6 +160,9 @@ class BtrFSRsyncConfig(BaseConfig):
         )
         raise ValueError(f"{errmsg_begin} {errmsg_body}")
 
+    def compression(self) -> ValidCompressions | None:
+        return self.Compression
+
 
 class ResticConfig(BaseConfig):
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -159,6 +173,9 @@ class ResticConfig(BaseConfig):
     def expand_tilde_in_sources(cls, files_and_folders) -> set[str]:
         new = {str(Path(src).expanduser()) for src in files_and_folders}
         return new
+
+    def compression(self) -> None:
+        return None
 
 
 Configuration = BtrFSRsyncConfig | ResticConfig

@@ -41,6 +41,7 @@ RUN touch README.md  # Content is not relevant for this Dockerfile
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-install-project
 
+COPY examples/ examples/
 COPY src/ src/
 RUN uv sync --frozen
 

@@ -17,10 +17,7 @@ def format_device(device: Path, file_system: ValidFileSystems) -> None:
         case "btrfs":
             sdm.mkfs_btrfs(device)
         case _:
-            # TODO: Use t.assert_never when Python 3.11 is the minimum version!
-            raise ValueError(
-                f"Unsupported file system {file_system} for Restic backend."
-            )
+            t.assert_never(file_system)
 
 
 def mkfs_ext4(device: Path) -> None:

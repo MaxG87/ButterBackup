@@ -1,6 +1,7 @@
 import datetime as dt
 import re
 import time
+import typing as t
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from unittest import mock
@@ -21,19 +22,13 @@ def in_docker_container() -> bool:
     return Path("/.dockerenv").exists()
 
 
-def prepare_tmp_path(
-    config: cp.BtrFSRsyncConfig | cp.ResticConfig, parent: Path
-) -> None:
+def prepare_tmp_path(config: cp.Configuration, parent: Path) -> None:
     if isinstance(config, cp.BtrFSRsyncConfig):
         prepare_tmp_path_for_btrfs(config, parent)
     elif isinstance(config, cp.ResticConfig):
         prepare_tmp_path_for_restic(config)
     else:
-        # TODO: Use t.assert_never when Python 3.11 is the minimum version!
-        raise TypeError(
-            f"Unsupported configuration type: {type(config).__name__}. "
-            "Expected BtrFSRsyncConfig or ResticConfig."
-        )
+        t.assert_never(config)
 
 
 def prepare_tmp_path_for_btrfs(config: cp.BtrFSRsyncConfig, parent: Path) -> None:
@@ -219,7 +214,59 @@ def test_open_close_roundtrip(runner, encrypted_device) -> None:
         runner.invoke(app, ["close", "--config", str(config_file)])
         assert not expected_cryptsetup_map.exists()
         assert not sdm.is_mounted(mount_dest)
-        assert not mount_dest.exists()
+        assert mount_dest.exists()  # Target directory should be kept after closing.
+
+
+@pytest.mark.parametrize("create_dest_subdir", [True, False])
+@pytest.mark.skipif(
+    in_docker_container(), reason="Test is known to fail in Docker container"
+)
+def test_open_with_explicit_dest(
+    runner, encrypted_device, create_dest_subdir: bool, tmp_path: Path
+) -> None:
+    config = encrypted_device
+    expected_cryptsetup_map = Path(f"/dev/mapper/{config.UUID}")
+    config_file = tmp_path / "config.json"
+    config_file.write_text(f"[{config.model_dump_json()}]")
+    dest_dir = tmp_path / "mounts"
+    dest_dir.mkdir()
+    expected_mount_dir = dest_dir / config.Name
+    if create_dest_subdir:
+        expected_mount_dir.mkdir()
+    open_result = runner.invoke(
+        app, ["open", str(dest_dir), "--config", str(config_file)]
+    )
+    assert open_result.exit_code == 0
+    assert str(expected_mount_dir) in open_result.stdout
+    assert expected_cryptsetup_map.exists()
+    assert expected_mount_dir.exists()
+    mount_destinations = sdm.get_mounted_devices()[str(expected_cryptsetup_map)]
+    assert expected_mount_dir in mount_destinations
+    runner.invoke(app, ["close", "--config", str(config_file)])
+    assert not expected_cryptsetup_map.exists()
+    assert not sdm.is_mounted(expected_mount_dir)
+
+
+@pytest.mark.skipif(
+    in_docker_container(), reason="Test is known to fail in Docker container"
+)
+def test_open_shows_error_on_failure(runner, encrypted_device, tmp_path: Path) -> None:
+    # Use a wrong passphrase so that decryption fails naturally without any mocking.
+    config = encrypted_device.model_copy(
+        update={"DevicePassCmd": "echo wrong_password"}
+    )
+    config_file = tmp_path / "config.json"
+    config_file.write_text(f"[{config.model_dump_json()}]")
+    dest_dir = tmp_path / "mounts"
+    dest_dir.mkdir()
+    open_result = runner.invoke(
+        app, ["open", str(dest_dir), "--config", str(config_file)]
+    )
+    expected_msg = f"Speichermedium {config.Name} konnte nicht geöffnet werden. Es wird übersprungen."
+    assert open_result.exit_code == 0
+    assert expected_msg in open_result.stdout
+    # The empty mount dir should have been cleaned up after the failure
+    assert not (dest_dir / config.Name).exists()
 
 
 @pytest.mark.parametrize(
@@ -413,5 +460,5 @@ def test_unmount_error_does_not_cause_content_deletion(
     mocker.stopall()
     result = runner.invoke(app, ["close", "--config", str(config_file)])
     assert result.exit_code == 0
-    assert not mount_of_device.exists()
+    assert mount_of_device.exists()  # Target directory should be kept after closing.
     assert sdm.is_mounted(mount_of_device) is False

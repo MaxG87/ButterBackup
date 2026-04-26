@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import contextlib
 import enum
 import json
 import os
@@ -65,17 +66,15 @@ def _get_default_file_system(backend: ValidBackends) -> ValidFileSystems:
             return ValidFileSystems.btrfs
         case ValidBackends.restic:
             return ValidFileSystems.ext4
-    # TODO: Use t.assert_never when Python 3.11 is the minimum version!
-    raise ValueError(
-        f"Unsupported backend: {backend}. Expected one of: {list(ValidBackends)}"
-    )
+        case _:
+            t.assert_never(backend)
 
 
 def _skip_device(
-    config: cp.BaseConfig,
+    config: cp.Configuration,
     *,
-    log_missing: Callable[[cp.BaseConfig], None] | None = None,
-    log_opened: Callable[[cp.BaseConfig], None] | None = None,
+    log_missing: Callable[[cp.Configuration], None] | None = None,
+    log_opened: Callable[[cp.Configuration], None] | None = None,
 ) -> bool:
     """
     Helper function to determine whether a device should be skipped.
@@ -103,9 +102,29 @@ CONFIG_OPTION = typer.Option(get_default_config_path(), exists=True, dir_okay=Fa
 VERBOSITY_OPTION = typer.Option(0, "--verbose", "-v", count=True)
 
 
+def _open_device(cfg: cp.Configuration, base_dir: Path) -> None:
+    mount_dir = base_dir / cfg.Name
+    mount_dir.mkdir(exist_ok=True)
+    try:
+        decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
+        sdm.mount_btrfs_device(
+            decrypted, mount_dir=mount_dir, compression=cfg.compression()
+        )
+    except:
+        typer.echo(
+            f"Speichermedium {cfg.Name} konnte nicht geöffnet werden. Es wird übersprungen."
+        )
+        with contextlib.suppress(OSError):
+            mount_dir.rmdir()
+    else:
+        typer.echo(f"Speichermedium {cfg.Name} wurde in {mount_dir} geöffnet.")
+
+
 @app.command()
 def open(  # noqa: A001
-    config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION
+    dest: Path | None = typer.Argument(None),  # noqa: B008
+    config: Path = CONFIG_OPTION,
+    verbose: int = VERBOSITY_OPTION,
 ) -> None:
     """
     Öffne alle in der Konfiguration gelisteten Speichermedien
@@ -120,9 +139,14 @@ def open(  # noqa: A001
     kann mit den Daten interagiert werden, z.B. durch Öffnen im Dateibrowser
     oder durch Verwendung von `restic`. Nach erfolgreicher Wiederherstellung
     kann das Speichermedium mit `butter-backup close` wieder entfernt werden.
+
+    Optional kann ein Zielverzeichnis angegeben werden. Wenn angegeben, werden
+    die Speichermedien in Unterverzeichnissen dieses Verzeichnisses gemountet.
+    Andernfalls wird ein temporäres Verzeichnis erstellt.
     """
     setup_logging(verbose)
     configurations = cp.parse_configuration(config.read_text())
+    base_dir = dest if dest is not None else Path(mkdtemp())
     for cfg in configurations:
         if _skip_device(
             cfg,
@@ -131,18 +155,7 @@ def open(  # noqa: A001
             ),
         ):
             continue
-        mount_dir = Path(mkdtemp())
-        decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
-        match cfg:
-            case cp.BtrFSRsyncConfig():
-                sdm.mount_btrfs_device(
-                    decrypted, mount_dir=mount_dir, compression=cfg.Compression
-                )
-            case cp.ResticConfig():
-                sdm.mount_btrfs_device(decrypted, mount_dir=mount_dir)
-            case _:
-                t.assert_never(cfg)
-        typer.echo(f"Speichermedium {cfg.Name} wurde in {mount_dir} geöffnet.")
+        _open_device(cfg, base_dir)
 
 
 @app.command()
@@ -169,7 +182,6 @@ def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None
             mount_dir = next(iter(mount_dirs))
             sdm.unmount_device(mount_dir)
             sdm.close_decrypted_device(Path(mapped_device))
-            mount_dir.rmdir()
 
 
 @app.command()
@@ -207,14 +219,7 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> Non
             continue
         backend = bb.BackupBackend.from_config(cfg)
         with sdm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted:
-            match cfg:
-                case cp.BtrFSRsyncConfig():
-                    compression = cfg.Compression
-                case cp.ResticConfig():
-                    compression = None
-                case _:
-                    t.assert_never(cfg)
-            with sdm.mounted_device(decrypted, compression) as mount_dir:
+            with sdm.mounted_device(decrypted, cfg.compression()) as mount_dir:
                 backend.do_backup(mount_dir)
 
 
@@ -271,17 +276,14 @@ def format_device(
                 "Zieldatei für ButterBackup-Konfiguration existiert schon!"
             )
         config_writer = config_to.write_text
-    config: cp.BaseConfig
+    config: cp.Configuration
     match backend:
         case ValidBackends.btrfs_rsync:
             config = prepare_device_for_butterbackend(device)
         case ValidBackends.restic:
             config = prepare_device_for_resticbackend(device, file_system.value)
         case _:
-            # TODO: Use t.assert_never when Python 3.11 is the minimum version!
-            raise ValueError(
-                f"Unsupported backend: {backend}. Expected one of: {list(ValidBackends)}"
-            )
+            t.assert_never(backend)
     json_serialisable = json.loads(config.model_dump_json(exclude_none=True))
     config_writer(json.dumps([json_serialisable], indent=4, sort_keys=True))
 
