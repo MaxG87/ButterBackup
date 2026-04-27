@@ -339,12 +339,8 @@ def test_format_device_creates_expected_file_system(
     assert len(config_lst) == 1
     config = config_lst[0]
     with sdm.decrypted_device(big_file, config.DevicePassCmd) as decrypted:
-        blkid_result = sh.run_cmd(
-            cmd=["sudo", "blkid", "-o", "value", "-s", "TYPE", str(decrypted)],
-            capture_output=True,
-        )
-    actual_fs = blkid_result.stdout.decode().strip()
-    assert actual_fs == file_system
+        result_fs = sdm.get_filesystem(decrypted)
+    assert result_fs == file_system
 
 
 @pytest.mark.parametrize("backend", ["restic", "btrfs-rsync"])
