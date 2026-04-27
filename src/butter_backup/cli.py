@@ -169,17 +169,16 @@ def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None
     configurations = cp.parse_configuration(config.read_text())
     mounted_devices = sdm.get_mounted_devices()
     for cfg in configurations:
-        mapped_device = str(cfg.map_name())
-        if cfg.device().exists() and mapped_device in mounted_devices:
-            mount_dirs = mounted_devices[mapped_device]
+        map_name = cfg.map_name()
+        if cfg.device().exists() and str(map_name) in mounted_devices:
+            mount_dirs = mounted_devices[str(map_name)]
             if len(mount_dirs) != 1:
                 # TODO introduce custom exception
                 raise ValueError(
                     "Got several possible mount points. Expected exactly 1!"
                 )
-            mount_dir = next(iter(mount_dirs))
-            sdm.unmount_device(mount_dir)
-            sdm.close_decrypted_device(Path(mapped_device))
+            sdm.unmount_device(map_name)
+            sdm.close_decrypted_device(map_name)
 
 
 @app.command()
