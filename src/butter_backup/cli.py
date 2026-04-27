@@ -107,9 +107,7 @@ def _open_device(cfg: cp.Configuration, base_dir: Path) -> None:
     mount_dir.mkdir(exist_ok=True)
     try:
         decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
-        sdm.mount_btrfs_device(
-            decrypted, mount_dir=mount_dir, compression=cfg.compression()
-        )
+        sdm.mount_device(decrypted, mount_dir=mount_dir, compression=cfg.compression())
     except:
         typer.echo(
             f"Speichermedium {cfg.Name} konnte nicht geöffnet werden. Es wird übersprungen."
