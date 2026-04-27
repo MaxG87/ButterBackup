@@ -170,13 +170,18 @@ def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None
     mounted_devices = sdm.get_mounted_devices()
     for cfg in configurations:
         map_name = cfg.map_name()
-        if cfg.device().exists() and str(map_name) in mounted_devices:
-            mount_dirs = mounted_devices[str(map_name)]
-            if len(mount_dirs) != 1:
-                # TODO introduce custom exception
-                raise ValueError(
-                    "Got several possible mount points. Expected exactly 1!"
+        map_name_as_str = str(map_name)
+        if cfg.device().exists() and map_name_as_str in mounted_devices:
+            mount_dirs = mounted_devices[map_name_as_str]
+            num_mount_dirs = len(mount_dirs)
+            if num_mount_dirs != 1:
+                logger.error(
+                    "Got {num_mount_dirs} mount points for device {device}. Expected"
+                    " exactly 1! Skipping device.",
+                    num_mount_dirs=num_mount_dirs,
+                    device=cfg.Name,
                 )
+                continue
             sdm.unmount_device(map_name)
             sdm.close_decrypted_device(map_name)
 
