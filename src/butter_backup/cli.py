@@ -107,9 +107,7 @@ def _open_device(cfg: cp.Configuration, base_dir: Path) -> None:
     mount_dir.mkdir(exist_ok=True)
     try:
         decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
-        sdm.mount_btrfs_device(
-            decrypted, mount_dir=mount_dir, compression=cfg.compression()
-        )
+        sdm.mount_device(decrypted, mount_dir=mount_dir, compression=cfg.compression())
     except:
         typer.echo(
             f"Speichermedium {cfg.Name} konnte nicht geöffnet werden. Es wird übersprungen."
@@ -171,17 +169,21 @@ def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None
     configurations = cp.parse_configuration(config.read_text())
     mounted_devices = sdm.get_mounted_devices()
     for cfg in configurations:
-        mapped_device = str(cfg.map_name())
-        if cfg.device().exists() and mapped_device in mounted_devices:
-            mount_dirs = mounted_devices[mapped_device]
-            if len(mount_dirs) != 1:
-                # TODO introduce custom exception
-                raise ValueError(
-                    "Got several possible mount points. Expected exactly 1!"
+        map_name = cfg.map_name()
+        map_name_as_str = str(map_name)
+        if cfg.device().exists() and map_name_as_str in mounted_devices:
+            mount_dirs = mounted_devices[map_name_as_str]
+            num_mount_dirs = len(mount_dirs)
+            if num_mount_dirs != 1:
+                logger.error(
+                    "Got {num_mount_dirs} mount points for device {device}. Expected"
+                    " exactly 1! Skipping device.",
+                    num_mount_dirs=num_mount_dirs,
+                    device=cfg.Name,
                 )
-            mount_dir = next(iter(mount_dirs))
-            sdm.unmount_device(mount_dir)
-            sdm.close_decrypted_device(Path(mapped_device))
+                continue
+            sdm.unmount_device(map_name)
+            sdm.close_decrypted_device(map_name)
 
 
 @app.command()

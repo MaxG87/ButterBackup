@@ -2,9 +2,9 @@ FROM python:3.12
 
 # Provide excecutables
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt update && \
-    apt install -y btrfs-progs cryptsetup e2fsprogs make restic rsync sudo && \
-    apt autoclean
+RUN apt update \
+    && apt install -y btrfs-progs cryptsetup e2fsprogs git make python3 pipx restic rsync sudo \
+    && apt autoclean
 
 # Setup uv
 ENV UV_VERSION=0.10.12
