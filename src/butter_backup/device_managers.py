@@ -10,21 +10,6 @@ from . import config_parser as cp
 ValidFileSystems = t.Literal["ext4", "btrfs"]
 
 
-def format_device(device: Path, file_system: ValidFileSystems) -> None:
-    match file_system:
-        case "ext4":
-            mkfs_ext4(device)
-        case "btrfs":
-            sdm.mkfs_btrfs(device)
-        case _:
-            t.assert_never(file_system)
-
-
-def mkfs_ext4(device: Path) -> None:
-    mkfs_cmd: sh.StrPathList = ["sudo", "mkfs.ext4", "-F", device]
-    sh.run_cmd(cmd=mkfs_cmd)
-
-
 def prepare_device_for_butterbackend(device: Path) -> cp.BtrFSRsyncConfig:
     password_cmd = sdm.generate_passcmd()
     backup_repository_folder = "ButterBackupRepository"
@@ -33,7 +18,7 @@ def prepare_device_for_butterbackend(device: Path) -> cp.BtrFSRsyncConfig:
     user = sh.get_user()
     group = sh.get_group(user)
     with sdm.decrypted_device(device, password_cmd) as decrypted:
-        format_device(decrypted, "btrfs")
+        sdm.mkfs(decrypted, "btrfs")
         with sdm.mounted_device(decrypted) as mounted:
             backup_repository = mounted / backup_repository_folder
             mkdir_cmd: sh.StrPathList = ["sudo", "mkdir", backup_repository]
@@ -75,7 +60,7 @@ def prepare_device_for_resticbackend(
     user = sh.get_user()
     group = sh.get_group(user)
     with sdm.decrypted_device(device, device_passcmd) as decrypted:
-        format_device(decrypted, file_system)
+        sdm.mkfs(decrypted, file_system)
         with sdm.mounted_device(decrypted) as mounted:
             backup_repo = mounted / backup_repository_folder
             mkdir_repo: sh.StrPathList = ["sudo", "mkdir", backup_repo]
