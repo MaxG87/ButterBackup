@@ -57,7 +57,6 @@ class BtrFSRsyncBackend(BackupBackend):
         files_dest.mkdir(parents=True, exist_ok=True)
         for src in self.config.Files:
             self.rsync_file(src, files_dest)
-        self.sync_filesystem_changes(mount_dir)
 
     @staticmethod
     def get_source_snapshot(root: Path) -> Path:
@@ -108,10 +107,6 @@ class BtrFSRsyncBackend(BackupBackend):
         cmd: sh.StrPathList = ["sudo", "rsync", "-ax", "--inplace", src, dest]
         sh.run_cmd(cmd=cmd)
 
-    @staticmethod
-    def sync_filesystem_changes(mount_dir: Path) -> None:
-        sync_cmd: sh.StrPathList = ["sudo", "btrfs", "filesystem", "sync", mount_dir]
-        sh.run_cmd(cmd=sync_cmd)
 
     @staticmethod
     def rsync_folder(
