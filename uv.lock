@@ -60,7 +60,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "rich", marker = "extra == 'all'", specifier = ">=13.9.4" },
     { name = "shell-interface", specifier = ">=1.0.2" },
-    { name = "storage-device-managers", specifier = ">=1.0.2" },
+    { name = "storage-device-managers", git = "https://github.com/MaxG87/storage-device-managers.git?rev=bee3454bb8086313a2bd47a741c320d9ee9589b7" },
     { name = "typer", specifier = ">=0.24.1" },
 ]
 provides-extras = ["all"]
@@ -666,15 +666,6 @@ version = "6.0.3"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/05/8e/961c0007c59b8dd7729d542c61a4d537767a59645b82a0b521206e1e25c2/pyyaml-6.0.3.tar.gz", hash = "sha256:d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f", size = 130960, upload-time = "2025-09-25T21:33:16.546Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f4/a0/39350dd17dd6d6c6507025c0e53aef67a9293a6d37d3511f23ea510d5800/pyyaml-6.0.3-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:214ed4befebe12df36bcc8bc2b64b396ca31be9304b8f59e25c11cf94a4c033b", size = 184227, upload-time = "2025-09-25T21:31:46.04Z" },
-    { url = "https://files.pythonhosted.org/packages/05/14/52d505b5c59ce73244f59c7a50ecf47093ce4765f116cdb98286a71eeca2/pyyaml-6.0.3-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:02ea2dfa234451bbb8772601d7b8e426c2bfa197136796224e50e35a78777956", size = 174019, upload-time = "2025-09-25T21:31:47.706Z" },
-    { url = "https://files.pythonhosted.org/packages/43/f7/0e6a5ae5599c838c696adb4e6330a59f463265bfa1e116cfd1fbb0abaaae/pyyaml-6.0.3-cp310-cp310-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:b30236e45cf30d2b8e7b3e85881719e98507abed1011bf463a8fa23e9c3e98a8", size = 740646, upload-time = "2025-09-25T21:31:49.21Z" },
-    { url = "https://files.pythonhosted.org/packages/2f/3a/61b9db1d28f00f8fd0ae760459a5c4bf1b941baf714e207b6eb0657d2578/pyyaml-6.0.3-cp310-cp310-manylinux2014_s390x.manylinux_2_17_s390x.manylinux_2_28_s390x.whl", hash = "sha256:66291b10affd76d76f54fad28e22e51719ef9ba22b29e1d7d03d6777a9174198", size = 840793, upload-time = "2025-09-25T21:31:50.735Z" },
-    { url = "https://files.pythonhosted.org/packages/7a/1e/7acc4f0e74c4b3d9531e24739e0ab832a5edf40e64fbae1a9c01941cabd7/pyyaml-6.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9c7708761fccb9397fe64bbc0395abcae8c4bf7b0eac081e12b809bf47700d0b", size = 770293, upload-time = "2025-09-25T21:31:51.828Z" },
-    { url = "https://files.pythonhosted.org/packages/8b/ef/abd085f06853af0cd59fa5f913d61a8eab65d7639ff2a658d18a25d6a89d/pyyaml-6.0.3-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:418cf3f2111bc80e0933b2cd8cd04f286338bb88bdc7bc8e6dd775ebde60b5e0", size = 732872, upload-time = "2025-09-25T21:31:53.282Z" },
-    { url = "https://files.pythonhosted.org/packages/1f/15/2bc9c8faf6450a8b3c9fc5448ed869c599c0a74ba2669772b1f3a0040180/pyyaml-6.0.3-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:5e0b74767e5f8c593e8c9b5912019159ed0533c70051e9cce3e8b6aa699fcd69", size = 758828, upload-time = "2025-09-25T21:31:54.807Z" },
-    { url = "https://files.pythonhosted.org/packages/a3/00/531e92e88c00f4333ce359e50c19b8d1de9fe8d581b1534e35ccfbc5f393/pyyaml-6.0.3-cp310-cp310-win32.whl", hash = "sha256:28c8d926f98f432f88adc23edf2e6d4921ac26fb084b028c733d01868d19007e", size = 142415, upload-time = "2025-09-25T21:31:55.885Z" },
-    { url = "https://files.pythonhosted.org/packages/2a/fa/926c003379b19fca39dd4634818b00dec6c62d87faf628d1394e137354d4/pyyaml-6.0.3-cp310-cp310-win_amd64.whl", hash = "sha256:bdb2c67c6c1390b63c6ff89f210c8fd09d9a1217a465701eac7316313c915e4c", size = 158561, upload-time = "2025-09-25T21:31:57.406Z" },
     { url = "https://files.pythonhosted.org/packages/6d/16/a95b6757765b7b031c9374925bb718d55e0a9ba8a1b6a12d25962ea44347/pyyaml-6.0.3-cp311-cp311-macosx_10_13_x86_64.whl", hash = "sha256:44edc647873928551a01e7a563d7452ccdebee747728c1080d881d68af7b997e", size = 185826, upload-time = "2025-09-25T21:31:58.655Z" },
     { url = "https://files.pythonhosted.org/packages/16/19/13de8e4377ed53079ee996e1ab0a9c33ec2faf808a4647b7b4c0d46dd239/pyyaml-6.0.3-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:652cb6edd41e718550aad172851962662ff2681490a8a711af6a4d288dd96824", size = 175577, upload-time = "2025-09-25T21:32:00.088Z" },
     { url = "https://files.pythonhosted.org/packages/0c/62/d2eb46264d4b157dae1275b573017abec435397aa59cbcdab6fc978a8af4/pyyaml-6.0.3-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:10892704fc220243f5305762e276552a0395f7beb4dbf9b14ec8fd43b57f126c", size = 775556, upload-time = "2025-09-25T21:32:01.31Z" },
@@ -764,11 +755,11 @@ wheels = [
 
 [[package]]
 name = "shell-interface"
-version = "1.0.2"
+version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a0/8f/648efc24a3cf77ad2161c8379dcd604e165b3147925d554359d65d42b2e1/shell_interface-1.0.2.tar.gz", hash = "sha256:7120dce6fcf11ab45b2cd24fbcc881666a1861c1b88f53773ec3702646b26856", size = 15331, upload-time = "2026-01-10T11:31:42.136Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e7/4d/3339a6f734bc1a21f663cf501fe8f525e57de7110b817a3a8993fb89c4ec/shell_interface-2.0.0.tar.gz", hash = "sha256:bf78d220a7c7fb9a699d1030db7ebc4945829f8f312ce0c130dea95526870ed6", size = 15412, upload-time = "2026-04-26T11:20:44.052Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b6/7a/01f195b3b083f758c3ce797dcbf4f52603bcbdbe1b3397d52d8bb2f99d42/shell_interface-1.0.2-py3-none-any.whl", hash = "sha256:2e8fdd5bfaca5be19caf718122836f4b95b96a8efce4e8942790e350539d9a93", size = 16192, upload-time = "2026-01-10T11:31:40.928Z" },
+    { url = "https://files.pythonhosted.org/packages/ca/aa/81ed389c0139ff5364c1b06015817cc7f44b84921237aa6fa6d33a5a99dc/shell_interface-2.0.0-py3-none-any.whl", hash = "sha256:9fcb39b0d680ec67731396f33179181c2c30fbd96c48d0da9c9886037931e676", size = 16293, upload-time = "2026-04-26T11:20:42.496Z" },
 ]
 
 [[package]]
@@ -792,14 +783,10 @@ wheels = [
 [[package]]
 name = "storage-device-managers"
 version = "1.0.2"
-source = { registry = "https://pypi.org/simple" }
+source = { git = "https://github.com/MaxG87/storage-device-managers.git?rev=bee3454bb8086313a2bd47a741c320d9ee9589b7#bee3454bb8086313a2bd47a741c320d9ee9589b7" }
 dependencies = [
     { name = "loguru" },
     { name = "shell-interface" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/e4/71/ba5fa0f430f798d71e7e694f2f3a379e0c1f1b21014f79484cbc7ee6417b/storage_device_managers-1.0.2.tar.gz", hash = "sha256:9284f00d6787168e8a1da75798cddc233ff178b412c7447290ba72f3a9658dbd", size = 18826, upload-time = "2026-04-15T19:15:02.33Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/af/b8/024f95dadeb006a354d207b56f5cc603009cf43e90eee29e2fa58e82d945/storage_device_managers-1.0.2-py3-none-any.whl", hash = "sha256:562295c8c2f7bb8edd5420d07ee03fc0928a7437847d08f5250eab5ac3983678", size = 19714, upload-time = "2026-04-15T19:15:01.215Z" },
 ]
 
 [[package]]
