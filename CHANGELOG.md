@@ -1,5 +1,44 @@
 # Changelog
 
+## [4.0.0](https://github.com/MaxG87/ButterBackup/compare/v3.6.0...v4.0.0) (2026-04-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* Names that form absolute paths are rejected to avoid bad surprises when using ButterBackup.
+* **config:** Setting the Compression value for Restic configurations is no longer supported.
+* Drop  Python 3.10
+* Bump minimum supported Python to 3.11
+
+### Features
+
+* Add --file-system option to format-device CLI command ([442ecc4](https://github.com/MaxG87/ButterBackup/commit/442ecc4b4dda8db1dd5b4ad62dd440cb8e339a02))
+* add optional dest argument to open command ([ba7faa6](https://github.com/MaxG87/ButterBackup/commit/ba7faa6c9c0905656d406b505b8ed9d03f79a22e))
+* Allow btrfs file system argument for BtrFS-Rsync too ([f6ff28c](https://github.com/MaxG87/ButterBackup/commit/f6ff28c398527a9b12a12cd5cda68e56d2df186c))
+* Allow configuration files in YAML, JSON5 and TOML ([7a6655d](https://github.com/MaxG87/ButterBackup/commit/7a6655db043f1b804846984ec6366eb00ecb648c))
+* Change default file system for restic to ext4 ([6f504c5](https://github.com/MaxG87/ButterBackup/commit/6f504c5892f1e08efdb251bd684ae35026494041))
+* **config:** Drop Compression value from Restic configuration ([c4ae3a7](https://github.com/MaxG87/ButterBackup/commit/c4ae3a7a958e15ac02b85ad282f8e0b652ca277f))
+* Continue with othen devices on close unmount confusion ([483de4a](https://github.com/MaxG87/ButterBackup/commit/483de4aea709027b76aee1672b1ad6e50dbac6ea))
+* Enforce certain restrictions on Names ([810171c](https://github.com/MaxG87/ButterBackup/commit/810171cb35d49e31a2a79b08f60be1af0fe78927))
+* implement --file-system option for format-device command ([cdfd75f](https://github.com/MaxG87/ButterBackup/commit/cdfd75fa7c5073a529aaeead908740457f5cbbe4))
+* Open all devices in same directory using their Names as folder names ([c368f9a](https://github.com/MaxG87/ButterBackup/commit/c368f9af84ca9ee0b38dc879c518980ad995f911))
+* open mounts all devices to shared tmpdir under Name subdirectory with error handling ([90c190e](https://github.com/MaxG87/ButterBackup/commit/90c190efe0ea1043d48d1a92900ec7363f5dd6d0))
+* Reject names that form absolute Paths ([6ebb1e7](https://github.com/MaxG87/ButterBackup/commit/6ebb1e7ae4bd1d9a7b35ea276a3a3edb78bed092))
+
+
+### Dependencies
+
+* Bump all dependencies - prod and dev ([f6a03b2](https://github.com/MaxG87/ButterBackup/commit/f6a03b2a1903c659bfd1a365d94e2b124da5a1ab))
+* Bump minimum supported Python to 3.11 ([c751d60](https://github.com/MaxG87/ButterBackup/commit/c751d606d853bbdf640400938f466416574072bb))
+* Bump to storage-device-managers to Git upstream ([32d2f5d](https://github.com/MaxG87/ButterBackup/commit/32d2f5deed46960fb7ec111b44cb60987bbde739))
+* Drop  Python 3.10 ([4437736](https://github.com/MaxG87/ButterBackup/commit/4437736511f7c13e66ea188217d16ff255101b0b))
+
+
+### Documentation
+
+* Remove quotes from keys in JSON5 documentation ([5502c48](https://github.com/MaxG87/ButterBackup/commit/5502c483c017fdb87601900c5fee90f029880c15))
+* Stress expected file ending by renaming example files ([9217b1d](https://github.com/MaxG87/ButterBackup/commit/9217b1da5dc63b5531d45f15e4999ce772f1f377))
+
 ## [3.6.0](https://github.com/MaxG87/ButterBackup/compare/v3.5.5...v3.6.0) (2026-04-15)
 
 
