@@ -13,7 +13,6 @@ RUN pacman -Sy --noconfirm \
     git \
     make \
     python \
-    python-pipx \
     python-uv \
     restic \
     rsync \
