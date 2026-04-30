@@ -9,7 +9,7 @@ RUN apt update \
 # Setup uv
 ENV UV_VERSION=0.11.8
 ENV PATH="/root/.local/bin:$PATH"
-RUN pipx install "uv==$UV_VERSION"
+RUN pipx install --global "uv==$UV_VERSION"
 
 # Setup production dependencies
 WORKDIR /project
