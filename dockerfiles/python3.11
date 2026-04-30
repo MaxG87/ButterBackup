@@ -7,8 +7,8 @@ RUN apt update \
     && apt autoclean
 
 # Setup uv
-ENV UV_VERSION=0.10.12
-RUN python3 -m pip install "uv==$UV_VERSION"
+ENV UV_VERSION=0.11.8
+RUN pipx install "uv==$UV_VERSION"
 
 # Setup production dependencies
 WORKDIR /project
