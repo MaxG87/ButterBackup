@@ -71,10 +71,10 @@ def _get_default_file_system(backend: ValidBackends) -> ValidFileSystems:
 
 
 def _skip_device(
-    config: cp.Configuration,
+    config: cp.DeviceConfiguration,
     *,
-    log_missing: Callable[[cp.Configuration], None] | None = None,
-    log_opened: Callable[[cp.Configuration], None] | None = None,
+    log_missing: Callable[[cp.DeviceConfiguration], None] | None = None,
+    log_opened: Callable[[cp.DeviceConfiguration], None] | None = None,
 ) -> bool:
     """
     Helper function to determine whether a device should be skipped.
@@ -102,7 +102,7 @@ CONFIG_OPTION = typer.Option(get_default_config_path(), exists=True, dir_okay=Fa
 VERBOSITY_OPTION = typer.Option(0, "--verbose", "-v", count=True)
 
 
-def _open_device(cfg: cp.Configuration, base_dir: Path) -> None:
+def _open_device(cfg: cp.DeviceConfiguration, base_dir: Path) -> None:
     mount_dir = base_dir / cfg.Name
     mount_dir.mkdir(exist_ok=True)
     try:
@@ -143,9 +143,9 @@ def open(  # noqa: A001
     Andernfalls wird ein temporäres Verzeichnis erstellt.
     """
     setup_logging(verbose)
-    configurations = cp.parse_configuration(config.read_text())
+    parsed_config = cp.parse_configuration(config.read_text())
     base_dir = dest if dest is not None else Path(mkdtemp())
-    for cfg in configurations:
+    for cfg in parsed_config.deviceConfigurations:
         if _skip_device(
             cfg,
             log_opened=lambda cfg: logger.warning(
@@ -166,9 +166,9 @@ def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None
     `open`. Weitere Erklärungen finden sich dort.
     """
     setup_logging(verbose)
-    configurations = cp.parse_configuration(config.read_text())
+    parsed_config = cp.parse_configuration(config.read_text())
     mounted_devices = sdm.get_mounted_devices()
-    for cfg in configurations:
+    for cfg in parsed_config.deviceConfigurations:
         map_name = cfg.map_name()
         map_name_as_str = str(map_name)
         if cfg.device().exists() and map_name_as_str in mounted_devices:
@@ -207,8 +207,8 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> Non
     weitere manuelle Schritte sind nicht nötig.
     """
     setup_logging(verbose)
-    configurations = cp.parse_configuration(config.read_text())
-    for cfg in configurations:
+    parsed_config = cp.parse_configuration(config.read_text())
+    for cfg in parsed_config.deviceConfigurations:
         if _skip_device(
             cfg,
             log_missing=lambda cfg: logger.info(
@@ -278,7 +278,7 @@ def format_device(
                 "Zieldatei für ButterBackup-Konfiguration existiert schon!"
             )
         config_writer = config_to.write_text
-    config: cp.Configuration
+    config: cp.DeviceConfiguration
     match backend:
         case ValidBackends.btrfs_rsync:
             config = prepare_device_for_butterbackend(device)
@@ -287,7 +287,8 @@ def format_device(
         case _:
             t.assert_never(backend)
     json_serialisable = json.loads(config.model_dump_json(exclude_none=True))
-    config_writer(json.dumps([json_serialisable], indent=4, sort_keys=True))
+    wrapper = {"deviceConfigurations": [json_serialisable]}
+    config_writer(json.dumps(wrapper, indent=4, sort_keys=True))
 
 
 @app.command()

@@ -23,8 +23,8 @@ def complement_configuration(
 
 
 def complement_configuration(
-    config: cp.Configuration, source_dir: Path
-) -> cp.Configuration:
+    config: cp.DeviceConfiguration, source_dir: Path
+) -> cp.DeviceConfiguration:
     folders_root = source_dir / "backup-root"
     single_files = {
         source_dir / "config" / "docker" / "daemon.json",

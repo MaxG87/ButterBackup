@@ -29,7 +29,7 @@ def test_example_files_can_be_parsed(example_file: Path) -> None:
     content = example_file.read_text()
     result = cp.parse_configuration(content)
     expected_names = ["BtrFS Backup Example", "Restic Backup Example"]
-    assert [cfg.Name for cfg in result] == expected_names
+    assert [cfg.Name for cfg in result.deviceConfigurations] == expected_names
 
 
 @given(
@@ -58,7 +58,16 @@ def test_parse_configuration_rejects_duplicate_names_for_btrfs_rsync(
         )
         btrfs_cfg_json = btrfs_cfg.model_dump_json()
         with pytest.raises(ValidationError):
-            cp.parse_configuration(f"[{btrfs_cfg_json}, {btrfs_cfg_json}]")
+            cp.parse_configuration(
+                json.dumps(
+                    {
+                        "deviceConfigurations": [
+                            json.loads(btrfs_cfg_json),
+                            json.loads(btrfs_cfg_json),
+                        ]
+                    }
+                )
+            )
 
 
 @given(
@@ -86,12 +95,21 @@ def test_parse_configuration_rejects_duplicate_names_for_restic(
         )
         restic_cfg_json = restic_cfg.model_dump_json()
         with pytest.raises(ValidationError):
-            cp.parse_configuration(f"[{restic_cfg_json}, {restic_cfg_json}]")
+            cp.parse_configuration(
+                json.dumps(
+                    {
+                        "deviceConfigurations": [
+                            json.loads(restic_cfg_json),
+                            json.loads(restic_cfg_json),
+                        ]
+                    }
+                )
+            )
 
 
 def test_parse_configuration_rejects_empty_list() -> None:
     with pytest.raises(SystemExit) as sysexit:
-        cp.parse_configuration("[]")
+        cp.parse_configuration(json.dumps({"deviceConfigurations": []}))
     assert sysexit.value.code not in SUCCESS_CODES
 
 
@@ -102,12 +120,12 @@ def test_parse_configuration_rejects_empty_list() -> None:
 )
 def test_parse_configuration_warns_on_non_lists(non_list) -> None:
     with pytest.raises(ValidationError):
-        cp.parse_configuration(json.dumps(non_list))
+        cp.parse_configuration(json.dumps({"deviceConfigurations": non_list}))
 
 
 def test_parse_configuration_warns_on_non_dict_item() -> None:
     with pytest.raises(ValidationError):
-        cp.parse_configuration(json.dumps([{}, 1337]))
+        cp.parse_configuration(json.dumps({"deviceConfigurations": [{}, 1337]}))
 
 
 @given(
@@ -134,8 +152,12 @@ def test_parse_configuration_parses_btrfs_config(
             Name=name,
             UUID=uuid,
         )
-        cfg_lst = cp.parse_configuration(f"[{btrfs_cfg.model_dump_json()}]")
-        assert cfg_lst == [btrfs_cfg]
+        cfg_lst = cp.parse_configuration(
+            json.dumps(
+                {"deviceConfigurations": [json.loads(btrfs_cfg.model_dump_json())]}
+            )
+        )
+        assert cfg_lst.deviceConfigurations == [btrfs_cfg]
 
 
 @given(
@@ -161,5 +183,9 @@ def test_load_configuration_parses_restic_config(
             RepositoryPassCmd=repository_pass_cmd,
             UUID=uuid,
         )
-        cfg_lst = cp.parse_configuration(f"[{restic_cfg.model_dump_json()}]")
-        assert cfg_lst == [restic_cfg]
+        cfg_lst = cp.parse_configuration(
+            json.dumps(
+                {"deviceConfigurations": [json.loads(restic_cfg.model_dump_json())]}
+            )
+        )
+        assert cfg_lst.deviceConfigurations == [restic_cfg]

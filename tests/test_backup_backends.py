@@ -28,11 +28,11 @@ def list_files_recursively(path: Path) -> Iterable[Path]:
 
 
 def run_backup_cycle(
-    base_config: cp.Configuration,
+    base_config: cp.DeviceConfiguration,
     source_dir: Path,
     device: Path,
     config_extension: dict[str, t.Any] | None = None,
-) -> cp.Configuration:
+) -> cp.DeviceConfiguration:
     config = complement_configuration(base_config, source_dir)
     if config_extension is not None:
         config = config.model_copy(update=config_extension)
@@ -54,7 +54,7 @@ def get_expected_content(
 
 
 def get_expected_content(
-    config: cp.Configuration,
+    config: cp.DeviceConfiguration,
     exclude_to_ignore_file: bool,
 ) -> Counter[bytes] | dict[Path, bytes]:
     match config:
@@ -116,7 +116,7 @@ def get_result_content(config: cp.ResticConfig, mounted: Path) -> Counter[bytes]
 
 
 def get_result_content(
-    config: cp.Configuration, mounted: Path
+    config: cp.DeviceConfiguration, mounted: Path
 ) -> Counter[bytes] | dict[Path, bytes]:
     match config:
         case cp.BtrFSRsyncConfig():

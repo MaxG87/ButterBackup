@@ -22,7 +22,7 @@ def in_docker_container() -> bool:
     return Path("/.dockerenv").exists()
 
 
-def prepare_tmp_path(config: cp.Configuration, parent: Path) -> None:
+def prepare_tmp_path(config: cp.DeviceConfiguration, parent: Path) -> None:
     if isinstance(config, cp.BtrFSRsyncConfig):
         prepare_tmp_path_for_btrfs(config, parent)
     elif isinstance(config, cp.ResticConfig):
@@ -184,7 +184,8 @@ def test_close_does_not_close_unopened_device(runner, encrypted_btrfs_device) ->
     config = encrypted_btrfs_device
     with NamedTemporaryFile() as tempf:
         config_file = Path(tempf.name)
-        config_file.write_text(f"[{config.model_dump_json()}]")
+        wrapped_config = cp.Configuration(deviceConfigurations=[config])
+        config_file.write_text(wrapped_config.model_dump_json())
         close_result = runner.invoke(app, ["close", "--config", str(config_file)])
         assert close_result.stdout == ""
         assert close_result.exit_code == 0
@@ -198,7 +199,8 @@ def test_open_close_roundtrip(runner, encrypted_device) -> None:
     expected_cryptsetup_map = Path(f"/dev/mapper/{config.UUID}")
     with NamedTemporaryFile() as tempf:
         config_file = Path(tempf.name)
-        config_file.write_text(f"[{config.model_dump_json()}]")
+        wrapped_config = cp.Configuration(deviceConfigurations=[config])
+        config_file.write_text(wrapped_config.model_dump_json())
         open_result = runner.invoke(app, ["open", "--config", str(config_file)])
         expected_msg = (
             f"Speichermedium {config.Name} wurde in (?P<mount_dest>/[^ ]+) geöffnet."
@@ -227,7 +229,8 @@ def test_open_with_explicit_dest(
     config = encrypted_device
     expected_cryptsetup_map = Path(f"/dev/mapper/{config.UUID}")
     config_file = tmp_path / "config.json"
-    config_file.write_text(f"[{config.model_dump_json()}]")
+    wrapped_config = cp.Configuration(deviceConfigurations=[config])
+    config_file.write_text(wrapped_config.model_dump_json())
     dest_dir = tmp_path / "mounts"
     dest_dir.mkdir()
     expected_mount_dir = dest_dir / config.Name
@@ -256,7 +259,8 @@ def test_open_shows_error_on_failure(runner, encrypted_device, tmp_path: Path) -
         update={"DevicePassCmd": "echo wrong_password"}
     )
     config_file = tmp_path / "config.json"
-    config_file.write_text(f"[{config.model_dump_json()}]")
+    wrapped_config = cp.Configuration(deviceConfigurations=[config])
+    config_file.write_text(wrapped_config.model_dump_json())
     dest_dir = tmp_path / "mounts"
     dest_dir.mkdir()
     open_result = runner.invoke(
@@ -335,7 +339,8 @@ def test_format_device_creates_expected_file_system(
     )
     assert format_result.exit_code == 0
     serialised_config = format_result.stdout
-    config_lst = list(cp.parse_configuration(serialised_config))
+    parsed = cp.parse_configuration(serialised_config)
+    config_lst = parsed.deviceConfigurations
     assert len(config_lst) == 1
     config = config_lst[0]
     with sdm.decrypted_device(big_file, config.DevicePassCmd) as decrypted:
@@ -347,7 +352,8 @@ def test_format_device_creates_expected_file_system(
 def test_format_device(runner, backend: str, big_file: Path) -> None:
     format_result = runner.invoke(app, ["format-device", backend, str(big_file)])
     serialised_config = format_result.stdout
-    config_lst = list(cp.parse_configuration(serialised_config))
+    parsed = cp.parse_configuration(serialised_config)
+    config_lst = parsed.deviceConfigurations
     assert len(config_lst) == 1
     device_uuid = config_lst[0].UUID
     device_name = config_lst[0].Name
@@ -371,7 +377,8 @@ def test_format_device_chowns_filesystem_to_user(
 ) -> None:
     format_result = runner.invoke(app, ["format-device", backend, str(big_file)])
     serialised_config = format_result.stdout
-    config_lst = list(cp.parse_configuration(serialised_config))
+    parsed = cp.parse_configuration(serialised_config)
+    config_lst = parsed.deviceConfigurations
     assert len(config_lst) == 1
     config = config_lst[0]
 
@@ -405,7 +412,8 @@ def test_do_backup_refuses_backup_when_device_is_already_open(
 
     config_file = tmp_path / "config.json"
 
-    config_file.write_text(f"[{config.model_dump_json()}]")
+    wrapped_config = cp.Configuration(deviceConfigurations=[config])
+    config_file.write_text(wrapped_config.model_dump_json())
     runner.invoke(app, ["open", "--config", str(config_file)])
     result = runner.invoke(app, [subprogram, "--config", str(config_file)])
     expected_msg = (
@@ -417,7 +425,7 @@ def test_do_backup_refuses_backup_when_device_is_already_open(
 
 
 def test_unmount_error_does_not_cause_content_deletion(
-    runner: CliRunner, encrypted_device: cp.Configuration, tmp_path: Path, mocker
+    runner: CliRunner, encrypted_device: cp.DeviceConfiguration, tmp_path: Path, mocker
 ) -> None:
     # THIS IS A REGRESSION TEST!
     #
@@ -439,7 +447,8 @@ def test_unmount_error_does_not_cause_content_deletion(
     config = complement_configuration(encrypted_device, tmp_path)
     prepare_tmp_path(config, tmp_path)
     config_file = tmp_path / "config.json"
-    config_file.write_text(f"[{config.model_dump_json()}]")
+    wrapped = cp.Configuration(deviceConfigurations=[config])
+    config_file.write_text(wrapped.model_dump_json())
 
     result = runner.invoke(app, ["backup", "--config", str(config_file)])
     assert result.exit_code == 1
