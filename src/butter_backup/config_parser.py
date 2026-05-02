@@ -183,6 +183,7 @@ DeviceConfiguration = BtrFSRsyncConfig | ResticConfig
 class Configuration(BaseModel):
     model_config = ConfigDict(frozen=True)
     deviceConfigurations: list[DeviceConfiguration]
+    SudoPassCmd: str | None = None
 
     @model_validator(mode="after")
     def check_unique_names(self) -> "Configuration":
