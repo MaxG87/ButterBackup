@@ -33,15 +33,15 @@ butter-backup = "butter_backup.cli:cli"
 
 [dependency-groups]
 dev = [
-    "hypothesis>=6.152.1",
-    "mypy>=1.20.1",
+    "hypothesis>=6.152.4",
+    "mypy>=2.0.0",
     "pdbpp>=0.12.1",
     "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.1",
     "pytest-xdist>=3.8.0",
-    "ruff>=0.15.10",
-    "types-pyyaml>=6.0.12.20260408",
+    "ruff>=0.15.12",
+    "types-pyyaml>=6.0.12.20260508",
 ]
 
 [tool.mypy]
