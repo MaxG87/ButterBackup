@@ -1,5 +1,45 @@
 # Changelog
 
+## [2.0.0](https://github.com/MaxG87/storage-device-managers/compare/v1.0.2...v2.0.0) (2026-04-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* Drop support for Python 3.10
+
+### Features
+
+* add `__all__` to define the public API ([ce82161](https://github.com/MaxG87/storage-device-managers/commit/ce82161d62813d40864a431c272f8603cb66561a))
+* add `get_filesystem` helper function ([06cde0c](https://github.com/MaxG87/storage-device-managers/commit/06cde0c91155f3201130c477446154e09c5d3d5f))
+* Add `mkfs` function to format a device to any file system ([a313425](https://github.com/MaxG87/storage-device-managers/commit/a313425bc3269a6abd674bc8b7a716d3f5f771f2))
+* add `mkfs_ext4` dedicated function ([6fa7efb](https://github.com/MaxG87/storage-device-managers/commit/6fa7efb2f3b348d4b1ac7a534313424e475e9874))
+* add `mount_device` helper function for auto-detected filesystem ([6e43fed](https://github.com/MaxG87/storage-device-managers/commit/6e43fedd5c40a337c84bd383f7dba1e2ae46b7ce))
+* add `mount_ext4_device` dedicated function ([d52db30](https://github.com/MaxG87/storage-device-managers/commit/d52db30fe1960d717a3c792c8f4596a0e4f719e8))
+* bump shell-interface to `>=2.0.0` and expose `PassCmdError` ([6f978c0](https://github.com/MaxG87/storage-device-managers/commit/6f978c0ee7a6a9a3510c83461700e9e375061439))
+* call filesystem sync on unmount ([1640b2e](https://github.com/MaxG87/storage-device-managers/commit/1640b2e1977e2af0e5a2b068c23051b5a418eedb))
+* First run BtrFS syncs, then the device's one ([1436c1a](https://github.com/MaxG87/storage-device-managers/commit/1436c1a7f49eade3f79a8e29253503b7d9f6015a))
+* modernise code for Python 3.11 minimum ([bf7ad02](https://github.com/MaxG87/storage-device-managers/commit/bf7ad0213011ee1d880cc82812d8fa63f56a6067))
+
+
+### Bug Fixes
+
+* rename temoprary_directory to temporary_directory ([8d8d164](https://github.com/MaxG87/storage-device-managers/commit/8d8d164a6da85325c75c04da08a45ab5356d33f8))
+
+
+### Dependencies
+
+* **dev:** Add pytest-xdist for faster execution ([95bdeac](https://github.com/MaxG87/storage-device-managers/commit/95bdeacd9f667e29a8797d1f034e259698cbf564))
+* Drop support for Python 3.10 ([c0588f8](https://github.com/MaxG87/storage-device-managers/commit/c0588f88d4ae4de507eae5da1924df30355559f3))
+
+
+### Documentation
+
+* Also mention ShellInterfaceError alongside PassCmdError ([7d8bf61](https://github.com/MaxG87/storage-device-managers/commit/7d8bf61bf307fa8e1382015de2d67433f8198241))
+* Improve documentation of get_mounted_device ([6f88bb0](https://github.com/MaxG87/storage-device-managers/commit/6f88bb04618b8738bc354be79a5a9f33f5e480da))
+* replace black/isort badges with ruff badge ([e4b33a4](https://github.com/MaxG87/storage-device-managers/commit/e4b33a4bcec3db03fde8c07b31e5fc0ac86347a0))
+* Update README for new additions ([b204986](https://github.com/MaxG87/storage-device-managers/commit/b204986b3dde58e2c3c138ebc5e60bbbefe43baf))
+* use modern union type syntax in API reference ([002088b](https://github.com/MaxG87/storage-device-managers/commit/002088b17fd150aafa73cee67b218dca753e51eb))
+
 ## [1.0.2](https://github.com/MaxG87/storage-device-managers/compare/v1.0.1...v1.0.2) (2026-04-15)
 
 ### Bug Fixes
