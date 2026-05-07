@@ -9,16 +9,16 @@
 
 ### Features
 
-* add __all__ to define the public API ([ce82161](https://github.com/MaxG87/storage-device-managers/commit/ce82161d62813d40864a431c272f8603cb66561a))
-* add get_filesystem helper function ([06cde0c](https://github.com/MaxG87/storage-device-managers/commit/06cde0c91155f3201130c477446154e09c5d3d5f))
-* Add mkfs function to format a device to any file system ([a313425](https://github.com/MaxG87/storage-device-managers/commit/a313425bc3269a6abd674bc8b7a716d3f5f771f2))
-* add mkfs_ext4 dedicated function ([6fa7efb](https://github.com/MaxG87/storage-device-managers/commit/6fa7efb2f3b348d4b1ac7a534313424e475e9874))
-* add mount_device helper function for auto-detected filesystem ([6e43fed](https://github.com/MaxG87/storage-device-managers/commit/6e43fedd5c40a337c84bd383f7dba1e2ae46b7ce))
-* add mount_ext4_device dedicated function ([d52db30](https://github.com/MaxG87/storage-device-managers/commit/d52db30fe1960d717a3c792c8f4596a0e4f719e8))
-* bump shell-interface to &gt;=2.0.0 and expose PassCmdError ([6f978c0](https://github.com/MaxG87/storage-device-managers/commit/6f978c0ee7a6a9a3510c83461700e9e375061439))
+* add `__all__` to define the public API ([ce82161](https://github.com/MaxG87/storage-device-managers/commit/ce82161d62813d40864a431c272f8603cb66561a))
+* add `get_filesystem` helper function ([06cde0c](https://github.com/MaxG87/storage-device-managers/commit/06cde0c91155f3201130c477446154e09c5d3d5f))
+* Add `mkfs` function to format a device to any file system ([a313425](https://github.com/MaxG87/storage-device-managers/commit/a313425bc3269a6abd674bc8b7a716d3f5f771f2))
+* add `mkfs_ext4` dedicated function ([6fa7efb](https://github.com/MaxG87/storage-device-managers/commit/6fa7efb2f3b348d4b1ac7a534313424e475e9874))
+* add `mount_device` helper function for auto-detected filesystem ([6e43fed](https://github.com/MaxG87/storage-device-managers/commit/6e43fedd5c40a337c84bd383f7dba1e2ae46b7ce))
+* add `mount_ext4_device` dedicated function ([d52db30](https://github.com/MaxG87/storage-device-managers/commit/d52db30fe1960d717a3c792c8f4596a0e4f719e8))
+* bump shell-interface to `>=2.0.0` and expose `PassCmdError` ([6f978c0](https://github.com/MaxG87/storage-device-managers/commit/6f978c0ee7a6a9a3510c83461700e9e375061439))
 * call filesystem sync on unmount ([1640b2e](https://github.com/MaxG87/storage-device-managers/commit/1640b2e1977e2af0e5a2b068c23051b5a418eedb))
 * First run BtrFS syncs, then the device's one ([1436c1a](https://github.com/MaxG87/storage-device-managers/commit/1436c1a7f49eade3f79a8e29253503b7d9f6015a))
-* modernize code for Python 3.11 minimum ([bf7ad02](https://github.com/MaxG87/storage-device-managers/commit/bf7ad0213011ee1d880cc82812d8fa63f56a6067))
+* modernise code for Python 3.11 minimum ([bf7ad02](https://github.com/MaxG87/storage-device-managers/commit/bf7ad0213011ee1d880cc82812d8fa63f56a6067))
 
 
 ### Bug Fixes
