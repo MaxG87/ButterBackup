@@ -12,7 +12,7 @@ dependencies = [
     "pydantic>=2.13.4",
     "pyyaml>=6.0.3",
     "shell-interface>=2.0.0",
-    "storage-device-managers",
+    "storage-device-managers>=2.0.0",
     "typer>=0.25.1",
 ]
 
@@ -85,10 +85,6 @@ src = [".", "src/"]
 select = ["A", "B", "C", "F", "I", "ISC", "PIE", "PL", "Q", "RUF", "SIM", "TID", "W", "YTT"]
 ignore = ["E", "PLC1901", "SIM117"]
 mccabe.max-complexity = 6
-
-[tool.uv.sources.storage-device-managers]
-git = "https://github.com/MaxG87/storage-device-managers.git"
-rev = "bee3454bb8086313a2bd47a741c320d9ee9589b7"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
