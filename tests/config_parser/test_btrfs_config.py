@@ -1,6 +1,7 @@
 import re
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
+from uuid import UUID
 
 import pytest
 from hypothesis import assume, given
@@ -234,3 +235,35 @@ def test_btrfs_config_rejects_invalid_name(
     }
     with pytest.raises(ValidationError):
         cp.BtrFSRsyncConfig.model_validate(config)
+
+
+@given(
+    backup_dest_dirs=st.lists(st.text(), min_size=2, max_size=2, unique=True),
+    backup_repository_folder=st.text(),
+    name=hu.valid_path_components(),
+    pass_cmd=st.text(),
+    uuid=st.uuids(),
+)
+def test_btrfs_config_rejects_missing_exclude_patterns_file(
+    backup_dest_dirs: list[str],
+    backup_repository_folder: str,
+    name: str,
+    pass_cmd: str,
+    uuid: UUID,
+) -> None:
+    missing_file = TEST_RESOURCES / "missing-exclude-file"
+    errmsg_pattern = f"Path does not point to a file .*{missing_file.name}"
+    with (
+        TemporaryDirectory() as source,
+        pytest.raises(ValidationError, match=errmsg_pattern),
+    ):
+        cp.BtrFSRsyncConfig(
+            BackupRepositoryFolder=backup_repository_folder,
+            DevicePassCmd=pass_cmd,
+            ExcludePatternsFile=Path(missing_file),
+            Files=set(),
+            FilesDest=backup_dest_dirs[1],
+            Folders={Path(source): backup_dest_dirs[0]},
+            Name=name,
+            UUID=uuid,
+        )

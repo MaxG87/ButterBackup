@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
+from uuid import UUID
 
 import pytest
 from hypothesis import given
@@ -118,3 +119,34 @@ def test_restic_config_rejects_invalid_name(invalid_name: str) -> None:
         }
         with pytest.raises(ValidationError):
             cp.ResticConfig.model_validate(config)
+
+
+@given(
+    backup_repository_folder=st.text(),
+    device_pass_cmd=st.text(),
+    name=hu.valid_path_components(),
+    repository_pass_cmd=st.text(),
+    uuid=st.uuids(),
+)
+def test_restic_config_rejects_missing_exclude_patterns_file(
+    backup_repository_folder: str,
+    device_pass_cmd: str,
+    name: str,
+    repository_pass_cmd: str,
+    uuid: UUID,
+) -> None:
+    missing_file = TEST_RESOURCES / "missing-exclude-file"
+    errmsg_pattern = f"Path does not point to a file .*{missing_file.name}"
+    with (
+        TemporaryDirectory() as source,
+        pytest.raises(ValidationError, match=errmsg_pattern),
+    ):
+        cp.ResticConfig(
+            BackupRepositoryFolder=backup_repository_folder,
+            DevicePassCmd=device_pass_cmd,
+            ExcludePatternsFile=Path(missing_file),
+            FilesAndFolders={Path(source)},
+            Name=name,
+            RepositoryPassCmd=repository_pass_cmd,
+            UUID=uuid,
+        )
