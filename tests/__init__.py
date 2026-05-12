@@ -25,6 +25,12 @@ def complement_configuration(
 def complement_configuration(
     config: cp.DeviceConfiguration, source_dir: Path
 ) -> cp.DeviceConfiguration:
+    """
+    Register to configuration some files and folders that should be backed up
+
+    This is used to test the handling of both files and folders in the backup backends.
+    """
+
     folders_root = source_dir / "backup-root"
     single_files = {
         source_dir / "config" / "docker" / "daemon.json",
