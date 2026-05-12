@@ -186,7 +186,7 @@ class Configuration(BaseModel):
     SudoPassCmd: str | None = None
 
     @model_validator(mode="after")
-    def check_unique_names(self) -> "Configuration":
+    def check_unique_names(self) -> t.Self:
         name_counts = Counter(cfg.Name for cfg in self.deviceConfigurations)
         duplicates = [name for name, count in name_counts.items() if count > 1]
         if duplicates:
