@@ -467,3 +467,92 @@ def test_unmount_error_does_not_cause_content_deletion(
     assert result.exit_code == 0
     assert mount_of_device.exists()  # Target directory should be kept after closing.
     assert sdm.is_mounted(mount_of_device) is False
+
+
+def test_sudo_pass_cmd_is_used_in_open(
+    runner: CliRunner,
+    encrypted_device: cp.DeviceConfiguration,
+    mocker,
+    tmp_path: Path,
+) -> None:
+    sudo_pass_cmd = "echo test_password"
+    wrapped_config = cp.Configuration(
+        deviceConfigurations=[encrypted_device], SudoPassCmd=sudo_pass_cmd
+    )
+    config_file = tmp_path / "config.json"
+    config_file.write_text(wrapped_config.model_dump_json())
+    dest_dir = tmp_path / "mounts"
+    dest_dir.mkdir()
+
+    mock_pipe = mocker.patch("shell_interface.pipe_pass_cmd_to_real_cmd")
+    mocker.patch(
+        "storage_device_managers.open_encrypted_device",
+        return_value=Path("/dev/mapper/test"),
+    )
+    mocker.patch("storage_device_managers.mount_device")
+
+    runner.invoke(app, ["open", str(dest_dir), "--config", str(config_file)])
+
+    mock_pipe.assert_called_once_with(
+        sudo_pass_cmd, ["sudo", "-Sv"], capture_output=True
+    )
+
+
+def test_sudo_pass_cmd_is_used_in_backup(
+    runner: CliRunner,
+    encrypted_device: cp.DeviceConfiguration,
+    mocker,
+    tmp_path: Path,
+) -> None:
+    sudo_pass_cmd = "echo test_password"
+    wrapped_config = cp.Configuration(
+        deviceConfigurations=[encrypted_device], SudoPassCmd=sudo_pass_cmd
+    )
+    config_file = tmp_path / "config.json"
+    config_file.write_text(wrapped_config.model_dump_json())
+
+    mock_pipe = mocker.patch("shell_interface.pipe_pass_cmd_to_real_cmd")
+    mocker.patch("storage_device_managers.decrypted_device")
+    mocker.patch("storage_device_managers.mounted_device")
+    mocker.patch(
+        "butter_backup.backup_backends.BackupBackend.from_config",
+        return_value=mocker.MagicMock(),
+    )
+
+    runner.invoke(app, ["backup", "--config", str(config_file)])
+
+    expected_nof_calls = 2  # One before opening the device and one post backup
+    result_calls = mock_pipe.call_args_list
+    expected_calls = [
+        ((sudo_pass_cmd, ["sudo", "-Sv"]), {"capture_output": True})
+    ] * expected_nof_calls
+    assert result_calls == expected_calls
+
+
+def test_sudo_pass_cmd_is_used_in_close(
+    runner: CliRunner,
+    encrypted_device: cp.DeviceConfiguration,
+    mocker,
+    tmp_path: Path,
+) -> None:
+    sudo_pass_cmd = "echo test_password"
+    wrapped_config = cp.Configuration(
+        deviceConfigurations=[encrypted_device], SudoPassCmd=sudo_pass_cmd
+    )
+    config_file = tmp_path / "config.json"
+    config_file.write_text(wrapped_config.model_dump_json())
+    map_name = str(encrypted_device.map_name())
+
+    mock_pipe = mocker.patch("shell_interface.pipe_pass_cmd_to_real_cmd")
+    mocker.patch(
+        "storage_device_managers.get_mounted_devices",
+        return_value={map_name: [tmp_path / "mnt"]},
+    )
+    mocker.patch("storage_device_managers.unmount_device")
+    mocker.patch("storage_device_managers.close_decrypted_device")
+
+    runner.invoke(app, ["close", "--config", str(config_file)])
+
+    mock_pipe.assert_called_once_with(
+        sudo_pass_cmd, ["sudo", "-Sv"], capture_output=True
+    )
