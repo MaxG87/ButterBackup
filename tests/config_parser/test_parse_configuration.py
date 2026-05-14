@@ -189,3 +189,63 @@ def test_load_configuration_parses_restic_config(
             )
         )
         assert cfg_lst.deviceConfigurations == [restic_cfg]
+
+
+@given(
+    backup_repository_folder=st.text(),
+    device_pass_cmd=st.text(),
+    name=hu.valid_path_components(),
+    repository_pass_cmd=st.text(),
+    sudo_pass_cmd=st.text(),
+    uuid=st.uuids(),
+)
+def test_parse_configuration_preserves_sudo_pass_cmd(  # noqa: PLR0913
+    backup_repository_folder: str,
+    device_pass_cmd: str,
+    name: str,
+    repository_pass_cmd: str,
+    sudo_pass_cmd: str,
+    uuid: UUID,
+) -> None:
+    restic_cfg = cp.ResticConfig(
+        BackupRepositoryFolder=backup_repository_folder,
+        DevicePassCmd=device_pass_cmd,
+        FilesAndFolders={Path("/tmp")},
+        Name=name,
+        RepositoryPassCmd=repository_pass_cmd,
+        UUID=uuid,
+    )
+    raw = json.loads(restic_cfg.model_dump_json())
+    config_json = json.dumps(
+        {"deviceConfigurations": [raw], "SudoPassCmd": sudo_pass_cmd}
+    )
+    result = cp.parse_configuration(config_json)
+    assert result.SudoPassCmd == sudo_pass_cmd
+
+
+@given(
+    backup_repository_folder=st.text(),
+    device_pass_cmd=st.text(),
+    name=hu.valid_path_components(),
+    repository_pass_cmd=st.text(),
+    uuid=st.uuids(),
+)
+def test_parse_configuration_defaults_sudo_pass_cmd_to_none(
+    backup_repository_folder: str,
+    device_pass_cmd: str,
+    name: str,
+    repository_pass_cmd: str,
+    uuid: UUID,
+) -> None:
+    restic_cfg = cp.ResticConfig(
+        BackupRepositoryFolder=backup_repository_folder,
+        DevicePassCmd=device_pass_cmd,
+        FilesAndFolders={Path("/tmp")},
+        Name=name,
+        RepositoryPassCmd=repository_pass_cmd,
+        UUID=uuid,
+    )
+    raw = json.loads(restic_cfg.model_dump_json())
+    config_json = json.dumps({"deviceConfigurations": [raw]})
+    result = cp.parse_configuration(config_json)
+    assert result.SudoPassCmd is None
