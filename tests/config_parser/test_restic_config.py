@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
@@ -15,21 +14,10 @@ TEST_RESOURCES = Path(__file__).parent.parent / "resources"
 EXCLUDE_FILE = TEST_RESOURCES / "exclude-file"
 
 
-@st.composite
-def valid_unparsed_empty_restic_config(draw):
-    config = draw(
-        st.builds(
-            cp.ResticConfig,
-            BackupRepositoryFolder=st.text(),
-            ExcludePatternsFile=st.just(str(EXCLUDE_FILE)) | st.none(),
-            DevicePassCmd=st.text(),
-            FilesAndFolders=st.just([]),
-            Name=hu.valid_path_components(),
-            RepositoryPassCmd=st.text(),
-            UUID=st.uuids(),
-        )
-    )
-    return json.loads(config.model_dump_json())
+def valid_unparsed_empty_restic_config() -> st.SearchStrategy[
+    dict[str, str | Path | None]
+]:
+    return hu.valid_unparsed_empty_restic_config(EXCLUDE_FILE)
 
 
 @given(base_config=valid_unparsed_empty_restic_config())
