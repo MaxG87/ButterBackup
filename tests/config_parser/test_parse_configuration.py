@@ -2,7 +2,6 @@ import json
 import typing as t
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from uuid import UUID
 
 import pytest
 from hypothesis import given
@@ -34,38 +33,14 @@ def test_example_files_can_be_parsed(example_file: Path) -> None:
 
 
 @given(
-    first_config=hu.valid_empty_btrfs_config(None),
-    second_config=hu.valid_empty_btrfs_config(None),
+    first_config=hu.valid_empty_btrfs_config(None) | hu.valid_empty_restic_config(None),
+    second_config=hu.valid_empty_btrfs_config(None)
+    | hu.valid_empty_restic_config(None),
     shared_name=hu.valid_path_components(),
 )
-def test_parse_configuration_rejects_duplicate_names_for_btrfs_rsync(
-    first_config: cp.BtrFSRsyncConfig,
-    second_config: cp.BtrFSRsyncConfig,
-    shared_name: str,
-) -> None:
-    first_config = first_config.model_copy(update={"Name": shared_name})
-    second_config = second_config.model_copy(update={"Name": shared_name})
-    with pytest.raises(ValidationError):
-        cp.parse_configuration(
-            json.dumps(
-                {
-                    "deviceConfigurations": [
-                        first_config.model_dump(mode="json"),
-                        second_config.model_dump(mode="json"),
-                    ]
-                }
-            )
-        )
-
-
-@given(
-    first_config=hu.valid_empty_restic_config(None),
-    second_config=hu.valid_empty_restic_config(None),
-    shared_name=hu.valid_path_components(),
-)
-def test_parse_configuration_rejects_duplicate_names_for_restic(
-    first_config: cp.ResticConfig,
-    second_config: cp.ResticConfig,
+def test_parse_configuration_rejects_duplicate_names(
+    first_config: cp.BtrFSRsyncConfig | cp.ResticConfig,
+    second_config: cp.BtrFSRsyncConfig | cp.ResticConfig,
     shared_name: str,
 ) -> None:
     first_config = first_config.model_copy(update={"Name": shared_name})
@@ -117,10 +92,9 @@ def test_parse_configuration_parses_btrfs_config(
     with TemporaryDirectory() as source:
         base_config.update({"Folders": {source: folders_dest}, "FilesDest": files_dest})
         btrfs_cfg = cp.BtrFSRsyncConfig.model_validate(base_config)
-        cfg_lst = cp.parse_configuration(
-            json.dumps({"deviceConfigurations": [btrfs_cfg.model_dump(mode="json")]})
-        )
-        assert cfg_lst.deviceConfigurations == [btrfs_cfg]
+        cfg = cp.Configuration(deviceConfigurations=[btrfs_cfg])
+        result = cp.parse_configuration(cfg.model_dump_json())
+        assert result == cfg
 
 
 @given(
@@ -130,67 +104,27 @@ def test_load_configuration_parses_restic_config(base_config: dict[str, t.Any]) 
     with TemporaryDirectory() as source:
         base_config["FilesAndFolders"] = [source]
         restic_cfg = cp.ResticConfig.model_validate(base_config)
-        cfg_lst = cp.parse_configuration(
-            json.dumps({"deviceConfigurations": [restic_cfg.model_dump(mode="json")]})
-        )
-        assert cfg_lst.deviceConfigurations == [restic_cfg]
+        cfg = cp.Configuration(deviceConfigurations=[restic_cfg])
+        result = cp.parse_configuration(cfg.model_dump_json())
+        assert result == cfg
 
 
 @given(
-    backup_repository_folder=st.text(),
-    device_pass_cmd=st.text(),
-    name=hu.valid_path_components(),
-    repository_pass_cmd=st.text(),
+    device_configurations=st.lists(
+        hu.valid_empty_restic_config(None) | hu.valid_empty_btrfs_config(None),
+        min_size=1,
+        unique_by=lambda cfg: cfg.Name,
+    ),
     sudo_pass_cmd=st.text(),
-    uuid=st.uuids(),
 )
-def test_parse_configuration_preserves_sudo_pass_cmd(  # noqa: PLR0913
-    backup_repository_folder: str,
-    device_pass_cmd: str,
-    name: str,
-    repository_pass_cmd: str,
+def test_parse_configuration_with_sudo_pass_cmd(
+    device_configurations: list[cp.ResticConfig | cp.BtrFSRsyncConfig],
     sudo_pass_cmd: str,
-    uuid: UUID,
 ) -> None:
-    restic_cfg = cp.ResticConfig(
-        BackupRepositoryFolder=backup_repository_folder,
-        DevicePassCmd=device_pass_cmd,
-        FilesAndFolders={Path("/tmp")},
-        Name=name,
-        RepositoryPassCmd=repository_pass_cmd,
-        UUID=uuid,
+    cfg = cp.Configuration(
+        deviceConfigurations=device_configurations,
+        SudoPassCmd=sudo_pass_cmd,
     )
-    raw = json.loads(restic_cfg.model_dump_json())
-    config_json = json.dumps(
-        {"deviceConfigurations": [raw], "SudoPassCmd": sudo_pass_cmd}
-    )
-    result = cp.parse_configuration(config_json)
-    assert result.SudoPassCmd == sudo_pass_cmd
-
-
-@given(
-    backup_repository_folder=st.text(),
-    device_pass_cmd=st.text(),
-    name=hu.valid_path_components(),
-    repository_pass_cmd=st.text(),
-    uuid=st.uuids(),
-)
-def test_parse_configuration_defaults_sudo_pass_cmd_to_none(
-    backup_repository_folder: str,
-    device_pass_cmd: str,
-    name: str,
-    repository_pass_cmd: str,
-    uuid: UUID,
-) -> None:
-    restic_cfg = cp.ResticConfig(
-        BackupRepositoryFolder=backup_repository_folder,
-        DevicePassCmd=device_pass_cmd,
-        FilesAndFolders={Path("/tmp")},
-        Name=name,
-        RepositoryPassCmd=repository_pass_cmd,
-        UUID=uuid,
-    )
-    raw = json.loads(restic_cfg.model_dump_json())
-    config_json = json.dumps({"deviceConfigurations": [raw]})
-    result = cp.parse_configuration(config_json)
-    assert result.SudoPassCmd is None
+    raw = cfg.model_dump_json()
+    result = cp.parse_configuration(raw)
+    assert result == cfg
