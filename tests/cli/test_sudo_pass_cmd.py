@@ -1,8 +1,10 @@
 import os
+import typing as t
 from pathlib import Path
 
 import pytest
 import shell_interface as sh
+from click.testing import Result
 from typer.testing import CliRunner
 
 from butter_backup import config_parser as cp
@@ -120,52 +122,25 @@ def test_sudo_pass_cmd_is_used_in_close(
 @pytest.mark.skipif(
     in_docker_container(), reason="Test is known to fail in Docker container"
 )
+@pytest.mark.parametrize(
+    "command,has_failed",
+    [
+        (
+            "open",
+            lambda config, result: (
+                f"Speichermedium {config.Name} konnte nicht geöffnet werden."
+                in result.stdout
+            ),
+        ),
+        ("backup", lambda _, result: result.exit_code != 0),
+        ("close", lambda _, result: result.exit_code != 0),
+    ],
+)
 def test_open_requires_correct_sudo_pass_cmd(
     runner: CliRunner,
     encrypted_device: cp.DeviceConfiguration,
-    tmp_path: Path,
-) -> None:
-    assert _SUDO_PASS_CMD is not None
-    config = encrypted_device
-    dest_dir = tmp_path / "mounts"
-    dest_dir.mkdir()
-    correct_config = cp.Configuration(
-        deviceConfigurations=[config], SudoPassCmd=_SUDO_PASS_CMD
-    )
-    correct_config_file = tmp_path / "correct_config.json"
-    correct_config_file.write_text(correct_config.model_dump_json())
-    wrong_config = cp.Configuration(deviceConfigurations=[config], SudoPassCmd="false")
-    wrong_config_file = tmp_path / "wrong_config.json"
-    wrong_config_file.write_text(wrong_config.model_dump_json())
-
-    # Wrong pass-cmd: pipe_pass_cmd_to_real_cmd raises PassCmdError since "false"
-    # exits 1. The open command catches it and prints the failure message.
-    _invalidate_sudo_session()
-    wrong_result = runner.invoke(
-        app, ["open", str(dest_dir), "--config", str(wrong_config_file)]
-    )
-    expected_fail_msg = f"Speichermedium {config.Name} konnte nicht geöffnet werden."
-    assert expected_fail_msg in wrong_result.stdout
-
-    # Correct password: open should succeed
-    _invalidate_sudo_session()
-    correct_result = runner.invoke(
-        app, ["open", str(dest_dir), "--config", str(correct_config_file)]
-    )
-    assert correct_result.exit_code == 0
-    assert f"Speichermedium {config.Name} wurde in" in correct_result.stdout
-
-    # Cleanup
-    runner.invoke(app, ["close", "--config", str(correct_config_file)])
-
-
-@_requires_sudo_pass_cmd
-@pytest.mark.skipif(
-    in_docker_container(), reason="Test is known to fail in Docker container"
-)
-def test_backup_requires_correct_sudo_pass_cmd(
-    runner: CliRunner,
-    encrypted_device: cp.DeviceConfiguration,
+    command: str,
+    has_failed: t.Callable[[cp.DeviceConfiguration, Result], bool],
     tmp_path: Path,
 ) -> None:
     assert _SUDO_PASS_CMD is not None
@@ -181,60 +156,20 @@ def test_backup_requires_correct_sudo_pass_cmd(
     wrong_config_file.write_text(wrong_config.model_dump_json())
 
     # Wrong pass-cmd: pipe_pass_cmd_to_real_cmd raises PassCmdError since "false"
-    # exits 1. This propagates out of the backup command, producing a non-zero exit.
+    # exits 1. The open command catches it and prints the failure message.
     _invalidate_sudo_session()
-    wrong_result = runner.invoke(app, ["backup", "--config", str(wrong_config_file)])
-    assert wrong_result.exit_code != 0
+    if command == "close":
+        # The device needs to be open for the close command to pick up the device at
+        # all.
+        runner.invoke(app, ["open", "--config", str(correct_config_file)])
 
-    # Correct password: backup should succeed
+    wrong_result = runner.invoke(app, [command, "--config", str(wrong_config_file)])
+    assert has_failed(config, wrong_result)
+
+    # Correct password: open should succeed
     _invalidate_sudo_session()
-    correct_result = runner.invoke(
-        app, ["backup", "--config", str(correct_config_file)]
-    )
+    correct_result = runner.invoke(app, [command, "--config", str(correct_config_file)])
     assert correct_result.exit_code == 0
 
-
-@_requires_sudo_pass_cmd
-@pytest.mark.skipif(
-    in_docker_container(), reason="Test is known to fail in Docker container"
-)
-def test_close_requires_correct_sudo_pass_cmd(
-    runner: CliRunner,
-    encrypted_device: cp.DeviceConfiguration,
-    tmp_path: Path,
-) -> None:
-    assert _SUDO_PASS_CMD is not None
-    config = encrypted_device
-    correct_config = cp.Configuration(
-        deviceConfigurations=[config], SudoPassCmd=_SUDO_PASS_CMD
-    )
-    correct_config_file = tmp_path / "correct_config.json"
-    correct_config_file.write_text(correct_config.model_dump_json())
-    wrong_config = cp.Configuration(deviceConfigurations=[config], SudoPassCmd="false")
-    wrong_config_file = tmp_path / "wrong_config.json"
-    wrong_config_file.write_text(wrong_config.model_dump_json())
-
-    # Open the device (sudo will be authenticated via the correct SudoPassCmd)
-    dest_dir = tmp_path / "mounts"
-    dest_dir.mkdir()
-    _invalidate_sudo_session()
-    open_result = runner.invoke(
-        app, ["open", str(dest_dir), "--config", str(correct_config_file)]
-    )
-    # Confirm the device is actually open before testing close behavior.
-    # exit_code is always 0 for `open` (it swallows exceptions), so check the
-    # success message instead.
-    assert f"Speichermedium {config.Name} wurde in" in open_result.stdout
-
-    # Wrong pass-cmd: pipe_pass_cmd_to_real_cmd raises PassCmdError since "false"
-    # exits 1. This propagates out of the close command, producing a non-zero exit.
-    _invalidate_sudo_session()
-    wrong_result = runner.invoke(app, ["close", "--config", str(wrong_config_file)])
-    assert wrong_result.exit_code != 0
-    assert config.map_name().exists()
-
-    # Correct password: close should succeed
-    _invalidate_sudo_session()
-    correct_result = runner.invoke(app, ["close", "--config", str(correct_config_file)])
-    assert correct_result.exit_code == 0
-    assert not config.map_name().exists()
+    # Cleanup
+    runner.invoke(app, ["close", "--config", str(correct_config_file)])
