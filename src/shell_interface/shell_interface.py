@@ -79,7 +79,7 @@ def run_cmd(
 
 
 def pipe_pass_cmd_to_real_cmd(
-    pass_cmd: str, command: _CMD_LIST
+    pass_cmd: str, command: _CMD_LIST, *, capture_output: bool = False
 ) -> subprocess.CompletedProcess[bytes]:
     """
     Pipe result of first command to second command
@@ -98,6 +98,9 @@ def pipe_pass_cmd_to_real_cmd(
         command to run in shell and whose output is piped to the second command
     command
         command to run in shell and whose input is piped from the first command
+    capture_output
+        whether to capture the output of the real command; if `True`, the output is
+        returned as part of the `CompletedProcess` object
 
     Returns:
     --------
@@ -122,7 +125,9 @@ def pipe_pass_cmd_to_real_cmd(
         logger.error(errmsg)
         raise PassCmdError(errmsg) from e
     try:
-        completed_process = subprocess.run(command, input=pwd_proc.stdout, check=True)
+        completed_process = subprocess.run(
+            command, input=pwd_proc.stdout, check=True, capture_output=capture_output
+        )
     except subprocess.CalledProcessError as e:
         errmsg = f"Shell-Befehl `{command}` ist fehlgeschlagen."
         logger.error(errmsg)

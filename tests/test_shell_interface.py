@@ -47,6 +47,14 @@ def test_pipe_pass_cmd_to_cmd() -> None:
     assert proc.returncode == 0
 
 
+def test_pipe_pass_cmd_to_cmd_captures_stdout() -> None:
+    pass_cmd = "echo Hallo Welt"
+    real_command: sh.StrPathList = ["grep", "-o", "Welt"]
+    proc = sh.pipe_pass_cmd_to_real_cmd(pass_cmd, real_command, capture_output=True)
+    assert proc.args == real_command
+    assert proc.stdout.strip().decode("utf-8") == "Welt"
+
+
 @pytest.mark.parametrize(
     "failing_cmd",
     ["false", "(echo some_password;  false)"],
