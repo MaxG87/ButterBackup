@@ -11,7 +11,7 @@ dependencies = [
     "loguru>=0.7.3",
     "pydantic>=2.13.4",
     "pyyaml>=6.0.3",
-    "shell-interface>=2.0.0",
+    "shell-interface>=2.1.0",
     "storage-device-managers>=2.0.0",
     "typer>=0.25.1",
 ]

@@ -101,7 +101,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "rich", marker = "extra == 'all'", specifier = ">=13.9.4" },
-    { name = "shell-interface", specifier = ">=2.0.0" },
+    { name = "shell-interface", specifier = ">=2.1.0" },
     { name = "storage-device-managers", specifier = ">=2.0.0" },
     { name = "typer", specifier = ">=0.25.1" },
 ]
@@ -798,11 +798,11 @@ wheels = [
 
 [[package]]
 name = "shell-interface"
-version = "2.0.0"
+version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e7/4d/3339a6f734bc1a21f663cf501fe8f525e57de7110b817a3a8993fb89c4ec/shell_interface-2.0.0.tar.gz", hash = "sha256:bf78d220a7c7fb9a699d1030db7ebc4945829f8f312ce0c130dea95526870ed6", size = 15412, upload-time = "2026-04-26T11:20:44.052Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e1/23/68efe8cccdc2f27ef9524effcc765d2ebfcf39ca4cddc541364a411ac4aa/shell_interface-2.1.0.tar.gz", hash = "sha256:9ac7df9f55b3e787758797c7ef659e8b56d4b7f5f968b9bbdfdd18ddab9bb317", size = 15425, upload-time = "2026-05-16T11:33:32.093Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ca/aa/81ed389c0139ff5364c1b06015817cc7f44b84921237aa6fa6d33a5a99dc/shell_interface-2.0.0-py3-none-any.whl", hash = "sha256:9fcb39b0d680ec67731396f33179181c2c30fbd96c48d0da9c9886037931e676", size = 16293, upload-time = "2026-04-26T11:20:42.496Z" },
+    { url = "https://files.pythonhosted.org/packages/ea/86/19920b883ed19c7a33ecb11043cb6a78aa14f80cca8ea95e9e541cae367a/shell_interface-2.1.0-py3-none-any.whl", hash = "sha256:0e5a7bc202fda3c74d901a452e7975db0b580f5229ecb55f5488752180e55ed3", size = 16307, upload-time = "2026-05-16T11:33:30.347Z" },
 ]
 
 [[package]]
