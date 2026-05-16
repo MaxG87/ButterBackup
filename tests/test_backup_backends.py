@@ -6,6 +6,7 @@ from collections import Counter
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Iterable, overload
+from uuid import uuid4
 
 import pytest
 import shell_interface as sh
@@ -315,3 +316,55 @@ def test_do_backup_for_restic_adapts_ownership(
     }
     assert found_user == {expected_user}
     assert found_group == {expected_group}
+
+
+def test_btrfs_backend_refreshes_sudo_session_in_do_backup(
+    mocker, tmp_path: Path
+) -> None:
+    sudo_pass_cmd = "echo test_password"
+    config = cp.BtrFSRsyncConfig(
+        BackupRepositoryFolder="repo",
+        DevicePassCmd="echo pass",
+        Files=set(),
+        FilesDest="files",
+        Folders={},
+        Name="test-device",
+        UUID=uuid4(),
+    )
+    backend = bb.BtrFSRsyncBackend(config=config)
+    mock_refresh = mocker.patch("butter_backup.backup_backends._refresh_sudo")
+    mocker.patch.object(
+        bb.BtrFSRsyncBackend, "get_source_snapshot", return_value=tmp_path
+    )
+    mocker.patch.object(bb.BtrFSRsyncBackend, "snapshot", return_value=tmp_path)
+    mocker.patch.object(bb.BtrFSRsyncBackend, "adapt_ownership")
+
+    backend.do_backup(tmp_path, sudo_pass_cmd)
+
+    # Only one call before adapting ownership. The other calls are not covered by this
+    # test to keep the setup simple.
+    mock_refresh.assert_called_once_with(sudo_pass_cmd)
+
+
+def test_restic_backend_refreshes_sudo_session_in_do_backup(
+    mocker, tmp_path: Path
+) -> None:
+    sudo_pass_cmd = "echo test_password"
+    config = cp.ResticConfig(
+        BackupRepositoryFolder="repo",
+        DevicePassCmd="echo pass",
+        FilesAndFolders=set(),
+        Name="test-device",
+        RepositoryPassCmd="echo repo_pass",
+        UUID=uuid4(),
+    )
+    backend = bb.ResticBackend(config=config)
+    mock_refresh = mocker.patch("butter_backup.backup_backends._refresh_sudo")
+    mocker.patch.object(bb.ResticBackend, "copy_files")
+    mocker.patch.object(bb.ResticBackend, "adapt_ownership")
+
+    backend.do_backup(tmp_path, sudo_pass_cmd)
+
+    expected_nof_calls = 2
+    result_calls = mock_refresh.call_args_list
+    assert len(result_calls) == expected_nof_calls

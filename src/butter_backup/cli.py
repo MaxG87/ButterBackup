@@ -235,7 +235,7 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> Non
         _refresh_sudo(parsed_config.SudoPassCmd)
         with sdm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted:
             with sdm.mounted_device(decrypted, cfg.compression()) as mount_dir:
-                backend.do_backup(mount_dir)
+                backend.do_backup(mount_dir, parsed_config.SudoPassCmd)
                 # A backup could take so long that the sudo session expires. In this
                 # case the user would have to enter the password again to unmount and
                 # close the device. To prevent this, the sudo session is refreshed.

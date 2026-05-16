@@ -11,9 +11,16 @@ from loguru import logger
 from . import config_parser as cp
 
 
+def _refresh_sudo(sudo_pass_cmd: str | None) -> None:
+    if sudo_pass_cmd is not None:
+        sh.pipe_pass_cmd_to_real_cmd(
+            sudo_pass_cmd, ["sudo", "-Sv"], capture_output=True
+        )
+
+
 class BackupBackend(abc.ABC):
     @abc.abstractmethod
-    def do_backup(self, mount_dir: Path) -> None: ...
+    def do_backup(self, mount_dir: Path, sudo_pass_cmd: str | None = None) -> None: ...
 
     @overload
     @staticmethod
@@ -37,7 +44,7 @@ class BackupBackend(abc.ABC):
 class BtrFSRsyncBackend(BackupBackend):
     config: cp.BtrFSRsyncConfig
 
-    def do_backup(self, mount_dir: Path) -> None:
+    def do_backup(self, mount_dir: Path, sudo_pass_cmd: str | None = None) -> None:
         logger.info(f"Beginne mit BtrFS-Backup für Speichermedium {self.config.Name}.")
         backup_repository = mount_dir / self.config.BackupRepositoryFolder
         src_snapshot = self.get_source_snapshot(backup_repository)
@@ -45,10 +52,12 @@ class BtrFSRsyncBackend(BackupBackend):
         backup_root = self.snapshot(
             src=src_snapshot, backup_repository=backup_repository
         )
+        _refresh_sudo(sudo_pass_cmd)
         self.adapt_ownership(backup_root)
 
         for src, dest_name in self.config.Folders.items():
             dest = backup_root / dest_name
+            _refresh_sudo(sudo_pass_cmd)
             self.rsync_folder(src, dest, self.config.ExcludePatternsFile)
 
         files_dest = backup_root / self.config.FilesDest
@@ -56,6 +65,7 @@ class BtrFSRsyncBackend(BackupBackend):
             files_dest.unlink()
         files_dest.mkdir(parents=True, exist_ok=True)
         for src in self.config.Files:
+            _refresh_sudo(sudo_pass_cmd)
             self.rsync_file(src, files_dest)
 
     @staticmethod
@@ -129,10 +139,12 @@ class BtrFSRsyncBackend(BackupBackend):
 class ResticBackend(BackupBackend):
     config: cp.ResticConfig
 
-    def do_backup(self, mount_dir: Path) -> None:
+    def do_backup(self, mount_dir: Path, sudo_pass_cmd: str | None = None) -> None:
         logger.info(f"Beginne mit Restic-Backup für Speichermedium {self.config.Name}.")
         backup_repository = mount_dir / self.config.BackupRepositoryFolder
+        _refresh_sudo(sudo_pass_cmd)
         self.copy_files(backup_repository)
+        _refresh_sudo(sudo_pass_cmd)
         self.adapt_ownership(backup_repository)
 
     @staticmethod
