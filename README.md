@@ -71,6 +71,23 @@ Zugriff auf einzelne Sicherungskopien erfolgt über die `restic`-Kommandozeile.
 
 ## Konfigurationsdateien
 
+ButterBackup erlaubt und erfordert für jedes Gerät, z.B. eine externe
+Festplatte, eine eigene Konfiguration. Diese Konfigurationen werden in einer
+einzigen Datei abgelegt, die von ButterBackup eingelesen wird.
+
+Die Konfigurationsdatei wird von ButterBackup als `~/.config/butter-backup.cfg`
+erwartet, unabhängig von ihrem Format. Es ist aber möglich, den Pfad zur
+Konfigurationsdatei jedem Kommando mit dem Flag `--config` anzugeben.
+
+Jede Gerätekonfigurationen in der Konfigurationsdatei enthält alle
+Informationen, die nötig sind, um Sicherungskopien für dieses Zielgerät
+anzulegen. Das schließt die konkret zu sichernden Dateien und Verzeichnisse
+ein.
+
+Beispiele für Konfigurationsdateien befinden sich im Verzeichnis `examples/`.
+Es existiert eine Datei pro unterstütztem Format. Jede Beispieldatei enthält
+alle möglichen, auch optionale, Felder und je ein Beispiel für beide Module.
+
 ### Erlaubte Dateiformate
 
 ButterBackup akzeptiert Konfigurationsdateien in den folgenden Formaten:
