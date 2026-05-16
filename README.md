@@ -92,10 +92,9 @@ alle möglichen, auch optionale, Felder und je ein Beispiel für beide Module.
 
 ButterBackup akzeptiert Konfigurationsdateien in den folgenden Formaten:
 
-- **JSON** – Standard-JSON ohne Kommentare
+- **JSON** – Standard-JSON
 - **JSON5** – JSON-Erweiterung mit Kommentaren und abschließenden Kommas
-- **TOML** – die Gerätekonfigurationen müssen unter dem Schlüssel
-  `[[DEVICE_CONFIGURATION]]` abgelegt werden
+- **TOML** - Standard-TOML
 - **YAML** – Standard-YAML
 
 Beispielkonfigurationen für alle vier Formate befinden sich im Verzeichnis
@@ -117,14 +116,14 @@ Folgende Einschränkungen gelten für die gesamte Liste:
 
 Alle Gerätekonfigurationen teilen die folgenden Felder:
 
-| Feld                     | Pflichtfeld | Beschreibung                                                                                                                                                         |
-| ------------------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `UUID`                   | ja          | UUID des Sicherungsgeräts                                                                                                                                            |
-| `DevicePassCmd`          | ja          | Shell-Befehl, der das Passwort zur Geräteverschlüsselung ausgibt                                                                                                     |
-| `BackupRepositoryFolder` | ja          | Name des Verzeichnisses auf dem Gerät, in das gesichert wird                                                                                                         |
-| `Name`                   | nein        | Anzeigename der Konfiguration; muss ein gültiger Pfadbestandteil sein (kein `/`, kein Nullbyte, nicht `.` oder `..`); wird auf `UUID` gesetzt, falls nicht angegeben |
-| `Compression`            | nein        | Gewünschte BtrFS-Kompression, z.B. `zstd:3` (Standard: keine)                                                                                                        |
-| `ExcludePatternsFile`    | nein        | Pfad zu einer Datei mit Ausschlussmustern                                                                                                                            |
+| Feld                     | Pflichtfeld | Beschreibung                                                                                                          |
+| ------------------------ | ----------- | --------------------------------------------------------------------------------------------------------------------- |
+| `UUID`                   | ja          | UUID des Sicherungsgeräts (bestimmbar mit `sudo blkid -s UUID /dev/<device>`)                                         |
+| `DevicePassCmd`          | ja          | Shell-Befehl, der das Passwort zur Geräteverschlüsselung ausgibt                                                      |
+| `BackupRepositoryFolder` | ja          | Name des Verzeichnisses auf dem Gerät, in das gesichert wird                                                          |
+| `Name`                   | nein        | Anzeigename der Konfiguration; muss ein gültiger Pfadbestandteil sein; wird auf `UUID` gesetzt, falls nicht angegeben |
+| `Compression`            | nein        | Gewünschte BtrFS-Kompression, z.B. `zstd:3` (Standard: keine)                                                         |
+| `ExcludePatternsFile`    | nein        | Pfad zu einer Datei mit Ausschlussmustern                                                                             |
 
 #### BtrFSRsync-spezifische Felder
 
