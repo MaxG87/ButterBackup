@@ -111,13 +111,13 @@ def encrypted_restic_device(
 
 
 @pytest.fixture(params=["encrypted_btrfs_device", "encrypted_restic_device"])
-def encrypted_device(request) -> cp.Configuration:
-    config: cp.Configuration = request.getfixturevalue(request.param)
+def encrypted_device(request) -> cp.DeviceConfiguration:
+    config: cp.DeviceConfiguration = request.getfixturevalue(request.param)
     return config
 
 
 @pytest.fixture
-def mounted_device(encrypted_device) -> t.Iterator[tuple[cp.Configuration, Path]]:
+def mounted_device(encrypted_device) -> t.Iterator[tuple[cp.DeviceConfiguration, Path]]:
     config = encrypted_device
     with sdm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted:
         with sdm.mounted_device(decrypted, config.compression()) as mounted_device:

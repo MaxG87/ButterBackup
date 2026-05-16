@@ -17,7 +17,6 @@ from pydantic import (
     DirectoryPath,
     Field,
     FilePath,
-    RootModel,
     field_validator,
     model_validator,
 )
@@ -178,15 +177,17 @@ class ResticConfig(BaseConfig):
         return None
 
 
-Configuration = BtrFSRsyncConfig | ResticConfig
+DeviceConfiguration = BtrFSRsyncConfig | ResticConfig
 
 
-class ConfigurationList(RootModel[list[Configuration]]):
-    root: list[Configuration]
+class Configuration(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    DeviceConfigurations: list[DeviceConfiguration]
+    SudoPassCmd: str | None = None
 
     @model_validator(mode="after")
-    def check_unique_names(self) -> "ConfigurationList":
-        name_counts = Counter(cfg.Name for cfg in self.root)
+    def check_unique_names(self) -> t.Self:
+        name_counts = Counter(cfg.Name for cfg in self.DeviceConfigurations)
         duplicates = [name for name, count in name_counts.items() if count > 1]
         if duplicates:
             raise ValueError(
@@ -205,7 +206,8 @@ def _parse_as_json5(content: str) -> Any:
 
 def _parse_as_toml(content: str) -> Any:
     data = tomllib.loads(content)
-    return data["DEVICE_CONFIGURATION"]
+    bb = data["butter-backup"]
+    return {"DeviceConfigurations": bb["device-configurations"]}
 
 
 def _parse_as_yaml(content: str) -> Any:
@@ -220,15 +222,15 @@ _PARSERS: list[tuple[Any, type[Exception] | tuple[type[Exception], ...]]] = [
 ]
 
 
-def parse_configuration(content: str) -> list[Configuration]:
+def parse_configuration(content: str) -> Configuration:
     for parse_fn, exc_type in _PARSERS:
         try:
             raw = parse_fn(content)
         except exc_type:
             continue
-        config_lst = ConfigurationList.model_validate(raw)
-        if len(config_lst.root) == 0:
+        config = Configuration.model_validate(raw)
+        if len(config.DeviceConfigurations) == 0:
             sys.exit("Leere Konfigurationsdateien sind nicht erlaubt.\n")
-        return config_lst.root
+        return config
 
     sys.exit("Konfigurationsdatei konnte nicht gelesen werden.\n")

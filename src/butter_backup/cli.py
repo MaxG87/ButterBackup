@@ -9,6 +9,7 @@ from pathlib import Path
 from tempfile import mkdtemp
 from typing import Any, Callable
 
+import shell_interface as sh
 import storage_device_managers as sdm
 import typer
 from loguru import logger
@@ -70,11 +71,18 @@ def _get_default_file_system(backend: ValidBackends) -> ValidFileSystems:
             t.assert_never(backend)
 
 
+def _refresh_sudo(sudo_pass_cmd: str | None) -> None:
+    if sudo_pass_cmd is not None:
+        sh.pipe_pass_cmd_to_real_cmd(
+            sudo_pass_cmd, ["sudo", "-Sv"], capture_output=True
+        )
+
+
 def _skip_device(
-    config: cp.Configuration,
+    config: cp.DeviceConfiguration,
     *,
-    log_missing: Callable[[cp.Configuration], None] | None = None,
-    log_opened: Callable[[cp.Configuration], None] | None = None,
+    log_missing: Callable[[cp.DeviceConfiguration], None] | None = None,
+    log_opened: Callable[[cp.DeviceConfiguration], None] | None = None,
 ) -> bool:
     """
     Helper function to determine whether a device should be skipped.
@@ -102,10 +110,13 @@ CONFIG_OPTION = typer.Option(get_default_config_path(), exists=True, dir_okay=Fa
 VERBOSITY_OPTION = typer.Option(0, "--verbose", "-v", count=True)
 
 
-def _open_device(cfg: cp.Configuration, base_dir: Path) -> None:
+def _open_device(
+    cfg: cp.DeviceConfiguration, base_dir: Path, sudo_pass_cmd: str | None
+) -> None:
     mount_dir = base_dir / cfg.Name
     mount_dir.mkdir(exist_ok=True)
     try:
+        _refresh_sudo(sudo_pass_cmd)
         decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
         sdm.mount_device(decrypted, mount_dir=mount_dir, compression=cfg.compression())
     except:
@@ -143,9 +154,9 @@ def open(  # noqa: A001
     Andernfalls wird ein temporäres Verzeichnis erstellt.
     """
     setup_logging(verbose)
-    configurations = cp.parse_configuration(config.read_text())
+    parsed_config = cp.parse_configuration(config.read_text())
     base_dir = dest if dest is not None else Path(mkdtemp())
-    for cfg in configurations:
+    for cfg in parsed_config.DeviceConfigurations:
         if _skip_device(
             cfg,
             log_opened=lambda cfg: logger.warning(
@@ -153,7 +164,7 @@ def open(  # noqa: A001
             ),
         ):
             continue
-        _open_device(cfg, base_dir)
+        _open_device(cfg, base_dir, parsed_config.SudoPassCmd)
 
 
 @app.command()
@@ -166,9 +177,9 @@ def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None
     `open`. Weitere Erklärungen finden sich dort.
     """
     setup_logging(verbose)
-    configurations = cp.parse_configuration(config.read_text())
+    parsed_config = cp.parse_configuration(config.read_text())
     mounted_devices = sdm.get_mounted_devices()
-    for cfg in configurations:
+    for cfg in parsed_config.DeviceConfigurations:
         map_name = cfg.map_name()
         map_name_as_str = str(map_name)
         if cfg.device().exists() and map_name_as_str in mounted_devices:
@@ -182,6 +193,7 @@ def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None
                     device=cfg.Name,
                 )
                 continue
+            _refresh_sudo(parsed_config.SudoPassCmd)
             sdm.unmount_device(map_name)
             sdm.close_decrypted_device(map_name)
 
@@ -207,8 +219,8 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> Non
     weitere manuelle Schritte sind nicht nötig.
     """
     setup_logging(verbose)
-    configurations = cp.parse_configuration(config.read_text())
-    for cfg in configurations:
+    parsed_config = cp.parse_configuration(config.read_text())
+    for cfg in parsed_config.DeviceConfigurations:
         if _skip_device(
             cfg,
             log_missing=lambda cfg: logger.info(
@@ -220,9 +232,14 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> Non
         ):
             continue
         backend = bb.BackupBackend.from_config(cfg)
+        _refresh_sudo(parsed_config.SudoPassCmd)
         with sdm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted:
             with sdm.mounted_device(decrypted, cfg.compression()) as mount_dir:
-                backend.do_backup(mount_dir)
+                backend.do_backup(mount_dir, parsed_config.SudoPassCmd)
+                # A backup could take so long that the sudo session expires. In this
+                # case the user would have to enter the password again to unmount and
+                # close the device. To prevent this, the sudo session is refreshed.
+                _refresh_sudo(parsed_config.SudoPassCmd)
 
 
 @app.command()
@@ -278,7 +295,7 @@ def format_device(
                 "Zieldatei für ButterBackup-Konfiguration existiert schon!"
             )
         config_writer = config_to.write_text
-    config: cp.Configuration
+    config: cp.DeviceConfiguration
     match backend:
         case ValidBackends.btrfs_rsync:
             config = prepare_device_for_butterbackend(device)
@@ -287,7 +304,8 @@ def format_device(
         case _:
             t.assert_never(backend)
     json_serialisable = json.loads(config.model_dump_json(exclude_none=True))
-    config_writer(json.dumps([json_serialisable], indent=4, sort_keys=True))
+    wrapper = {"DeviceConfigurations": [json_serialisable]}
+    config_writer(json.dumps(wrapper, indent=4, sort_keys=True))
 
 
 @app.command()

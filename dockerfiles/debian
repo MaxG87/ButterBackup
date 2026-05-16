@@ -6,12 +6,15 @@ RUN apt update \
     && apt install -y btrfs-progs cryptsetup e2fsprogs git make python3 pipx restic rsync sudo \
     && apt autoclean
 
+# Setup uv
+ENV UV_VERSION=0.11.8
 ENV PATH="/root/.local/bin:$PATH"
-RUN pipx install uv
+RUN pipx install --global "uv==$UV_VERSION"
 
 # Setup production dependencies
 WORKDIR /project
 RUN touch README.md  # Content is not relevant for this Dockerfile
+COPY --chmod=555 dockerfiles/entrypoint.sh ./
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-install-project
 
@@ -20,6 +23,4 @@ COPY examples/ examples/
 COPY src/ src/
 RUN uv sync --frozen
 
-# Create /dev/disk/by-uuid/. It is required by the test suite but not available
-# in Docker containers by default.
-CMD mkdir -p /dev/disk/by-uuid/ && uv run pytest --no-cov --stepwise .
+ENTRYPOINT ["./entrypoint.sh"]

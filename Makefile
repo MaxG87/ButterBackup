@@ -1,6 +1,6 @@
 # Configuration
 ALL_FILES := $(sort $(shell find -type f -not -wholename "./.*" -not -name Makefile -not -wholename "*/__pycache__/*"))
-ALL_DOCKER_FILES := $(shell ls dockerfiles)
+ALL_DOCKER_FILES := $(shell ls dockerfiles | grep -v entrypoint.sh)
 SERVICE := $(notdir $(CURDIR))
 SERVICE_LC := $(shell echo $(SERVICE) | tr '[[:upper:]]' '[[:lower:]]')
 SERVICE_ID_FULL := $(shell sha256sum $(ALL_FILES) | sha256sum | cut -d' ' -f1)

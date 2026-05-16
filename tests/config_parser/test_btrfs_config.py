@@ -1,4 +1,5 @@
 import re
+import typing as t
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
@@ -15,25 +16,8 @@ TEST_RESOURCES = Path(__file__).parent.parent / "resources"
 EXCLUDE_FILE = TEST_RESOURCES / "exclude-file"
 
 
-@st.composite
-def valid_unparsed_empty_btrfs_config(draw):
-    config = draw(
-        st.fixed_dictionaries(
-            {
-                "BackupRepositoryFolder": st.text(),
-                "Compression": st.sampled_from(
-                    [cur.value for cur in ValidCompressions]
-                ),
-                "ExcludePatternsFile": st.just(str(EXCLUDE_FILE)) | st.none(),
-                "DevicePassCmd": st.text(),
-                "Files": st.just([]),
-                "FilesDest": st.text(),
-                "Folders": st.just({}),
-                "UUID": st.uuids().map(str),
-            }
-        )
-    )
-    return config
+def valid_unparsed_empty_btrfs_config() -> st.SearchStrategy[dict[str, t.Any]]:
+    return hu.valid_unparsed_empty_btrfs_config(EXCLUDE_FILE)
 
 
 @given(base_config=valid_unparsed_empty_btrfs_config(), dest_dir=hu.filenames())
@@ -51,7 +35,7 @@ def test_btrfs_config_rejects_file_dest_collision(base_config, dest_dir: str):
 
 
 @given(base_config=valid_unparsed_empty_btrfs_config(), file_name=hu.filenames())
-def test_btrfs_config_rejects_filename_collision(base_config, file_name):
+def test_btrfs_config_rejects_filename_collision(base_config, file_name: str):
     base_config["Folders"] = {}
     with TemporaryDirectory() as td1:
         with TemporaryDirectory() as td2:
@@ -234,3 +218,19 @@ def test_btrfs_config_rejects_invalid_name(
     }
     with pytest.raises(ValidationError):
         cp.BtrFSRsyncConfig.model_validate(config)
+
+
+@given(
+    base_config=valid_unparsed_empty_btrfs_config(),
+    files_folders_dest=st.lists(
+        hu.valid_path_components(), min_size=2, max_size=2, unique=True
+    ),
+)
+def test_btrfs_config_rejects_missing_exclude_patterns_file(
+    base_config: dict[str, t.Any], files_folders_dest: list[str]
+) -> None:
+    missing_file = TEST_RESOURCES / "missing-exclude-file"
+    errmsg_pattern = f"Path does not point to a file .*{missing_file.name}"
+    base_config["ExcludePatternsFile"] = str(missing_file)
+    with pytest.raises(ValidationError, match=errmsg_pattern):
+        cp.BtrFSRsyncConfig.model_validate(base_config)

@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
@@ -14,22 +13,11 @@ from tests import hypothesis_utils as hu
 TEST_RESOURCES = Path(__file__).parent.parent / "resources"
 EXCLUDE_FILE = TEST_RESOURCES / "exclude-file"
 
+_RawResticConfigT = dict[str, str | Path | None]
 
-@st.composite
-def valid_unparsed_empty_restic_config(draw):
-    config = draw(
-        st.builds(
-            cp.ResticConfig,
-            BackupRepositoryFolder=st.text(),
-            ExcludePatternsFile=st.just(str(EXCLUDE_FILE)) | st.none(),
-            DevicePassCmd=st.text(),
-            FilesAndFolders=st.just([]),
-            Name=hu.valid_path_components(),
-            RepositoryPassCmd=st.text(),
-            UUID=st.uuids(),
-        )
-    )
-    return json.loads(config.model_dump_json())
+
+def valid_unparsed_empty_restic_config() -> st.SearchStrategy[_RawResticConfigT]:
+    return hu.valid_unparsed_empty_restic_config(EXCLUDE_FILE)
 
 
 @given(base_config=valid_unparsed_empty_restic_config())
@@ -118,3 +106,14 @@ def test_restic_config_rejects_invalid_name(invalid_name: str) -> None:
         }
         with pytest.raises(ValidationError):
             cp.ResticConfig.model_validate(config)
+
+
+@given(base_config=valid_unparsed_empty_restic_config())
+def test_restic_config_rejects_missing_exclude_patterns_file(
+    base_config: _RawResticConfigT,
+) -> None:
+    missing_file = TEST_RESOURCES / "missing-exclude-file"
+    errmsg_pattern = f"Path does not point to a file .*{missing_file.name}"
+    base_config["ExcludePatternsFile"] = missing_file
+    with pytest.raises(ValidationError, match=errmsg_pattern):
+        cp.ResticConfig.model_validate(base_config)
