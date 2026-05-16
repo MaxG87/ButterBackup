@@ -37,7 +37,7 @@ def test_sudo_pass_cmd_is_used_in_open(
 ) -> None:
     sudo_pass_cmd = "echo test_password"
     wrapped_config = cp.Configuration(
-        deviceConfigurations=[encrypted_device], SudoPassCmd=sudo_pass_cmd
+        DeviceConfigurations=[encrypted_device], SudoPassCmd=sudo_pass_cmd
     )
     config_file = tmp_path / "config.json"
     config_file.write_text(wrapped_config.model_dump_json())
@@ -66,7 +66,7 @@ def test_sudo_pass_cmd_is_used_in_backup(
 ) -> None:
     sudo_pass_cmd = "echo test_password"
     wrapped_config = cp.Configuration(
-        deviceConfigurations=[encrypted_device], SudoPassCmd=sudo_pass_cmd
+        DeviceConfigurations=[encrypted_device], SudoPassCmd=sudo_pass_cmd
     )
     config_file = tmp_path / "config.json"
     config_file.write_text(wrapped_config.model_dump_json())
@@ -97,7 +97,7 @@ def test_sudo_pass_cmd_is_used_in_close(
 ) -> None:
     sudo_pass_cmd = "echo test_password"
     wrapped_config = cp.Configuration(
-        deviceConfigurations=[encrypted_device], SudoPassCmd=sudo_pass_cmd
+        DeviceConfigurations=[encrypted_device], SudoPassCmd=sudo_pass_cmd
     )
     config_file = tmp_path / "config.json"
     config_file.write_text(wrapped_config.model_dump_json())
@@ -147,11 +147,11 @@ def test_open_requires_correct_sudo_pass_cmd(
     config = complement_configuration(encrypted_device, tmp_path)
     prepare_tmp_path(config, tmp_path)
     correct_config = cp.Configuration(
-        deviceConfigurations=[config], SudoPassCmd=_SUDO_PASS_CMD
+        DeviceConfigurations=[config], SudoPassCmd=_SUDO_PASS_CMD
     )
     correct_config_file = tmp_path / "correct_config.json"
     correct_config_file.write_text(correct_config.model_dump_json())
-    wrong_config = cp.Configuration(deviceConfigurations=[config], SudoPassCmd="false")
+    wrong_config = cp.Configuration(DeviceConfigurations=[config], SudoPassCmd="false")
     wrong_config_file = tmp_path / "wrong_config.json"
     wrong_config_file.write_text(wrong_config.model_dump_json())
 

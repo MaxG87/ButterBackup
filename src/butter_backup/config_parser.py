@@ -182,12 +182,12 @@ DeviceConfiguration = BtrFSRsyncConfig | ResticConfig
 
 class Configuration(BaseModel):
     model_config = ConfigDict(frozen=True)
-    deviceConfigurations: list[DeviceConfiguration]
+    DeviceConfigurations: list[DeviceConfiguration]
     SudoPassCmd: str | None = None
 
     @model_validator(mode="after")
     def check_unique_names(self) -> t.Self:
-        name_counts = Counter(cfg.Name for cfg in self.deviceConfigurations)
+        name_counts = Counter(cfg.Name for cfg in self.DeviceConfigurations)
         duplicates = [name for name, count in name_counts.items() if count > 1]
         if duplicates:
             raise ValueError(
@@ -207,7 +207,7 @@ def _parse_as_json5(content: str) -> Any:
 def _parse_as_toml(content: str) -> Any:
     data = tomllib.loads(content)
     bb = data["butter-backup"]
-    return {"deviceConfigurations": bb["device-configurations"]}
+    return {"DeviceConfigurations": bb["device-configurations"]}
 
 
 def _parse_as_yaml(content: str) -> Any:
@@ -229,7 +229,7 @@ def parse_configuration(content: str) -> Configuration:
         except exc_type:
             continue
         config = Configuration.model_validate(raw)
-        if len(config.deviceConfigurations) == 0:
+        if len(config.DeviceConfigurations) == 0:
             sys.exit("Leere Konfigurationsdateien sind nicht erlaubt.\n")
         return config
 

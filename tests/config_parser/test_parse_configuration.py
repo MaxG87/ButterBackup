@@ -29,7 +29,7 @@ def test_example_files_can_be_parsed(example_file: Path) -> None:
     content = example_file.read_text()
     result = cp.parse_configuration(content)
     expected_names = ["BtrFS Backup Example", "Restic Backup Example"]
-    assert [cfg.Name for cfg in result.deviceConfigurations] == expected_names
+    assert [cfg.Name for cfg in result.DeviceConfigurations] == expected_names
 
 
 @given(
@@ -49,7 +49,7 @@ def test_parse_configuration_rejects_duplicate_names(
         cp.parse_configuration(
             json.dumps(
                 {
-                    "deviceConfigurations": [
+                    "DeviceConfigurations": [
                         first_config.model_dump(mode="json"),
                         second_config.model_dump(mode="json"),
                     ]
@@ -60,7 +60,7 @@ def test_parse_configuration_rejects_duplicate_names(
 
 def test_parse_configuration_rejects_empty_list() -> None:
     with pytest.raises(SystemExit) as sysexit:
-        cp.parse_configuration(json.dumps({"deviceConfigurations": []}))
+        cp.parse_configuration(json.dumps({"DeviceConfigurations": []}))
     assert sysexit.value.code not in SUCCESS_CODES
 
 
@@ -71,12 +71,12 @@ def test_parse_configuration_rejects_empty_list() -> None:
 )
 def test_parse_configuration_warns_on_non_lists(non_list) -> None:
     with pytest.raises(ValidationError):
-        cp.parse_configuration(json.dumps({"deviceConfigurations": non_list}))
+        cp.parse_configuration(json.dumps({"DeviceConfigurations": non_list}))
 
 
 def test_parse_configuration_warns_on_non_dict_item() -> None:
     with pytest.raises(ValidationError):
-        cp.parse_configuration(json.dumps({"deviceConfigurations": [{}, 1337]}))
+        cp.parse_configuration(json.dumps({"DeviceConfigurations": [{}, 1337]}))
 
 
 @given(
@@ -92,7 +92,7 @@ def test_parse_configuration_parses_btrfs_config(
     with TemporaryDirectory() as source:
         base_config.update({"Folders": {source: folders_dest}, "FilesDest": files_dest})
         btrfs_cfg = cp.BtrFSRsyncConfig.model_validate(base_config)
-        cfg = cp.Configuration(deviceConfigurations=[btrfs_cfg])
+        cfg = cp.Configuration(DeviceConfigurations=[btrfs_cfg])
         result = cp.parse_configuration(cfg.model_dump_json())
         assert result == cfg
 
@@ -104,7 +104,7 @@ def test_load_configuration_parses_restic_config(base_config: dict[str, t.Any]) 
     with TemporaryDirectory() as source:
         base_config["FilesAndFolders"] = [source]
         restic_cfg = cp.ResticConfig.model_validate(base_config)
-        cfg = cp.Configuration(deviceConfigurations=[restic_cfg])
+        cfg = cp.Configuration(DeviceConfigurations=[restic_cfg])
         result = cp.parse_configuration(cfg.model_dump_json())
         assert result == cfg
 
@@ -122,7 +122,7 @@ def test_parse_configuration_with_sudo_pass_cmd(
     sudo_pass_cmd: str,
 ) -> None:
     cfg = cp.Configuration(
-        deviceConfigurations=device_configurations,
+        DeviceConfigurations=device_configurations,
         SudoPassCmd=sudo_pass_cmd,
     )
     raw = cfg.model_dump_json()

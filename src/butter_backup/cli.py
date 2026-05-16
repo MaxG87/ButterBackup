@@ -156,7 +156,7 @@ def open(  # noqa: A001
     setup_logging(verbose)
     parsed_config = cp.parse_configuration(config.read_text())
     base_dir = dest if dest is not None else Path(mkdtemp())
-    for cfg in parsed_config.deviceConfigurations:
+    for cfg in parsed_config.DeviceConfigurations:
         if _skip_device(
             cfg,
             log_opened=lambda cfg: logger.warning(
@@ -179,7 +179,7 @@ def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None
     setup_logging(verbose)
     parsed_config = cp.parse_configuration(config.read_text())
     mounted_devices = sdm.get_mounted_devices()
-    for cfg in parsed_config.deviceConfigurations:
+    for cfg in parsed_config.DeviceConfigurations:
         map_name = cfg.map_name()
         map_name_as_str = str(map_name)
         if cfg.device().exists() and map_name_as_str in mounted_devices:
@@ -220,7 +220,7 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> Non
     """
     setup_logging(verbose)
     parsed_config = cp.parse_configuration(config.read_text())
-    for cfg in parsed_config.deviceConfigurations:
+    for cfg in parsed_config.DeviceConfigurations:
         if _skip_device(
             cfg,
             log_missing=lambda cfg: logger.info(
@@ -304,7 +304,7 @@ def format_device(
         case _:
             t.assert_never(backend)
     json_serialisable = json.loads(config.model_dump_json(exclude_none=True))
-    wrapper = {"deviceConfigurations": [json_serialisable]}
+    wrapper = {"DeviceConfigurations": [json_serialisable]}
     config_writer(json.dumps(wrapper, indent=4, sort_keys=True))
 
 
