@@ -122,11 +122,11 @@ All device configurations share the following fields:
 
 #### Fields specific to BtrFSRsync
 
-| Feld        | Pflichtfeld | Beschreibung                                                                         |
-| ----------- | ----------- | ------------------------------------------------------------------------------------ |
-| `Folders`   | yes         | Mapping of source directories to destination directory names on the device           |
-| `Files`     | yes         | Number of source files to be backed up individually                                  |
-| `FilesDest` | yes         | Name of destination directory on the device to which the individual files are copied |
+| Field       | Mandatory | Description                                                                          |
+| ----------- | --------- | ------------------------------------------------------------------------------------ |
+| `Folders`   | yes       | Mapping of source directories to destination directory names on the device           |
+| `Files`     | yes       | Set of source files to be backed up individually                                     |
+| `FilesDest` | yes       | Name of destination directory on the device to which the individual files are copied |
 
 For the BtrFSRsync module, the following additional restrictions apply:
 
@@ -136,10 +136,10 @@ For the BtrFSRsync module, the following additional restrictions apply:
 
 #### Fields specific to Restic
 
-| Feld                | Pflichtfeld | Beschreibung                                                       |
-| ------------------- | ----------- | ------------------------------------------------------------------ |
-| `FilesAndFolders`   | yes         | Set of source files and directories to be backed up                |
-| `RepositoryPassCmd` | yes         | Shell command that produces the password for the Restic repository |
+| Field               | Mandatory | Description                                                        |
+| ------------------- | --------- | ------------------------------------------------------------------ |
+| `FilesAndFolders`   | yes       | Set of source files and directories to be backed up                |
+| `RepositoryPassCmd` | yes       | Shell command that produces the password for the Restic repository |
 
 ## Threat Scenarios
 
@@ -154,7 +154,7 @@ detailed discussion of the measures.
 | Faulty backup copies due to misuse                         | Very simple usage                          |
 | Loss of the data storage medium                            | Full encryption of the data storage medium |
 | Destruction of the data storage medium due to power surges | Physically separate storage                |
-| backups taken too rarerly                                  | Very simple to use                         |
+| Backups taken too rarely                                   | Very simple to use                         |
 
 These threats are mitigated by the fact that the system is very simple to use,
 enabling the physically separate storage of the data storage medium containing
@@ -171,9 +171,9 @@ process requiring manual steps is prone to errors and runs the risk of not
 being carried out when in doubt. Creating backup copies is no exception here.
 
 ButterBackup addresses this risk by reducing the creation of a backup copy to
-just two manual steps. All you need to do is connect the hard drive to the
-computer and launch the programme. ButterBackup takes care of all further
-steps, such as decryption, copying the data and unmounting.
+just two manual steps. It suffices to connect the hard drive to the computer
+and launch the programme. ButterBackup takes care of all further steps, such as
+decryption, copying the data and unmounting.
 
 Overall, ButterBackup enables you to store backup copies as securely as
 possible without complicating the process of creating new backup copies.

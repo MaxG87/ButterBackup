@@ -12,7 +12,7 @@ ButterBackup kann direkt von PyPI installiert werden:
 pipx install butter-backup
 ```
 
-Es ist aber auch möglich, das Projekt kann aus dem lokalen Quellcode zu installieren:
+Es ist aber auch möglich, das Projekt aus dem lokalen Quellcode zu installieren:
 
 ```bash
 uv build
@@ -230,7 +230,8 @@ nur, weil es Probleme mit Arch gab.
 
 Die Testsuite kann mittels `make` ausgeführt werden. Es ist auch eine
 Parallelisierung mittels `make -j N` möglich, wobei N die Anzahl der Prozesse
-angibt.
+angibt. Es hat sich jedoch herausgestellt, dass dies etwas instabil ist. Daher
+wird empfohlen, die Tests bei Problemen zunächst sequenzielle auszuführen.
 
 Diese Tests werden ergänzt durch eine Testmatrix auf Github. Diese Testmatrix
 deckt Ubuntu mit allen unterstützten Pythonversionen ab. Dies erlaubt ggf., die
