@@ -140,3 +140,90 @@ For the BtrFSRsync module, the following additional restrictions apply:
 | ------------------- | ----------- | ------------------------------------------------------------------ |
 | `FilesAndFolders`   | yes         | Set of source files and directories to be backed up                |
 | `RepositoryPassCmd` | yes         | Shell command that produces the password for the Restic repository |
+
+## Threat Scenarios
+
+ButterBackup has been designed to protect against a range of specific threat
+scenarios. The specific threats and the corresponding countermeasures are
+listed in the table below. The summary table is followed by a slightly more
+detailed discussion of the measures.
+
+| Threat                                                     | Countermeasure                             |
+| ---------------------------------------------------------- | ------------------------------------------ |
+| File-encrypting malware                                    | Physically separate storage                |
+| Faulty backup copies due to misuse                         | Very simple usage                          |
+| Loss of the data storage medium                            | Full encryption of the data storage medium |
+| Destruction of the data storage medium due to power surges | Physically separate storage                |
+| backups taken too rarerly                                  | Very simple to use                         |
+
+These threats are mitigated by the fact that the system is very simple to use,
+enabling the physically separate storage of the data storage medium containing
+the backup copies.
+
+An easy-to-implement and reliable measure to protect the storage device from
+damage caused by power surges is to store it physically separate from the
+computer. At the same time, this measure also provides excellent protection
+against the destruction of backup copies by malware, as the backup copies are
+beyond the reach of the malware.
+
+However, physically separate storage presents a threat due to convenience. A
+process requiring manual steps is prone to errors and runs the risk of not
+being carried out when in doubt. Creating backup copies is no exception here.
+
+ButterBackup addresses this risk by reducing the creation of a backup copy to
+just two manual steps. All you need to do is connect the hard drive to the
+computer and launch the programme. ButterBackup takes care of all further
+steps, such as decryption, copying the data and unmounting.
+
+Overall, ButterBackup enables you to store backup copies as securely as
+possible without complicating the process of creating new backup copies.
+
+## Running the tests
+
+ButterBackup has a comprehensive test suite that covers many relevant aspects
+of the programme. This is supplemented by the similarly comprehensive test
+suites for the dependencies `storage-device-managers` and `shell-interface`.
+These two dependencies originated from ButterBackup, meaning that their test
+suites thoroughly cover further aspects that are important for ButterBackup.
+
+For quick execution during development, it is advisable to run the test suite
+directly. This is explained in the “quick” section. However, the
+cross-distribution tests should also be run at the latest before a release, as
+these guarantee that ButterBackup works on Arch and all supported Python
+versions.
+
+**⚠️ Please note:** The test suite requires and requests sudo privileges, as it
+needs to create, encrypt, format and mount loop devices. However, the tests are
+designed to be safe and do not make any permanent or significant changes to the
+system. If you have any concerns in this regard, you can run the Docker-based
+test suite instead.
+
+### Quick execution
+
+#### Direct
+
+```bash
+uv run ruff check .
+uv run mypy .
+uv run pytest
+```
+
+#### Using the Makefile
+
+```bash
+make check-format check-linters run-undockered-tests
+```
+
+### Cross-distribution tests
+
+There is a comprehensive test suite that can also detect certain platform
+dependencies. The Docker tests only exist because there were issues with Arch.
+
+The test suite can be run using `make`. Parallelisation is also possible using
+`make -j <N>`, where N specifies the number of processes. However, this was
+found to be a bit unstable, so it is advised to resort to sequential execution
+if you encounter any issues.
+
+These tests are supplemented by a test matrix on GitHub. This test matrix
+covers Ubuntu with all supported Python versions. This allows the very
+long-running Docker test suite to be run less frequently where necessary.
