@@ -53,3 +53,56 @@ immediately available in the file manager.
 name, size, and timestamp are not copied. Therefore, if, for example, a process
 on a filesystem without modification timestamps repeatedly overwrites files
 without changing their size, these files will not be updated in the backup.
+
+### Restic
+
+This module uses `restic` to create backups. `restic` is a highly sophisticated
+program for creating encrypted backups with advanced deduplication. More
+information about `restic` and its capabilities can be found on [the official
+website](https://restic.net/). This module is recommended for technically savvy
+users.
+
+After running `butter-backup open`, only a single directory is available,
+containing all `restic` backups. Individual backups can be accessed via the
+`restic` command line.
+
+## Configuration Files
+
+ButterBackup allows and requires a separate configuration for each device, e.g.
+an external hard drive. These configurations are stored in a single file, which
+is read by ButterBackup.
+
+ButterBackup expects the configuration file to be located at
+`~/.config/butter-backup.cfg`, regardless of its format. However, it is
+possible to specify the path to the configuration file for each command using
+the `--config` flag.
+
+Each device configuration in the configuration file contains all the
+information necessary to create backups for that target device. This includes
+the specific files and directories to be backed up.
+
+Examples of configuration files can be found in the `examples/` directory.
+There is one file per supported format. Each example file contains all possible
+fields, including optional ones, and one example for each module.
+
+### Supported File Formats
+
+ButterBackup accepts configuration files in the following formats:
+
+- **JSON** – Standard JSON
+- **JSON5** – JSON extension with comments and trailing commas
+- **TOML** – Standard TOML
+- **YAML** – Standard YAML
+
+Sample configurations for all four formats can be found in the `examples/` directory.
+
+### Structure and Restrictions
+
+A configuration file contains a **non-empty list** of device configurations.
+Each configuration describes exactly one backup device and belongs to one of
+the two available modules (BtrFSRsync or Restic).
+
+The following restrictions apply to the entire list:
+
+- The list must **not be empty**.
+- The `Name` field must be **unique** within the list.
