@@ -22,8 +22,10 @@ starten – ButterBackup erledigt den Rest.
 
 ## Schnellstart
 
-    pipx install butter-backup
-    butter-backup backup --config ~/.config/butter-backup.cfg
+```bash
+pipx install butter-backup
+butter-backup backup --config ~/.config/butter-backup.cfg
+```
 
 ## Demo
 

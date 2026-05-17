@@ -8,12 +8,16 @@
 
 ButterBackup kann direkt von PyPI installiert werden:
 
-    pipx install butter-backup
+```bash
+pipx install butter-backup
+```
 
 Es ist aber auch möglich, das Projekt kann aus dem lokalen Quellcode zu installieren:
 
-    uv build
-    pipx install dist/butter-backup-<version>.whl
+```bash
+uv build
+pipx install dist/butter-backup-<version>.whl
+```
 
 ## Benutzung
 
@@ -200,13 +204,17 @@ Arch und allen unterstützten Pythonversionen funktioniert.
 
 #### Direkt
 
-    uv run ruff check .
-    uv run mypy .
-    uv run pytest
+```bash
+uv run ruff check .
+uv run mypy .
+uv run pytest
+```
 
 #### Mittels Makefile
 
-    make check-format check-linters run-undockered-tests
+```bash
+make check-format check-linters run-undockered-tests
+```
 
 ### Plattformübergreifende Tests
 
