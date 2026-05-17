@@ -229,38 +229,3 @@ angibt.
 Diese Tests werden ergänzt durch eine Testmatrix auf Github. Diese Testmatrix
 deckt Ubuntu mit allen unterstützten Pythonversionen ab. Dies erlaubt ggf., die
 sehr lang laufende Docker-Testsuite seltener auszuführen.
-
-## Designentscheidungen
-
-### Beibehaltung von nicht mehr vermerkten Zielordnern und -dateien
-
-In den Konfigurationen müssen Zielordner und Dateien angegeben werden. Nun ist
-es denkbar, dass einige dieser Ziele umbenannt oder entfernt werden. Als
-Beispiel diene hier das Backup des Ordners `Videos-Quelle` nach `Videos-Ziel`.
-Ein Nutzer könnte sich nun entscheiden, aus Platzgründen `Videos-Quelle` auf
-eine externe Festplatte auszulagern. Die Backup-Anweisung könnte damit entfernt
-werden.
-
-In diesem Fall wird ButterBackup `Videos-Ziel` nicht löschen. Der
-offensichtlichste Grund ist, dass dies das Programm verkomplizieren würde. Es
-ist ohne weiteres möglich, über `butter-backup open` die Sicherungskopien zu
-öffnen und nicht mehr benötigte Ordner händisch zu löschen.
-
-Außerdem ist es vorstellbar, dass die Quelle zwar gelöscht wurde, aber im
-Backup archiviert werden soll. Dieser Anwendungsfall würde unmöglich gemacht,
-würden nicht mehr gelistete Ziele aus der Sicherungskopie entfernt.
-
-## Ausstehende Aufgaben
-
-- README schreiben und übersetzen
-- Testsuite umstellen von Docker auf virtuelle Maschinen
-- Alias für Einzelkonfigurationen?
-- butter-backup exec / run
-  - nimmt Befehl als Zeichenkette und führt diesen im BackupRootDir aus
-  - butter-backup exec [<uuid>] <cmd> --> open; cd; cmd; cd -; close
-  - sollte Mapping auf Umgebungsvariablen unterstützen, z.B. RepoPassCmd -> RESTIC_PASSWORD_COMMAND
-- Verbesserte Fehlermeldungen
-  - wenn unmount nicht möglich ist
-  - wenn BackupRepository nicht vorhanden ist
-- SudoPassCmd
-- Konfiguration der gewünschten Kompression ermöglichen (zlib, zstd, none, etc.)
