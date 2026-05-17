@@ -200,6 +200,12 @@ Spätestens vor einem Release sollten aber auch die distributionsübergreifenden
 Tests ausgeführt werden, da diese garantieren, dass ButterBackup auch unter
 Arch und allen unterstützten Pythonversionen funktioniert.
 
+**⚠️ Achtung:** Die Testsuite benötigt und fordert sudo-Rechte an, da sie
+Loop-Geräte erstellen, verschlüsseln, formatieren und mounten muss. Die Tests
+sind jedoch so konzipiert, dass sie sicher sind und das System nicht dauerhaft
+oder relevant verändern. Sollten diesbezüglich Bedenken bestehen, kann auch nur
+die Docker-basiert Testsuite ausgeführt werden.
+
 ### Schnell
 
 #### Direkt
