@@ -122,7 +122,7 @@ Alle Gerätekonfigurationen teilen die folgenden Felder:
 | `BackupRepositoryFolder` | ja          | Name des Verzeichnisses auf dem Gerät, in das gesichert wird                                                          |
 | `Name`                   | nein        | Anzeigename der Konfiguration; muss ein gültiger Pfadbestandteil sein; wird auf `UUID` gesetzt, falls nicht angegeben |
 | `Compression`            | nein        | Gewünschte BtrFS-Kompression, z.B. `zstd:3` (Standard: keine)                                                         |
-| `ExcludePatternsFile`    | nein        | Pfad zu einer Datei mit Ausschlussmustern                                                                             |
+| `ExcludePatternsFile`    | nein        | Pfad zu einer Datei mit Ausschlussmustern (`rsync`-Format)                                                            |
 
 #### BtrFSRsync-spezifische Felder
 
