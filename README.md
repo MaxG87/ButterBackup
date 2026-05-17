@@ -11,8 +11,7 @@
 
 ---
 
-📖 **Ausführliche Dokumentation:**
-**[🇩🇪 Deutsch (README.de.md)](README.de.md)** | [🇬🇧 English (README.en.md)](README.en.md)
+📖 **Ausführliche Dokumentation:** **[🇩🇪 Deutsch](docs/README.de.md)** | [🇬🇧 English](docs/README.en.md)
 
 ---
 
