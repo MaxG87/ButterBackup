@@ -35,14 +35,14 @@ def runner():
     return CliRunner()
 
 
-def test_get_default_config_path() -> None:
+def test_get_default_config_paths() -> None:
     with TemporaryDirectory() as tempdir:
         xdg_config_dir = Path(tempdir)
     with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config_dir}.get):
         config_files = cli.get_default_config_paths()
     expected_cfgs = [
-        xdg_config_dir / "butter-backup.json",
         xdg_config_dir / "butter-backup.json5",
+        xdg_config_dir / "butter-backup.json",
         xdg_config_dir / "butter-backup.toml",
         xdg_config_dir / "butter-backup.yaml",
     ]
@@ -173,7 +173,7 @@ def test_subprograms_refuse_missing_config(subprogram, runner) -> None:
     ["backup", "close", "open"],
 )
 def test_subprograms_refuse_unreadable_file(subprogram, runner) -> None:
-    with NamedTemporaryFile() as fh:
+    with NamedTemporaryFile(suffix=".json") as fh:
         config_file = Path(fh.name)
         config_file.chmod(0)
         result = runner.invoke(app, [subprogram, "--config", str(config_file)])
@@ -196,8 +196,8 @@ def test_subprograms_refuse_directories(subprogram, runner) -> None:
 def test_open_refuses_missing_xdg_config(runner) -> None:
     # It seems as if this test cannot be implemented at the moment.
     #
-    # This test resets XDG_CONFIG_HOME to provoke that get_default_config_path
-    # returns a not existing config file. However, get_default_config_path is
+    # This test resets XDG_CONFIG_HOME to provoke that get_default_config_paths
+    # returns non-existent config files. However, get_default_config_paths is
     # executed at import time, rendering resetting XDG_CONFIG_HOME effectless.
     with TemporaryDirectory() as xdg_config_dir:
         pass
@@ -212,7 +212,7 @@ def test_open_refuses_missing_xdg_config(runner) -> None:
 )
 def test_close_does_not_close_unopened_device(runner, encrypted_btrfs_device) -> None:
     config = encrypted_btrfs_device
-    with NamedTemporaryFile() as tempf:
+    with NamedTemporaryFile(suffix=".json") as tempf:
         config_file = Path(tempf.name)
         wrapped_config = cp.Configuration(DeviceConfigurations=[config])
         config_file.write_text(wrapped_config.model_dump_json())
@@ -227,7 +227,7 @@ def test_close_does_not_close_unopened_device(runner, encrypted_btrfs_device) ->
 def test_open_close_roundtrip(runner, encrypted_device) -> None:
     config = encrypted_device
     expected_cryptsetup_map = Path(f"/dev/mapper/{config.UUID}")
-    with NamedTemporaryFile() as tempf:
+    with NamedTemporaryFile(suffix=".json") as tempf:
         config_file = Path(tempf.name)
         wrapped_config = cp.Configuration(DeviceConfigurations=[config])
         config_file.write_text(wrapped_config.model_dump_json())
@@ -389,7 +389,7 @@ def test_format_device(runner, backend: str, big_file: Path) -> None:
     device_name = config_lst[0].Name
     link_dest = Path(f"/dev/disk/by-uuid/{device_uuid}")
     wait_until_gone(link_dest, dt.timedelta(seconds=3))
-    with NamedTemporaryFile("w") as fh:
+    with NamedTemporaryFile("w", suffix=".json") as fh:
         fh.write(serialised_config)
         fh.seek(0)
         with sdm.symbolic_link(big_file, link_dest):

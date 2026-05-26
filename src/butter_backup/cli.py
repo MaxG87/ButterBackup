@@ -25,7 +25,7 @@ from .device_managers import (
 app = typer.Typer()
 DEFAULT_CONFIG_DIR = Path("~/.config/").expanduser()
 DEFAULT_CONFIG_BASENAME = "butter-backup"
-DEFAULT_CONFIG_SUFFIX_ORDER = (".json", ".json5", ".toml", ".yaml")
+DEFAULT_CONFIG_SUFFIX_ORDER = [".json5", ".json", ".toml", ".yaml"]
 SUPPORTED_CONFIG_SUFFIXES = frozenset(DEFAULT_CONFIG_SUFFIX_ORDER)
 
 
