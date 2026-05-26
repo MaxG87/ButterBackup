@@ -221,6 +221,15 @@ _PARSERS: list[tuple[Any, type[Exception] | tuple[type[Exception], ...]]] = [
     (_parse_as_yaml, yaml.YAMLError),
 ]
 
+_PARSER_BY_EXTENSION: dict[
+    str, tuple[t.Callable[[str], Any], type[Exception] | tuple[type[Exception], ...]]
+] = {
+    ".json": (_parse_as_json5, ValueError),
+    ".json5": (_parse_as_json5, ValueError),
+    ".toml": (_parse_as_toml, (tomllib.TOMLDecodeError, KeyError)),
+    ".yaml": (_parse_as_yaml, yaml.YAMLError),
+}
+
 
 def parse_configuration(content: str) -> Configuration:
     for parse_fn, exc_type in _PARSERS:
@@ -234,3 +243,18 @@ def parse_configuration(content: str) -> Configuration:
         return config
 
     sys.exit("Konfigurationsdatei konnte nicht gelesen werden.\n")
+
+
+def parse_configuration_by_extension(content: str, extension: str) -> Configuration:
+    try:
+        parse_fn, exc_type = _PARSER_BY_EXTENSION[extension]
+    except KeyError:
+        sys.exit("Konfigurationsdatei konnte nicht gelesen werden.\n")
+    try:
+        raw = parse_fn(content)
+    except exc_type:
+        sys.exit("Konfigurationsdatei konnte nicht gelesen werden.\n")
+    config = Configuration.model_validate(raw)
+    if len(config.DeviceConfigurations) == 0:
+        sys.exit("Leere Konfigurationsdateien sind nicht erlaubt.\n")
+    return config

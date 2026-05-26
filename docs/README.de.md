@@ -74,9 +74,16 @@ ButterBackup erlaubt und erfordert für jedes Gerät, z.B. eine externe
 Festplatte, eine eigene Konfiguration. Diese Konfigurationen werden in einer
 einzigen Datei abgelegt, die von ButterBackup eingelesen wird.
 
-Die Konfigurationsdatei wird von ButterBackup als `~/.config/butter-backup.cfg`
-erwartet, unabhängig von ihrem Format. Es ist aber möglich, den Pfad zur
-Konfigurationsdatei jedem Kommando mit dem Flag `--config` anzugeben.
+Wenn kein `--config`-Argument übergeben wird, prüft ButterBackup diese
+Standardpfade in dieser Reihenfolge:
+
+1. `~/.config/butter-backup.json`
+2. `~/.config/butter-backup.json5`
+3. `~/.config/butter-backup.toml`
+4. `~/.config/butter-backup.yaml`
+
+Es ist außerdem möglich, den Pfad zur Konfigurationsdatei jedem Kommando mit
+dem Flag `--config` anzugeben.
 
 Jede Gerätekonfigurationen in der Konfigurationsdatei enthält alle
 Informationen, die nötig sind, um Sicherungskopien für dieses Zielgerät
@@ -91,10 +98,10 @@ alle möglichen, auch optionale, Felder und je ein Beispiel für beide Module.
 
 ButterBackup akzeptiert Konfigurationsdateien in den folgenden Formaten:
 
-- **JSON** – Standard-JSON
-- **JSON5** – JSON-Erweiterung mit Kommentaren und abschließenden Kommas
-- **TOML** - Standard-TOML
-- **YAML** – Standard-YAML
+- **JSON5** – JSON-Erweiterung mit Kommentaren und abschließenden Kommas (`*.json5`)
+- **JSON** – Wird als JSON5 geparst (`*.json`)
+- **TOML** - Standard-TOML (`*.toml`)
+- **YAML** – Standard-YAML (`*.yaml`)
 
 Beispielkonfigurationen für alle vier Formate befinden sich im Verzeichnis
 `examples/`.

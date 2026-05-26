@@ -4,10 +4,12 @@ import time
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from unittest import mock
+from uuid import UUID
 
 import pytest
 import shell_interface as sh
 import storage_device_managers as sdm
+import typer
 from loguru import logger
 from typer.testing import CliRunner
 
@@ -37,9 +39,67 @@ def test_get_default_config_path() -> None:
     with TemporaryDirectory() as tempdir:
         xdg_config_dir = Path(tempdir)
     with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config_dir}.get):
-        config_file = cli.get_default_config_path()
-    expected_cfg = xdg_config_dir / cli.DEFAULT_CONFIG_NAME
-    assert str(expected_cfg) == config_file
+        config_files = cli.get_default_config_paths()
+    expected_cfgs = [
+        xdg_config_dir / "butter-backup.json",
+        xdg_config_dir / "butter-backup.json5",
+        xdg_config_dir / "butter-backup.toml",
+        xdg_config_dir / "butter-backup.yaml",
+    ]
+    assert config_files == expected_cfgs
+
+
+def test_read_configuration_uses_first_matching_default_file() -> None:
+    with TemporaryDirectory() as tempdir:
+        xdg_config_dir = Path(tempdir)
+        json5_cfg = cp.Configuration(
+            DeviceConfigurations=[
+                cp.ResticConfig(
+                    Name="restic",
+                    UUID=UUID("12345678-1234-5678-1234-567812345678"),
+                    DevicePassCmd="echo pw",
+                    BackupRepositoryFolder="repo",
+                    RepositoryPassCmd="echo rpw",
+                    FilesAndFolders={Path("/tmp")},
+                )
+            ]
+        )
+        toml_cfg = cp.Configuration(
+            DeviceConfigurations=[
+                cp.ResticConfig(
+                    Name="toml",
+                    UUID=UUID("87654321-4321-8765-4321-876543218765"),
+                    DevicePassCmd="echo pw",
+                    BackupRepositoryFolder="repo",
+                    RepositoryPassCmd="echo rpw",
+                    FilesAndFolders={Path("/tmp")},
+                )
+            ]
+        )
+        (xdg_config_dir / "butter-backup.toml").write_text(
+            """
+[butter-backup]
+[[butter-backup.device-configurations]]
+Name = "toml"
+UUID = "87654321-4321-8765-4321-876543218765"
+DevicePassCmd = "echo pw"
+BackupRepositoryFolder = "repo"
+RepositoryPassCmd = "echo rpw"
+FilesAndFolders = ["/tmp"]
+"""
+        )
+        (xdg_config_dir / "butter-backup.json5").write_text(json5_cfg.model_dump_json())
+        with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config_dir}.get):
+            loaded = cli._read_configuration(None)
+    assert loaded == json5_cfg
+    assert loaded != toml_cfg
+
+
+def test_read_configuration_rejects_uppercase_extension(tmp_path: Path) -> None:
+    cfg_file = tmp_path / "butter-backup.JSON"
+    cfg_file.write_text("{}")
+    with pytest.raises(typer.BadParameter):
+        cli._read_configuration(cfg_file)
 
 
 @pytest.mark.parametrize(

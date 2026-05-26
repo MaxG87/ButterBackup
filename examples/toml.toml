@@ -1,0 +1,25 @@
+# TOML configuration for butter-backup
+# Each [[butter-backup.device-configurations]] section defines one device configuration
+
+[butter-backup]
+SudoPassCmd = "gpg --decrypt ~/.local/share/passwords/sudo-password.gpg"
+
+[[butter-backup.device-configurations]]
+Name = "BtrFS Backup Example"
+UUID = "12345678-1234-5678-1234-567812345678"
+DevicePassCmd = "echo device-password"
+BackupRepositoryFolder = "ButterBackupRepo"
+Compression = "zstd:3"
+Files = []
+FilesDest = "single-files"
+
+[butter-backup.device-configurations.Folders]
+"/tmp" = "temp-files"
+
+[[butter-backup.device-configurations]]
+Name = "Restic Backup Example"
+UUID = "87654321-4321-8765-4321-876543218765"
+DevicePassCmd = "echo device-password"
+BackupRepositoryFolder = "ResticRepo"
+RepositoryPassCmd = "echo repo-password"
+FilesAndFolders = ["/tmp"]
