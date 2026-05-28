@@ -19,10 +19,10 @@ EXAMPLES_DIR = Path(__file__).parent.parent.parent / "examples"
 @pytest.mark.parametrize(
     "example_file",
     [
-        EXAMPLES_DIR / "json.json",
-        EXAMPLES_DIR / "json5.json5",
-        EXAMPLES_DIR / "toml.toml",
-        EXAMPLES_DIR / "yaml.yaml",
+        EXAMPLES_DIR / "config.json",
+        EXAMPLES_DIR / "config.json5",
+        EXAMPLES_DIR / "config.toml",
+        EXAMPLES_DIR / "config.yaml",
     ],
 )
 def test_example_files_can_be_parsed(example_file: Path) -> None:
