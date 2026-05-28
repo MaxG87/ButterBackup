@@ -41,10 +41,10 @@ def test_get_default_config_paths() -> None:
     with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config_dir}.get):
         config_files = cli.get_default_config_paths()
     expected_cfgs = [
-        xdg_config_dir / "butter-backup.json5",
-        xdg_config_dir / "butter-backup.json",
-        xdg_config_dir / "butter-backup.toml",
-        xdg_config_dir / "butter-backup.yaml",
+        xdg_config_dir / "butter-backup" / "butter-backup.json5",
+        xdg_config_dir / "butter-backup" / "butter-backup.json",
+        xdg_config_dir / "butter-backup" / "butter-backup.toml",
+        xdg_config_dir / "butter-backup" / "butter-backup.yaml",
     ]
     assert config_files == expected_cfgs
 
@@ -76,7 +76,8 @@ def test_read_configuration_uses_first_matching_default_file() -> None:
                 )
             ]
         )
-        (xdg_config_dir / "butter-backup.toml").write_text(
+        (xdg_config_dir / "butter-backup").mkdir()
+        (xdg_config_dir / "butter-backup" / "butter-backup.toml").write_text(
             """
 [butter-backup]
 [[butter-backup.device-configurations]]
@@ -88,7 +89,9 @@ RepositoryPassCmd = "echo rpw"
 FilesAndFolders = ["/tmp"]
 """
         )
-        (xdg_config_dir / "butter-backup.json5").write_text(json5_cfg.model_dump_json())
+        (xdg_config_dir / "butter-backup" / "butter-backup.json5").write_text(
+            json5_cfg.model_dump_json()
+        )
         with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config_dir}.get):
             loaded = cli._read_configuration(None)
     assert loaded == json5_cfg
