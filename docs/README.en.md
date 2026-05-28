@@ -75,10 +75,10 @@ is read by ButterBackup.
 If no `--config` argument is passed, ButterBackup checks the following default
 paths in order:
 
-1. `~/.config/butter-backup.json5`
-2. `~/.config/butter-backup.json`
-3. `~/.config/butter-backup.toml`
-4. `~/.config/butter-backup.yaml`
+1. `~/.config/butter-backup/butter-backup.json5`
+2. `~/.config/butter-backup/butter-backup.json`
+3. `~/.config/butter-backup/butter-backup.toml`
+4. `~/.config/butter-backup/butter-backup.yaml`
 
 It is also possible to specify the path to the configuration file for each
 command using the `--config` flag.
