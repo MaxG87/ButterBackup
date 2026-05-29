@@ -98,8 +98,12 @@ FilesAndFolders = ["/tmp"]
     assert loaded != toml_cfg
 
 
-def test_read_configuration_rejects_uppercase_extension(tmp_path: Path) -> None:
-    cfg_file = tmp_path / "butter-backup.JSON"
+@pytest.mark.parametrize("suffix", cli.DEFAULT_CONFIG_SUFFIX_ORDER)
+def test_read_configuration_rejects_uppercase_extension(
+    tmp_path: Path, suffix: str
+) -> None:
+    uppercase_suffix = suffix.upper()
+    cfg_file = tmp_path / f"butter-backup.{uppercase_suffix}"
     cfg_file.write_text("{}")
     with pytest.raises(typer.BadParameter):
         cli._read_configuration(cfg_file)
