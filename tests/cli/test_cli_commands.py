@@ -2,7 +2,7 @@ import datetime as dt
 import re
 import time
 from pathlib import Path
-from tempfile import NamedTemporaryFile, TemporaryDirectory
+from tempfile import NamedTemporaryFile
 from unittest import mock
 from uuid import UUID
 
@@ -35,9 +35,8 @@ def runner():
     return CliRunner()
 
 
-def test_get_default_config_paths() -> None:
-    with TemporaryDirectory() as tempdir:
-        xdg_config_dir = Path(tempdir)
+def test_get_default_config_paths(tmp_path: Path) -> None:
+    xdg_config_dir = tmp_path
     with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config_dir}.get):
         config_files = cli.get_default_config_paths()
     expected_cfgs = [
@@ -49,36 +48,41 @@ def test_get_default_config_paths() -> None:
     assert config_files == expected_cfgs
 
 
-def test_read_configuration_uses_first_matching_default_file() -> None:
-    with TemporaryDirectory() as tempdir:
-        xdg_config_dir = Path(tempdir)
-        json5_cfg = cp.Configuration(
-            DeviceConfigurations=[
-                cp.ResticConfig(
-                    Name="restic",
-                    UUID=UUID("12345678-1234-5678-1234-567812345678"),
-                    DevicePassCmd="echo pw",
-                    BackupRepositoryFolder="repo",
-                    RepositoryPassCmd="echo rpw",
-                    FilesAndFolders={Path("/tmp")},
-                )
-            ]
-        )
-        toml_cfg = cp.Configuration(
-            DeviceConfigurations=[
-                cp.ResticConfig(
-                    Name="toml",
-                    UUID=UUID("87654321-4321-8765-4321-876543218765"),
-                    DevicePassCmd="echo pw",
-                    BackupRepositoryFolder="repo",
-                    RepositoryPassCmd="echo rpw",
-                    FilesAndFolders={Path("/tmp")},
-                )
-            ]
-        )
-        (xdg_config_dir / "butter-backup").mkdir()
-        (xdg_config_dir / "butter-backup" / "config.toml").write_text(
-            """
+def test_read_configuration_uses_first_matching_default_file(tmp_path: Path) -> None:
+    tempdir = tmp_path
+    xdg_config_dir = Path(tempdir)
+    butter_backup_config_dir = xdg_config_dir / "butter-backup"
+    json5_config_f = butter_backup_config_dir / "config.json5"
+    toml_config_f = butter_backup_config_dir / "config.toml"
+
+    json5_cfg = cp.Configuration(
+        DeviceConfigurations=[
+            cp.ResticConfig(
+                Name="restic",
+                UUID=UUID("12345678-1234-5678-1234-567812345678"),
+                DevicePassCmd="echo pw",
+                BackupRepositoryFolder="repo",
+                RepositoryPassCmd="echo rpw",
+                FilesAndFolders={Path("/tmp")},
+            )
+        ]
+    )
+    toml_cfg = cp.Configuration(
+        DeviceConfigurations=[
+            cp.ResticConfig(
+                Name="toml",
+                UUID=UUID("87654321-4321-8765-4321-876543218765"),
+                DevicePassCmd="echo pw",
+                BackupRepositoryFolder="repo",
+                RepositoryPassCmd="echo rpw",
+                FilesAndFolders={Path("/tmp")},
+            )
+        ]
+    )
+    butter_backup_config_dir.mkdir()
+    json5_config_f.write_text(json5_cfg.model_dump_json())
+    toml_config_f.write_text(
+        """
 [butter-backup]
 [[butter-backup.device-configurations]]
 Name = "toml"
@@ -88,12 +92,9 @@ BackupRepositoryFolder = "repo"
 RepositoryPassCmd = "echo rpw"
 FilesAndFolders = ["/tmp"]
 """
-        )
-        (xdg_config_dir / "butter-backup" / "config.json5").write_text(
-            json5_cfg.model_dump_json()
-        )
-        with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config_dir}.get):
-            loaded = cli._read_configuration(None)
+    )
+    with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config_dir}.get):
+        loaded = cli._read_configuration(None)
     assert loaded == json5_cfg
     assert loaded != toml_cfg
 
@@ -192,22 +193,21 @@ def test_subprograms_refuse_unreadable_file(subprogram, runner) -> None:
     "subprogram",
     ["backup", "close", "open"],
 )
-def test_subprograms_refuse_directories(subprogram, runner) -> None:
-    with TemporaryDirectory() as tmp_dir:
-        result = runner.invoke(app, [subprogram, "--config", tmp_dir])
-        assert tmp_dir in result.stderr
-        assert result.exit_code != 0
+def test_subprograms_refuse_directories(subprogram, runner, tmp_path: Path) -> None:
+    tmp_path_as_str = str(tmp_path)
+    result = runner.invoke(app, [subprogram, "--config", tmp_path_as_str])
+    assert tmp_path_as_str in result.stderr
+    assert result.exit_code != 0
 
 
 @pytest.mark.skip("Impossible to implement!")
-def test_open_refuses_missing_xdg_config(runner) -> None:
+def test_open_refuses_missing_xdg_config(runner, tmp_path) -> None:
     # It seems as if this test cannot be implemented at the moment.
     #
     # This test resets XDG_CONFIG_HOME to provoke that get_default_config_paths
     # returns non-existent config files. However, get_default_config_paths is
     # executed at import time, rendering resetting XDG_CONFIG_HOME effectless.
-    with TemporaryDirectory() as xdg_config_dir:
-        pass
+    xdg_config_dir = tmp_path / "nonexistent_config_dir"
     with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config_dir}.get):
         result = runner.invoke(app, ["open"])
     assert xdg_config_dir in result.stderr
