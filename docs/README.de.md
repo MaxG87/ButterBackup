@@ -103,6 +103,9 @@ ButterBackup akzeptiert Konfigurationsdateien in den folgenden Formaten:
 - **TOML** - Standard-TOML (`*.toml`)
 - **YAML** – Standard-YAML (`*.yaml`)
 
+Da `*.json`-Dateien als JSON5 geparst werden, können auch in diesen Dateien
+Kommentare und abschließende Kommas verwendet werden.
+
 Beispielkonfigurationen für alle vier Formate befinden sich im Verzeichnis
 `examples/`.
 
