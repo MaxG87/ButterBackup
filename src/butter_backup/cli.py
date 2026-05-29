@@ -42,7 +42,7 @@ class ValidFileSystems(enum.Enum):
 def get_default_config_paths() -> list[Path]:
     config_dir = Path(os.getenv("XDG_CONFIG_HOME", DEFAULT_CONFIG_DIR))
     return [
-        config_dir / DEFAULT_CONFIG_BASENAME / f"{DEFAULT_CONFIG_BASENAME}{suffix}"
+        config_dir / DEFAULT_CONFIG_BASENAME / f"config{suffix}"
         for suffix in DEFAULT_CONFIG_SUFFIX_ORDER
     ]
 

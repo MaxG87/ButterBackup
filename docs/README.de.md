@@ -77,10 +77,10 @@ einzigen Datei abgelegt, die von ButterBackup eingelesen wird.
 Wenn kein `--config`-Argument übergeben wird, prüft ButterBackup diese
 Standardpfade in dieser Reihenfolge:
 
-1. `~/.config/butter-backup/butter-backup.json5`
-2. `~/.config/butter-backup/butter-backup.json`
-3. `~/.config/butter-backup/butter-backup.toml`
-4. `~/.config/butter-backup/butter-backup.yaml`
+1. `~/.config/butter-backup/config.json5`
+2. `~/.config/butter-backup/config.json`
+3. `~/.config/butter-backup/config.toml`
+4. `~/.config/butter-backup/config.yaml`
 
 Es ist außerdem möglich, den Pfad zur Konfigurationsdatei jedem Kommando mit
 dem Flag `--config` anzugeben.
