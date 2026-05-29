@@ -41,8 +41,6 @@ def test_sudo_pass_cmd_is_used_in_open(
     )
     config_file = tmp_path / "config.json"
     config_file.write_text(wrapped_config.model_dump_json())
-    dest_dir = tmp_path / "mounts"
-    dest_dir.mkdir()
 
     mock_pipe = mocker.patch("shell_interface.pipe_pass_cmd_to_real_cmd")
     mocker.patch(
@@ -51,7 +49,7 @@ def test_sudo_pass_cmd_is_used_in_open(
     )
     mocker.patch("storage_device_managers.mount_device")
 
-    runner.invoke(app, ["open", str(dest_dir), "--config", str(config_file)])
+    runner.invoke(app, ["open", "--config", str(config_file)])
 
     mock_pipe.assert_called_once_with(
         sudo_pass_cmd, ["sudo", "-Sv"], capture_output=True

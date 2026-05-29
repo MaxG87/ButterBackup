@@ -3,6 +3,7 @@ import contextlib
 import enum
 import json
 import os
+import shutil
 import sys
 import typing as t
 from pathlib import Path
@@ -141,7 +142,10 @@ def _open_device(
     cfg: cp.DeviceConfiguration, base_dir: Path, sudo_pass_cmd: str | None
 ) -> None:
     mount_dir = base_dir / cfg.Name
-    mount_dir.mkdir(exist_ok=True)
+    created_mount_dir = False
+    if not mount_dir.exists():
+        mount_dir.mkdir(parents=True, exist_ok=True)
+        created_mount_dir = True
     try:
         _refresh_sudo(sudo_pass_cmd)
         decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
@@ -150,15 +154,15 @@ def _open_device(
         typer.echo(
             f"Speichermedium {cfg.Name} konnte nicht geöffnet werden. Es wird übersprungen."
         )
-        with contextlib.suppress(OSError):
-            mount_dir.rmdir()
+        if created_mount_dir:
+            with contextlib.suppress(OSError):
+                mount_dir.rmdir()
     else:
         typer.echo(f"Speichermedium {cfg.Name} wurde in {mount_dir} geöffnet.")
 
 
 @app.command()
 def open(  # noqa: A001
-    dest: Path | None = typer.Argument(None),  # noqa: B008
     config: Path | None = CONFIG_OPTION,
     verbose: int = VERBOSITY_OPTION,
 ) -> None:
@@ -176,22 +180,34 @@ def open(  # noqa: A001
     oder durch Verwendung von `restic`. Nach erfolgreicher Wiederherstellung
     kann das Speichermedium mit `butter-backup close` wieder entfernt werden.
 
-    Optional kann ein Zielverzeichnis angegeben werden. Wenn angegeben, werden
-    die Speichermedien in Unterverzeichnissen dieses Verzeichnisses gemountet.
-    Andernfalls wird ein temporäres Verzeichnis erstellt.
+    Das Verzeichnis, in dem Speichermedien geöffnet werden, wird über die
+    Konfigurationsoption `OpenDirectory` gesteuert. Wenn sie gesetzt ist,
+    werden Speichermedien in Unterverzeichnissen dieses Verzeichnisses
+    gemountet. Andernfalls wird ein temporäres Verzeichnis verwendet.
     """
     setup_logging(verbose)
     parsed_config = _read_configuration(config)
-    base_dir = dest if dest is not None else Path(mkdtemp())
-    for cfg in parsed_config.DeviceConfigurations:
-        if _skip_device(
-            cfg,
-            log_opened=lambda cfg: logger.warning(
-                f"Speichermedium {cfg.Name} ist bereits geöffnet. Es wird übersprungen."
-            ),
-        ):
-            continue
-        _open_device(cfg, base_dir, parsed_config.SudoPassCmd)
+    base_dir = parsed_config.OpenDirectory
+    temp_base_dir: Path | None = None
+    if base_dir is None:
+        temp_base_dir = Path(mkdtemp())
+        base_dir = temp_base_dir
+    else:
+        base_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        for cfg in parsed_config.DeviceConfigurations:
+            if _skip_device(
+                cfg,
+                log_opened=lambda cfg: logger.warning(
+                    f"Speichermedium {cfg.Name} ist bereits geöffnet. Es wird übersprungen."
+                ),
+            ):
+                continue
+            _open_device(cfg, base_dir, parsed_config.SudoPassCmd)
+    finally:
+        if temp_base_dir is not None:
+            shutil.rmtree(temp_base_dir, ignore_errors=True)
 
 
 @app.command()

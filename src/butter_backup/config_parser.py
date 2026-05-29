@@ -184,6 +184,13 @@ class Configuration(BaseModel):
     model_config = ConfigDict(frozen=True)
     DeviceConfigurations: list[DeviceConfiguration]
     SudoPassCmd: str | None = None
+    OpenDirectory: Path | None = None
+
+    @field_validator("OpenDirectory", mode="before")
+    def expand_open_dir_tilde(cls, open_dir) -> str | None:
+        if open_dir is None:
+            return None
+        return str(Path(open_dir).expanduser())
 
     @model_validator(mode="after")
     def check_unique_names(self) -> t.Self:
@@ -207,7 +214,16 @@ def _parse_as_json5(content: str) -> Any:
 def _parse_as_toml(content: str) -> Any:
     data = tomllib.loads(content)
     bb = data["butter-backup"]
-    return {"DeviceConfigurations": bb["device-configurations"]}
+    result: dict[str, Any] = {"DeviceConfigurations": bb["device-configurations"]}
+    if "SudoPassCmd" in bb:
+        result["SudoPassCmd"] = bb["SudoPassCmd"]
+    if "sudo-pass-cmd" in bb and "SudoPassCmd" not in result:
+        result["SudoPassCmd"] = bb["sudo-pass-cmd"]
+    if "OpenDirectory" in bb:
+        result["OpenDirectory"] = bb["OpenDirectory"]
+    if "open-directory" in bb and "OpenDirectory" not in result:
+        result["OpenDirectory"] = bb["open-directory"]
+    return result
 
 
 def _parse_as_yaml(content: str) -> Any:
