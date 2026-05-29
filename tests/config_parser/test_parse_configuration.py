@@ -130,8 +130,12 @@ def test_parse_configuration_with_sudo_pass_cmd(
     assert result == cfg
 
 
-def test_parse_configuration_with_open_directory_expands_tilde(monkeypatch) -> None:
-    monkeypatch.setenv("HOME", "/tmp/testhome")
+def test_parse_configuration_with_open_directory_expands_tilde(
+    monkeypatch, tmp_path: Path
+) -> None:
+    home_dir = tmp_path / "home"
+    home_dir.mkdir()
+    monkeypatch.setenv("HOME", str(home_dir))
     raw = json.dumps(
         {
             "OpenDirectory": "~/ButterBackup",
@@ -148,7 +152,7 @@ def test_parse_configuration_with_open_directory_expands_tilde(monkeypatch) -> N
         }
     )
     parsed = cp.parse_configuration(raw)
-    assert parsed.OpenDirectory == Path("/tmp/testhome/ButterBackup")
+    assert parsed.OpenDirectory == home_dir / "ButterBackup"
 
 
 def test_parse_configuration_by_extension_toml_parses_open_directory() -> None:
