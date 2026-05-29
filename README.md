@@ -24,7 +24,7 @@ starten – ButterBackup erledigt den Rest.
 
 ```bash
 pipx install butter-backup
-butter-backup backup --config ~/.config/butter-backup.cfg
+butter-backup backup --config ~/.config/butter-backup/config.json5
 ```
 
 ## Demo

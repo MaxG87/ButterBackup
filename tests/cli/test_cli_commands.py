@@ -2,12 +2,13 @@ import datetime as dt
 import re
 import time
 from pathlib import Path
-from tempfile import NamedTemporaryFile, TemporaryDirectory
-from unittest import mock
+from tempfile import NamedTemporaryFile
+from uuid import UUID
 
 import pytest
 import shell_interface as sh
 import storage_device_managers as sdm
+import typer
 from loguru import logger
 from typer.testing import CliRunner
 
@@ -33,13 +34,81 @@ def runner():
     return CliRunner()
 
 
-def test_get_default_config_path() -> None:
-    with TemporaryDirectory() as tempdir:
-        xdg_config_dir = Path(tempdir)
-    with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config_dir}.get):
-        config_file = cli.get_default_config_path()
-    expected_cfg = xdg_config_dir / cli.DEFAULT_CONFIG_NAME
-    assert str(expected_cfg) == config_file
+def test_get_default_config_paths(tmp_path: Path, monkeypatch) -> None:
+    xdg_config_dir = tmp_path
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg_config_dir))
+    config_files = cli.get_default_config_paths()
+    expected_cfgs = [
+        xdg_config_dir / "butter-backup" / "config.json5",
+        xdg_config_dir / "butter-backup" / "config.json",
+        xdg_config_dir / "butter-backup" / "config.toml",
+        xdg_config_dir / "butter-backup" / "config.yaml",
+    ]
+    assert config_files == expected_cfgs
+
+
+def test_read_configuration_uses_first_matching_default_file(
+    tmp_path: Path, monkeypatch
+) -> None:
+    tempdir = tmp_path
+    xdg_config_dir = Path(tempdir)
+    butter_backup_config_dir = xdg_config_dir / "butter-backup"
+    json5_config_f = butter_backup_config_dir / "config.json5"
+    toml_config_f = butter_backup_config_dir / "config.toml"
+
+    json5_cfg = cp.Configuration(
+        DeviceConfigurations=[
+            cp.ResticConfig(
+                Name="restic",
+                UUID=UUID("12345678-1234-5678-1234-567812345678"),
+                DevicePassCmd="echo pw",
+                BackupRepositoryFolder="repo",
+                RepositoryPassCmd="echo rpw",
+                FilesAndFolders={Path("/tmp")},
+            )
+        ]
+    )
+    toml_cfg = cp.Configuration(
+        DeviceConfigurations=[
+            cp.ResticConfig(
+                Name="toml",
+                UUID=UUID("87654321-4321-8765-4321-876543218765"),
+                DevicePassCmd="echo pw",
+                BackupRepositoryFolder="repo",
+                RepositoryPassCmd="echo rpw",
+                FilesAndFolders={Path("/tmp")},
+            )
+        ]
+    )
+    butter_backup_config_dir.mkdir()
+    json5_config_f.write_text(json5_cfg.model_dump_json())
+    toml_config_f.write_text(
+        """
+[butter-backup]
+[[butter-backup.device-configurations]]
+Name = "toml"
+UUID = "87654321-4321-8765-4321-876543218765"
+DevicePassCmd = "echo pw"
+BackupRepositoryFolder = "repo"
+RepositoryPassCmd = "echo rpw"
+FilesAndFolders = ["/tmp"]
+"""
+    )
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg_config_dir))
+    loaded = cli._read_configuration(None)
+    assert loaded == json5_cfg
+    assert loaded != toml_cfg
+
+
+@pytest.mark.parametrize("suffix", cli.DEFAULT_CONFIG_SUFFIX_ORDER)
+def test_read_configuration_rejects_uppercase_extension(
+    tmp_path: Path, suffix: str
+) -> None:
+    uppercase_suffix = suffix.upper()
+    cfg_file = tmp_path / f"butter-backup.{uppercase_suffix}"
+    cfg_file.write_text("{}")
+    with pytest.raises(typer.BadParameter):
+        cli._read_configuration(cfg_file)
 
 
 @pytest.mark.parametrize(
@@ -113,7 +182,7 @@ def test_subprograms_refuse_missing_config(subprogram, runner) -> None:
     ["backup", "close", "open"],
 )
 def test_subprograms_refuse_unreadable_file(subprogram, runner) -> None:
-    with NamedTemporaryFile() as fh:
+    with NamedTemporaryFile(suffix=".json") as fh:
         config_file = Path(fh.name)
         config_file.chmod(0)
         result = runner.invoke(app, [subprogram, "--config", str(config_file)])
@@ -125,25 +194,18 @@ def test_subprograms_refuse_unreadable_file(subprogram, runner) -> None:
     "subprogram",
     ["backup", "close", "open"],
 )
-def test_subprograms_refuse_directories(subprogram, runner) -> None:
-    with TemporaryDirectory() as tmp_dir:
-        result = runner.invoke(app, [subprogram, "--config", tmp_dir])
-        assert tmp_dir in result.stderr
-        assert result.exit_code != 0
+def test_subprograms_refuse_directories(subprogram, runner, tmp_path: Path) -> None:
+    tmp_path_as_str = str(tmp_path)
+    result = runner.invoke(app, [subprogram, "--config", tmp_path_as_str])
+    assert tmp_path_as_str in result.stderr
+    assert result.exit_code != 0
 
 
-@pytest.mark.skip("Impossible to implement!")
-def test_open_refuses_missing_xdg_config(runner) -> None:
-    # It seems as if this test cannot be implemented at the moment.
-    #
-    # This test resets XDG_CONFIG_HOME to provoke that get_default_config_path
-    # returns a not existing config file. However, get_default_config_path is
-    # executed at import time, rendering resetting XDG_CONFIG_HOME effectless.
-    with TemporaryDirectory() as xdg_config_dir:
-        pass
-    with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config_dir}.get):
-        result = runner.invoke(app, ["open"])
-    assert xdg_config_dir in result.stderr
+def test_open_refuses_missing_xdg_config(runner, tmp_path, monkeypatch) -> None:
+    xdg_config_dir = tmp_path / "nonexistent_config_dir"
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg_config_dir))
+    result = runner.invoke(app, ["open"])
+    assert str(xdg_config_dir) in result.stderr
     assert result.exit_code != 0
 
 
@@ -152,7 +214,7 @@ def test_open_refuses_missing_xdg_config(runner) -> None:
 )
 def test_close_does_not_close_unopened_device(runner, encrypted_btrfs_device) -> None:
     config = encrypted_btrfs_device
-    with NamedTemporaryFile() as tempf:
+    with NamedTemporaryFile(suffix=".json") as tempf:
         config_file = Path(tempf.name)
         wrapped_config = cp.Configuration(DeviceConfigurations=[config])
         config_file.write_text(wrapped_config.model_dump_json())
@@ -167,7 +229,7 @@ def test_close_does_not_close_unopened_device(runner, encrypted_btrfs_device) ->
 def test_open_close_roundtrip(runner, encrypted_device) -> None:
     config = encrypted_device
     expected_cryptsetup_map = Path(f"/dev/mapper/{config.UUID}")
-    with NamedTemporaryFile() as tempf:
+    with NamedTemporaryFile(suffix=".json") as tempf:
         config_file = Path(tempf.name)
         wrapped_config = cp.Configuration(DeviceConfigurations=[config])
         config_file.write_text(wrapped_config.model_dump_json())
@@ -329,7 +391,7 @@ def test_format_device(runner, backend: str, big_file: Path) -> None:
     device_name = config_lst[0].Name
     link_dest = Path(f"/dev/disk/by-uuid/{device_uuid}")
     wait_until_gone(link_dest, dt.timedelta(seconds=3))
-    with NamedTemporaryFile("w") as fh:
+    with NamedTemporaryFile("w", suffix=".json") as fh:
         fh.write(serialised_config)
         fh.seek(0)
         with sdm.symbolic_link(big_file, link_dest):

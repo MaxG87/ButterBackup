@@ -24,7 +24,9 @@ from .device_managers import (
 
 app = typer.Typer()
 DEFAULT_CONFIG_DIR = Path("~/.config/").expanduser()
-DEFAULT_CONFIG_NAME = "butter-backup.cfg"
+DEFAULT_CONFIG_BASENAME = "butter-backup"
+DEFAULT_CONFIG_SUFFIX_ORDER = [".json5", ".json", ".toml", ".yaml"]
+SUPPORTED_CONFIG_SUFFIXES = frozenset(DEFAULT_CONFIG_SUFFIX_ORDER)
 
 
 class ValidBackends(enum.Enum):
@@ -37,10 +39,35 @@ class ValidFileSystems(enum.Enum):
     ext4 = "ext4"
 
 
-def get_default_config_path() -> str:
+def get_default_config_paths() -> list[Path]:
     config_dir = Path(os.getenv("XDG_CONFIG_HOME", DEFAULT_CONFIG_DIR))
-    config_file = config_dir / DEFAULT_CONFIG_NAME
-    return str(config_file)
+    return [
+        config_dir / DEFAULT_CONFIG_BASENAME / f"config{suffix}"
+        for suffix in DEFAULT_CONFIG_SUFFIX_ORDER
+    ]
+
+
+def _read_configuration(config: Path | None) -> cp.Configuration:
+    if config is not None:
+        if config.suffix not in SUPPORTED_CONFIG_SUFFIXES:
+            raise typer.BadParameter(
+                "Konfigurationsdatei muss auf .json, .json5, .toml oder .yaml enden.",
+                param_hint="'--config'",
+            )
+        return cp.parse_configuration_by_extension(config.read_text(), config.suffix)
+
+    for maybe_config in get_default_config_paths():
+        if maybe_config.exists():
+            return cp.parse_configuration_by_extension(
+                maybe_config.read_text(), maybe_config.suffix
+            )
+
+    tried = ", ".join(str(path) for path in get_default_config_paths())
+    typer.echo(
+        f"Keine Konfigurationsdatei gefunden. Es wurden folgende Pfade geprüft: {tried}",
+        err=True,
+    )
+    raise typer.Exit(2)
 
 
 def setup_logging(verbosity: int) -> None:
@@ -106,7 +133,7 @@ def _skip_device(
     return False
 
 
-CONFIG_OPTION = typer.Option(get_default_config_path(), exists=True, dir_okay=False)
+CONFIG_OPTION = typer.Option(None, exists=True, dir_okay=False)
 VERBOSITY_OPTION = typer.Option(0, "--verbose", "-v", count=True)
 
 
@@ -132,7 +159,7 @@ def _open_device(
 @app.command()
 def open(  # noqa: A001
     dest: Path | None = typer.Argument(None),  # noqa: B008
-    config: Path = CONFIG_OPTION,
+    config: Path | None = CONFIG_OPTION,
     verbose: int = VERBOSITY_OPTION,
 ) -> None:
     """
@@ -154,7 +181,7 @@ def open(  # noqa: A001
     Andernfalls wird ein temporäres Verzeichnis erstellt.
     """
     setup_logging(verbose)
-    parsed_config = cp.parse_configuration(config.read_text())
+    parsed_config = _read_configuration(config)
     base_dir = dest if dest is not None else Path(mkdtemp())
     for cfg in parsed_config.DeviceConfigurations:
         if _skip_device(
@@ -168,7 +195,7 @@ def open(  # noqa: A001
 
 
 @app.command()
-def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None:
+def close(config: Path | None = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None:
     """
     Schließe alle geöffneten Speichermedien
 
@@ -177,7 +204,7 @@ def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None
     `open`. Weitere Erklärungen finden sich dort.
     """
     setup_logging(verbose)
-    parsed_config = cp.parse_configuration(config.read_text())
+    parsed_config = _read_configuration(config)
     mounted_devices = sdm.get_mounted_devices()
     for cfg in parsed_config.DeviceConfigurations:
         map_name = cfg.map_name()
@@ -199,7 +226,9 @@ def close(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None
 
 
 @app.command()
-def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None:
+def backup(
+    config: Path | None = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION
+) -> None:
     """
     Führe Sicherheitskopien durch
 
@@ -219,7 +248,7 @@ def backup(config: Path = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> Non
     weitere manuelle Schritte sind nicht nötig.
     """
     setup_logging(verbose)
-    parsed_config = cp.parse_configuration(config.read_text())
+    parsed_config = _read_configuration(config)
     for cfg in parsed_config.DeviceConfigurations:
         if _skip_device(
             cfg,
