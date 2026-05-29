@@ -3,7 +3,6 @@ import re
 import time
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from unittest import mock
 from uuid import UUID
 
 import pytest
@@ -35,10 +34,10 @@ def runner():
     return CliRunner()
 
 
-def test_get_default_config_paths(tmp_path: Path) -> None:
+def test_get_default_config_paths(tmp_path: Path, monkeypatch) -> None:
     xdg_config_dir = tmp_path
-    with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config_dir}.get):
-        config_files = cli.get_default_config_paths()
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg_config_dir))
+    config_files = cli.get_default_config_paths()
     expected_cfgs = [
         xdg_config_dir / "butter-backup" / "config.json5",
         xdg_config_dir / "butter-backup" / "config.json",
@@ -48,7 +47,9 @@ def test_get_default_config_paths(tmp_path: Path) -> None:
     assert config_files == expected_cfgs
 
 
-def test_read_configuration_uses_first_matching_default_file(tmp_path: Path) -> None:
+def test_read_configuration_uses_first_matching_default_file(
+    tmp_path: Path, monkeypatch
+) -> None:
     tempdir = tmp_path
     xdg_config_dir = Path(tempdir)
     butter_backup_config_dir = xdg_config_dir / "butter-backup"
@@ -93,8 +94,8 @@ RepositoryPassCmd = "echo rpw"
 FilesAndFolders = ["/tmp"]
 """
     )
-    with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config_dir}.get):
-        loaded = cli._read_configuration(None)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg_config_dir))
+    loaded = cli._read_configuration(None)
     assert loaded == json5_cfg
     assert loaded != toml_cfg
 
