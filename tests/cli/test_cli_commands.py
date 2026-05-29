@@ -200,17 +200,11 @@ def test_subprograms_refuse_directories(subprogram, runner, tmp_path: Path) -> N
     assert result.exit_code != 0
 
 
-@pytest.mark.skip("Impossible to implement!")
-def test_open_refuses_missing_xdg_config(runner, tmp_path) -> None:
-    # It seems as if this test cannot be implemented at the moment.
-    #
-    # This test resets XDG_CONFIG_HOME to provoke that get_default_config_paths
-    # returns non-existent config files. However, get_default_config_paths is
-    # executed at import time, rendering resetting XDG_CONFIG_HOME effectless.
+def test_open_refuses_missing_xdg_config(runner, tmp_path, monkeypatch) -> None:
     xdg_config_dir = tmp_path / "nonexistent_config_dir"
-    with mock.patch("os.getenv", {"XDG_CONFIG_HOME": xdg_config_dir}.get):
-        result = runner.invoke(app, ["open"])
-    assert xdg_config_dir in result.stderr
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg_config_dir))
+    result = runner.invoke(app, ["open"])
+    assert str(xdg_config_dir) in result.stderr
     assert result.exit_code != 0
 
 
