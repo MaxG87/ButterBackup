@@ -273,7 +273,8 @@ def test_open_with_open_directory_from_config(
         expected_mount_dir.mkdir()
     if make_dest_subdir_nonempty:
         expected_mount_dir.mkdir(exist_ok=True)
-        (expected_mount_dir / "will_be_hidden_while_mounted.txt").write_text("x")
+        existing_file = expected_mount_dir / "will_be_hidden_while_mounted.txt"
+        existing_file.write_text("x")
     wrapped_config = cp.Configuration(
         DeviceConfigurations=[config], OpenDirectory=dest_dir
     )
@@ -288,6 +289,8 @@ def test_open_with_open_directory_from_config(
     runner.invoke(app, ["close", "--config", str(config_file)])
     assert not expected_cryptsetup_map.exists()
     assert not sdm.is_mounted(expected_mount_dir)
+    if make_dest_subdir_nonempty:
+        assert existing_file.read_text() == "x"
 
 
 @pytest.mark.skipif(
