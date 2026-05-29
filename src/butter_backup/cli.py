@@ -140,7 +140,7 @@ VERBOSITY_OPTION = typer.Option(0, "--verbose", "-v", count=True)
 
 def _open_device(
     cfg: cp.DeviceConfiguration, base_dir: Path, sudo_pass_cmd: str | None
-) -> None:
+) -> bool:
     mount_dir = base_dir / cfg.Name
     created_mount_dir = False
     if not mount_dir.exists():
@@ -157,8 +157,10 @@ def _open_device(
         if created_mount_dir:
             with contextlib.suppress(OSError):
                 mount_dir.rmdir()
+        return False
     else:
         typer.echo(f"Speichermedium {cfg.Name} wurde in {mount_dir} geöffnet.")
+        return True
 
 
 @app.command()
@@ -195,6 +197,7 @@ def open(  # noqa: A001
     else:
         base_dir.mkdir(parents=True, exist_ok=True)
 
+    opened_any_device = False
     try:
         for cfg in parsed_config.DeviceConfigurations:
             if _skip_device(
@@ -204,9 +207,10 @@ def open(  # noqa: A001
                 ),
             ):
                 continue
-            _open_device(cfg, base_dir, parsed_config.SudoPassCmd)
+            opened = _open_device(cfg, base_dir, parsed_config.SudoPassCmd)
+            opened_any_device = opened_any_device or opened
     finally:
-        if temp_base_dir is not None:
+        if temp_base_dir is not None and not opened_any_device:
             shutil.rmtree(temp_base_dir, ignore_errors=True)
 
 
