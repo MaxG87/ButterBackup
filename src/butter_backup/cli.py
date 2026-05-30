@@ -225,6 +225,7 @@ def close(config: Path | None = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) 
     """
     setup_logging(verbose)
     parsed_config = _read_configuration(config)
+    remove_mount_dirs = parsed_config.OpenDirectory is None
     mounted_devices = sdm.get_mounted_devices()
     for cfg in parsed_config.DeviceConfigurations:
         map_name = cfg.map_name()
@@ -240,9 +241,15 @@ def close(config: Path | None = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) 
                     device=cfg.Name,
                 )
                 continue
+            mount_dir = next(iter(mount_dirs))
             _refresh_sudo(parsed_config.SudoPassCmd)
             sdm.unmount_device(map_name)
             sdm.close_decrypted_device(map_name)
+            if remove_mount_dirs:
+                with contextlib.suppress(OSError):
+                    mount_dir.rmdir()
+                with contextlib.suppress(OSError):
+                    mount_dir.parent.rmdir()
 
 
 @app.command()

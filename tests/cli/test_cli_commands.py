@@ -248,7 +248,7 @@ def test_open_close_roundtrip(runner, encrypted_device) -> None:
         runner.invoke(app, ["close", "--config", str(config_file)])
         assert not expected_cryptsetup_map.exists()
         assert not sdm.is_mounted(mount_dest)
-        assert mount_dest.exists()  # Target directory should be kept after closing.
+        assert not mount_dest.exists()  # Temporary target directory should be removed.
 
 
 @pytest.mark.parametrize("create_dest_subdir", [True, False])
@@ -289,6 +289,7 @@ def test_open_with_open_directory_from_config(
     runner.invoke(app, ["close", "--config", str(config_file)])
     assert not expected_cryptsetup_map.exists()
     assert not sdm.is_mounted(expected_mount_dir)
+    assert expected_mount_dir.exists()
     if make_dest_subdir_nonempty:
         assert existing_file.read_text() == "x"
 
@@ -508,5 +509,5 @@ def test_unmount_error_does_not_cause_content_deletion(
     mocker.stopall()
     result = runner.invoke(app, ["close", "--config", str(config_file)])
     assert result.exit_code == 0
-    assert mount_of_device.exists()  # Target directory should be kept after closing.
+    assert not mount_of_device.exists()  # Temporary target directory should be removed.
     assert sdm.is_mounted(mount_of_device) is False
