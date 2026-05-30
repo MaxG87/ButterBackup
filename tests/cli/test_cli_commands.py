@@ -248,29 +248,38 @@ def test_open_close_roundtrip(runner, encrypted_device) -> None:
         runner.invoke(app, ["close", "--config", str(config_file)])
         assert not expected_cryptsetup_map.exists()
         assert not sdm.is_mounted(mount_dest)
-        assert mount_dest.exists()  # Target directory should be kept after closing.
+        assert not mount_dest.exists()  # Temporary target directory should be removed.
 
 
 @pytest.mark.parametrize("create_dest_subdir", [True, False])
+@pytest.mark.parametrize("make_dest_subdir_nonempty", [True, False])
 @pytest.mark.skipif(
     in_docker_container(), reason="Test is known to fail in Docker container"
 )
-def test_open_with_explicit_dest(
-    runner, encrypted_device, create_dest_subdir: bool, tmp_path: Path
+def test_open_with_open_directory_from_config(
+    runner,
+    encrypted_device,
+    create_dest_subdir: bool,
+    make_dest_subdir_nonempty: bool,
+    tmp_path: Path,
 ) -> None:
     config = encrypted_device
     expected_cryptsetup_map = Path(f"/dev/mapper/{config.UUID}")
     config_file = tmp_path / "config.json"
-    wrapped_config = cp.Configuration(DeviceConfigurations=[config])
-    config_file.write_text(wrapped_config.model_dump_json())
     dest_dir = tmp_path / "mounts"
     dest_dir.mkdir()
     expected_mount_dir = dest_dir / config.Name
     if create_dest_subdir:
         expected_mount_dir.mkdir()
-    open_result = runner.invoke(
-        app, ["open", str(dest_dir), "--config", str(config_file)]
+    if make_dest_subdir_nonempty:
+        expected_mount_dir.mkdir(exist_ok=True)
+        existing_file = expected_mount_dir / "will_be_hidden_while_mounted.txt"
+        existing_file.write_text("x")
+    wrapped_config = cp.Configuration(
+        DeviceConfigurations=[config], OpenDirectory=dest_dir
     )
+    config_file.write_text(wrapped_config.model_dump_json())
+    open_result = runner.invoke(app, ["open", "--config", str(config_file)])
     assert open_result.exit_code == 0
     assert str(expected_mount_dir) in open_result.stdout
     assert expected_cryptsetup_map.exists()
@@ -280,6 +289,9 @@ def test_open_with_explicit_dest(
     runner.invoke(app, ["close", "--config", str(config_file)])
     assert not expected_cryptsetup_map.exists()
     assert not sdm.is_mounted(expected_mount_dir)
+    assert expected_mount_dir.exists()
+    if make_dest_subdir_nonempty:
+        assert existing_file.read_text() == "x"
 
 
 @pytest.mark.skipif(
@@ -291,13 +303,13 @@ def test_open_shows_error_on_failure(runner, encrypted_device, tmp_path: Path) -
         update={"DevicePassCmd": "echo wrong_password"}
     )
     config_file = tmp_path / "config.json"
-    wrapped_config = cp.Configuration(DeviceConfigurations=[config])
-    config_file.write_text(wrapped_config.model_dump_json())
     dest_dir = tmp_path / "mounts"
     dest_dir.mkdir()
-    open_result = runner.invoke(
-        app, ["open", str(dest_dir), "--config", str(config_file)]
+    wrapped_config = cp.Configuration(
+        DeviceConfigurations=[config], OpenDirectory=dest_dir
     )
+    config_file.write_text(wrapped_config.model_dump_json())
+    open_result = runner.invoke(app, ["open", "--config", str(config_file)])
     expected_msg = f"Speichermedium {config.Name} konnte nicht geöffnet werden. Es wird übersprungen."
     assert open_result.exit_code == 0
     assert expected_msg in open_result.stdout
@@ -497,5 +509,5 @@ def test_unmount_error_does_not_cause_content_deletion(
     mocker.stopall()
     result = runner.invoke(app, ["close", "--config", str(config_file)])
     assert result.exit_code == 0
-    assert mount_of_device.exists()  # Target directory should be kept after closing.
+    assert not mount_of_device.exists()  # Temporary target directory should be removed.
     assert sdm.is_mounted(mount_of_device) is False

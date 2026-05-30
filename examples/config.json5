@@ -1,6 +1,7 @@
 // JSON5 allows comments and trailing commas
 {
   SudoPassCmd: "gpg --decrypt ~/.local/share/passwords/sudo-password.gpg",
+  OpenDirectory: "~/ButterBackup",
   DeviceConfigurations: [
     {
       Name: "BtrFS Backup Example",

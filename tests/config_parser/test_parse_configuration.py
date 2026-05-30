@@ -128,3 +128,45 @@ def test_parse_configuration_with_sudo_pass_cmd(
     raw = cfg.model_dump_json()
     result = cp.parse_configuration(raw)
     assert result == cfg
+
+
+def test_parse_configuration_with_open_directory_expands_tilde(
+    monkeypatch, tmp_path: Path
+) -> None:
+    home_dir = tmp_path / "home"
+    home_dir.mkdir()
+    monkeypatch.setenv("HOME", str(home_dir))
+    raw = json.dumps(
+        {
+            "OpenDirectory": "~/ButterBackup",
+            "DeviceConfigurations": [
+                {
+                    "Name": "restic",
+                    "UUID": "12345678-1234-5678-1234-567812345678",
+                    "DevicePassCmd": "echo pw",
+                    "BackupRepositoryFolder": "repo",
+                    "RepositoryPassCmd": "echo rp",
+                    "FilesAndFolders": ["/tmp"],
+                }
+            ],
+        }
+    )
+    parsed = cp.parse_configuration(raw)
+    assert parsed.OpenDirectory == home_dir / "ButterBackup"
+
+
+def test_parse_configuration_by_extension_toml_parses_open_directory() -> None:
+    raw = """
+[butter-backup]
+open-directory = "/tmp/mounts"
+
+[[butter-backup.device-configurations]]
+Name = "restic"
+UUID = "12345678-1234-5678-1234-567812345678"
+DevicePassCmd = "echo pw"
+BackupRepositoryFolder = "repo"
+RepositoryPassCmd = "echo rp"
+FilesAndFolders = ["/tmp"]
+"""
+    parsed = cp.parse_configuration_by_extension(raw, ".toml")
+    assert parsed.OpenDirectory == Path("/tmp/mounts")
