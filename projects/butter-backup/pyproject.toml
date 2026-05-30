@@ -1,0 +1,91 @@
+[project]
+name = "butter-backup"
+version = "3.6.0"
+description = "Vollverschlüsselte, pseudoinkrementelle Sicherungskopien leicht gemacht"
+authors = [{name = "Max Görner", email = "max@familie-goerner.eu"}]
+license = "GPL-3.0-or-later"
+readme = "README.md"
+requires-python = ">=3.11,<4.0.0"
+dependencies = [
+    "json5>=0.14.0",
+    "loguru>=0.7.3",
+    "pydantic>=2.13.4",
+    "pyyaml>=6.0.3",
+    "shell-interface>=2.1.0",
+    "storage-device-managers>=2.0.0",
+    "typer>=0.25.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/MaxG87/ButterBackup"
+Repository = "https://github.com/MaxG87/ButterBackup"
+Issues = "https://github.com/MaxG87/ButterBackup/issues"
+Changelog = "https://github.com/MaxG87/ButterBackup/blob/main/CHANGELOG.md"
+
+
+[project.optional-dependencies]
+all = [
+    "rich>=13.9.4",
+]
+
+[project.scripts]
+butter-backup = "butter_backup.cli:cli"
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.152.7",
+    "mypy>=2.1.0",
+    "pdbpp>=0.12.1",
+    "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
+    "pytest-mock>=3.15.1",
+    "pytest-xdist>=3.8.0",
+    "ruff>=0.15.13",
+    "types-pyyaml>=6.0.12.20260510",
+]
+
+[tool.mypy]
+plugins = [
+  "pydantic.mypy"
+]
+allow_any_unimported = false
+warn_unreachable = true
+enable_error_code = [
+    "possibly-undefined"
+]
+strict = true
+allow_incomplete_defs = true
+allow_untyped_defs = true
+
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disable_error_code = [
+    "possibly-undefined"
+]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+warn_untyped_fields = true
+
+[tool.pytest.ini_options]
+addopts = [
+    "--cov", "src",
+    "--cov-branch",
+    "--cov-fail-under", "85"
+]
+testpaths = ["tests"]
+
+[tool.ruff]
+src = [".", "src/"]
+
+[tool.ruff.lint]
+select = ["A", "B", "C", "F", "I", "ISC", "PIE", "PL", "Q", "RUF", "SIM", "TID", "W", "YTT"]
+ignore = ["E", "PLC1901", "SIM117"]
+mccabe.max-complexity = 6
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
