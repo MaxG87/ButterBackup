@@ -10,6 +10,7 @@ resolution-markers = [
 members = [
     "butter-backup",
     "butterbackup",
+    "storage-device-managers",
 ]
 
 [[package]]
@@ -110,7 +111,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "rich", marker = "extra == 'all'", specifier = ">=13.9.4" },
     { name = "shell-interface", specifier = ">=2.1.0" },
-    { name = "storage-device-managers", specifier = ">=2.0.0" },
+    { name = "storage-device-managers", editable = "projects/storage-device-managers" },
     { name = "typer", specifier = ">=0.25.1" },
 ]
 provides-extras = ["all"]
@@ -827,14 +828,47 @@ wheels = [
 [[package]]
 name = "storage-device-managers"
 version = "2.0.0"
-source = { registry = "https://pypi.org/simple" }
+source = { editable = "projects/storage-device-managers" }
 dependencies = [
     { name = "loguru" },
     { name = "shell-interface" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ab/b5/82e05db0f1327a3254955c3bf4a69df64205640de22d732690733485bcfb/storage_device_managers-2.0.0.tar.gz", hash = "sha256:0e0389f3dd3fb9ec22b90c1520a5f32a36090ac930bf61a0c9c0554c7aecb1a3", size = 20055, upload-time = "2026-05-07T18:59:25.998Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f3/1f/9969a68034120058df9992479a37015c45f1cb06900ac68be9d2b17f45af/storage_device_managers-2.0.0-py3-none-any.whl", hash = "sha256:d0f9b2f48c15c1496078e78a0289d983d79284162f72c197260b7c85f654e80b", size = 20998, upload-time = "2026-05-07T18:59:24.473Z" },
+
+[package.optional-dependencies]
+logging = [
+    { name = "loguru" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "hypothesis" },
+    { name = "mypy" },
+    { name = "pdbpp" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-mock" },
+    { name = "pytest-xdist" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "loguru", specifier = ">=0.7.3" },
+    { name = "loguru", marker = "extra == 'logging'" },
+    { name = "shell-interface", specifier = ">=2.0.0" },
+]
+provides-extras = ["logging"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "hypothesis", specifier = ">=6.141.1" },
+    { name = "mypy", specifier = ">=1.19.1" },
+    { name = "pdbpp", specifier = ">=0.12.1" },
+    { name = "pytest", specifier = ">=8.4.2" },
+    { name = "pytest-cov", specifier = ">=7.0.0" },
+    { name = "pytest-mock", specifier = ">=3.15.1" },
+    { name = "pytest-xdist", specifier = ">=3.8.0" },
+    { name = "ruff", specifier = ">=0.15.7" },
 ]
 
 [[package]]

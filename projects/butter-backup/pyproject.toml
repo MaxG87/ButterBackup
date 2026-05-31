@@ -12,7 +12,7 @@ dependencies = [
     "pydantic>=2.13.4",
     "pyyaml>=6.0.3",
     "shell-interface>=2.1.0",
-    "storage-device-managers>=2.0.0",
+    "storage-device-managers",
     "typer>=0.25.1",
 ]
 
@@ -85,6 +85,9 @@ src = [".", "src/"]
 select = ["A", "B", "C", "F", "I", "ISC", "PIE", "PL", "Q", "RUF", "SIM", "TID", "W", "YTT"]
 ignore = ["E", "PLC1901", "SIM117"]
 mccabe.max-complexity = 6
+
+[tool.uv.sources]
+storage-device-managers = { workspace = true }
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
