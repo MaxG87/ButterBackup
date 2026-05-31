@@ -10,6 +10,7 @@ resolution-markers = [
 members = [
     "butter-backup",
     "butterbackup",
+    "shell-interface",
     "storage-device-managers",
 ]
 
@@ -110,7 +111,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "rich", marker = "extra == 'all'", specifier = ">=13.9.4" },
-    { name = "shell-interface", specifier = ">=2.1.0" },
+    { name = "shell-interface", editable = "projects/shell-interface" },
     { name = "storage-device-managers", editable = "projects/storage-device-managers" },
     { name = "typer", specifier = ">=0.25.1" },
 ]
@@ -800,11 +801,36 @@ wheels = [
 
 [[package]]
 name = "shell-interface"
-version = "2.1.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e1/23/68efe8cccdc2f27ef9524effcc765d2ebfcf39ca4cddc541364a411ac4aa/shell_interface-2.1.0.tar.gz", hash = "sha256:9ac7df9f55b3e787758797c7ef659e8b56d4b7f5f968b9bbdfdd18ddab9bb317", size = 15425, upload-time = "2026-05-16T11:33:32.093Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ea/86/19920b883ed19c7a33ecb11043cb6a78aa14f80cca8ea95e9e541cae367a/shell_interface-2.1.0-py3-none-any.whl", hash = "sha256:0e5a7bc202fda3c74d901a452e7975db0b580f5229ecb55f5488752180e55ed3", size = 16307, upload-time = "2026-05-16T11:33:30.347Z" },
+version = "2.0.0"
+source = { editable = "projects/shell-interface" }
+
+[package.optional-dependencies]
+logging = [
+    { name = "loguru" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "hypothesis" },
+    { name = "mypy" },
+    { name = "pdbpp" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "loguru", marker = "extra == 'logging'" }]
+provides-extras = ["logging"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "hypothesis", specifier = ">=6.141.1" },
+    { name = "mypy", specifier = ">=1.19.1" },
+    { name = "pdbpp", specifier = ">=0.12.1" },
+    { name = "pytest", specifier = ">=8.4.2" },
+    { name = "pytest-cov", specifier = ">=7.1.0" },
+    { name = "ruff", specifier = ">=0.15.12" },
 ]
 
 [[package]]
@@ -855,7 +881,7 @@ dev = [
 requires-dist = [
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "loguru", marker = "extra == 'logging'" },
-    { name = "shell-interface", specifier = ">=2.0.0" },
+    { name = "shell-interface", editable = "projects/shell-interface" },
 ]
 provides-extras = ["logging"]
 

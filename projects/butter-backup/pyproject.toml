@@ -11,7 +11,7 @@ dependencies = [
     "loguru>=0.7.3",
     "pydantic>=2.13.4",
     "pyyaml>=6.0.3",
-    "shell-interface>=2.1.0",
+    "shell-interface",
     "storage-device-managers",
     "typer>=0.25.1",
 ]
@@ -87,6 +87,7 @@ ignore = ["E", "PLC1901", "SIM117"]
 mccabe.max-complexity = 6
 
 [tool.uv.sources]
+shell-interface = { workspace = true }
 storage-device-managers = { workspace = true }
 
 [build-system]
