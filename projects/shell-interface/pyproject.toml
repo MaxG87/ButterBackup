@@ -1,0 +1,60 @@
+[project]
+name = "shell-interface"
+version = "2.0.0"
+description = "Helpful and convenient utilities to interact with UNIX shells"
+authors = [{name = "Max Görner", email = "5477952+MaxG87@users.noreply.github.com"}]
+repository = "https://github.com/MaxG87/shell-interface"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/MaxG87/shell-interface"
+Repository = "https://github.com/MaxG87/shell-interface"
+Issues = "https://github.com/MaxG87/shell-interface/issues"
+Changelog = "https://github.com/MaxG87/shell-interface/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+logging = [
+    "loguru",
+]
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.141.1",
+    "mypy>=1.19.1",
+    "pdbpp>=0.12.1",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.15.12",
+]
+
+[tool.mypy]
+allow_any_unimported = false
+warn_unreachable = true
+enable_error_code = [
+    "possibly-undefined"
+]
+strict = true
+
+
+[tool.pytest.ini_options]
+addopts = [
+    "--cov", "src",
+    "--cov-branch",
+    "--cov-fail-under", "75"
+]
+testpaths = ["tests"]
+
+[tool.ruff]
+src = [".", "src/"]
+
+[tool.ruff.lint]
+select = ["A", "B", "C", "F", "I", "ISC", "PIE", "PL", "Q", "RUF", "SIM", "TID", "W", "YTT"]
+ignore = ["E"]
+mccabe.max-complexity = 6
+
+[build-system]
+requires = ["poetry-core>=2.0.0"]
+build-backend = "poetry.core.masonry.api"
