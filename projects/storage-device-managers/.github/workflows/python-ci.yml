@@ -1,0 +1,50 @@
+---
+name: Python package
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+        dependency-extras: ["--extra logging", ""]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        run: pipx install 'uv==0.10.11'
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          uv sync ${{ matrix.dependency-extras }}
+      - name: Check formatting with ruff
+        run: |
+          uv run ruff format --check .
+      - name: Check import ordering with ruff
+        run: |
+          uv run ruff check --output-format=github --select I .
+      - name: Check static typing with mypy
+        run: uv run mypy .
+      - name: Lint with ruff
+        run: |
+          uv run ruff check --output-format=github .
+      - name: Test with pytest
+        run: |
+          uv run pytest --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html
+
+  check:
+    if: always()
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
