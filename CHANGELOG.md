@@ -1,5 +1,59 @@
 # Changelog
 
+## [4.0.0](https://github.com/MaxG87/ButterBackup/compare/v3.6.0...v4.0.0) (2026-05-31)
+
+
+### ⚠ BREAKING CHANGES
+
+* Names that form absolute paths are rejected to avoid bad surprises when using ButterBackup.
+* **config:** Setting the Compression value for Restic configurations is no longer supported.
+* Drop  Python 3.10
+* Bump minimum supported Python to 3.11
+
+### Features
+
+* Add --file-system option to format-device CLI command ([442ecc4](https://github.com/MaxG87/ButterBackup/commit/442ecc4b4dda8db1dd5b4ad62dd440cb8e339a02))
+* add Configuration wrapper model with deviceConfigurations sublist ([fa49e1b](https://github.com/MaxG87/ButterBackup/commit/fa49e1b641deb3182092b853d1f0eb2e4eff369b))
+* add optional dest argument to open command ([ba7faa6](https://github.com/MaxG87/ButterBackup/commit/ba7faa6c9c0905656d406b505b8ed9d03f79a22e))
+* add SudoPassCmd field to Configuration ([04569ff](https://github.com/MaxG87/ButterBackup/commit/04569ff737d8e278fc2120534b569d0fec77418c))
+* Allow btrfs file system argument for BtrFS-Rsync too ([f6ff28c](https://github.com/MaxG87/ButterBackup/commit/f6ff28c398527a9b12a12cd5cda68e56d2df186c))
+* Allow configuration files in YAML, JSON5 and TOML ([7a6655d](https://github.com/MaxG87/ButterBackup/commit/7a6655db043f1b804846984ec6366eb00ecb648c))
+* Change default file system for restic to ext4 ([6f504c5](https://github.com/MaxG87/ButterBackup/commit/6f504c5892f1e08efdb251bd684ae35026494041))
+* **config:** Drop Compression value from Restic configuration ([c4ae3a7](https://github.com/MaxG87/ButterBackup/commit/c4ae3a7a958e15ac02b85ad282f8e0b652ca277f))
+* Continue with othen devices on close unmount confusion ([483de4a](https://github.com/MaxG87/ButterBackup/commit/483de4aea709027b76aee1672b1ad6e50dbac6ea))
+* Enforce certain restrictions on Names ([810171c](https://github.com/MaxG87/ButterBackup/commit/810171cb35d49e31a2a79b08f60be1af0fe78927))
+* implement --file-system option for format-device command ([cdfd75f](https://github.com/MaxG87/ButterBackup/commit/cdfd75fa7c5073a529aaeead908740457f5cbbe4))
+* implement SudoPassCmd to refresh sudo cache ([7ddc0a3](https://github.com/MaxG87/ButterBackup/commit/7ddc0a3a2600b9b905c57ed54abcf79f05cf42b8))
+* Open all devices in same directory using their Names as folder names ([c368f9a](https://github.com/MaxG87/ButterBackup/commit/c368f9af84ca9ee0b38dc879c518980ad995f911))
+* open mounts all devices to shared tmpdir under Name subdirectory with error handling ([90c190e](https://github.com/MaxG87/ButterBackup/commit/90c190efe0ea1043d48d1a92900ec7363f5dd6d0))
+* pass SudoPassCmd into do_backup and refresh sudo session in both backends ([78c0c39](https://github.com/MaxG87/ButterBackup/commit/78c0c3925b8bcc74c14d67881953e7d558393c10))
+* Reject names that form absolute Paths ([6ebb1e7](https://github.com/MaxG87/ButterBackup/commit/6ebb1e7ae4bd1d9a7b35ea276a3a3edb78bed092))
+
+
+### Dependencies
+
+* Bump all dependencies - prod and dev ([f6a03b2](https://github.com/MaxG87/ButterBackup/commit/f6a03b2a1903c659bfd1a365d94e2b124da5a1ab))
+* Bump all production dependencies ([3c9b037](https://github.com/MaxG87/ButterBackup/commit/3c9b0379abbb56895538f2da3b1e1eb7f0376bb0))
+* Bump all production dependencies ([faa1b7d](https://github.com/MaxG87/ButterBackup/commit/faa1b7daf2f038b240d5c7f47d517dd10602fc4d))
+* Bump minimum supported Python to 3.11 ([c751d60](https://github.com/MaxG87/ButterBackup/commit/c751d606d853bbdf640400938f466416574072bb))
+* Bump storage-device-managers to 2.0.0 ([dc11c4f](https://github.com/MaxG87/ButterBackup/commit/dc11c4f00cd8a2493a38a40848d049cd2ef5d0c6))
+* Bump to storage-device-managers to Git upstream ([32d2f5d](https://github.com/MaxG87/ButterBackup/commit/32d2f5deed46960fb7ec111b44cb60987bbde739))
+* **dev:** Bump all development dependencies ([0e3a620](https://github.com/MaxG87/ButterBackup/commit/0e3a6200ec90cc9e46b843d94a8af908bde4d369))
+* **dev:** Bump all development dependencies ([24f5caa](https://github.com/MaxG87/ButterBackup/commit/24f5caade8d452f9d0da9cc331acf801dea5b93c))
+* **dev:** Bump the development-dependencies group with 3 updates ([#118](https://github.com/MaxG87/ButterBackup/issues/118)) ([e5cb51d](https://github.com/MaxG87/ButterBackup/commit/e5cb51d14d2ca2593d55c787f29b2085a7e777d6))
+* Drop  Python 3.10 ([4437736](https://github.com/MaxG87/ButterBackup/commit/4437736511f7c13e66ea188217d16ff255101b0b))
+
+
+### Documentation
+
+* Add introduction text to configuration section ([781c666](https://github.com/MaxG87/ButterBackup/commit/781c666db0d27dceb978a46bf9994549d7a54cb7))
+* add Konfigurationsdateien section to README ([ef6777f](https://github.com/MaxG87/ButterBackup/commit/ef6777f3a112d0f72c4dee469c57c9646b5a6b49))
+* Minor editorial changes to new sections ([0cadafa](https://github.com/MaxG87/ButterBackup/commit/0cadafa61001b4a17602bc295bbfbd7ad40651e4))
+* Remove quotes from keys in JSON5 documentation ([5502c48](https://github.com/MaxG87/ButterBackup/commit/5502c483c017fdb87601900c5fee90f029880c15))
+* Set up multi-language READMEs for project ([e9a2e8f](https://github.com/MaxG87/ButterBackup/commit/e9a2e8fb62d1354e7ce8182b107b8de19899b727))
+* Stress expected file ending by renaming example files ([9217b1d](https://github.com/MaxG87/ButterBackup/commit/9217b1da5dc63b5531d45f15e4999ce772f1f377))
+* **test:** Add helpful comment to test helper ([dab53aa](https://github.com/MaxG87/ButterBackup/commit/dab53aa817338b440d25a22a45ce321b4837d7d5))
+
 ## [3.6.0](https://github.com/MaxG87/ButterBackup/compare/v3.5.5...v3.6.0) (2026-04-15)
 
 
