@@ -1,0 +1,9 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "python",
+  "packages": {
+    "projects/butter-backup": {},
+    "projects/shell-interface": {},
+    "projects/storage-device-managers": {}
+  }
+}
