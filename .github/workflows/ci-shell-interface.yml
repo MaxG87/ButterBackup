@@ -1,0 +1,43 @@
+name: shell-interface
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+        dependency-extras: ["", "--extra logging"]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: uv sync --package shell-interface ${{ matrix.dependency-extras }}
+      - name: Check formatting with ruff
+        run: uv run --package shell-interface ruff format --check projects/shell-interface
+      - name: Check import ordering with ruff
+        run: uv run --package shell-interface ruff check --output-format=github --select I projects/shell-interface
+      - name: Check static typing with mypy
+        run: uv run --package shell-interface mypy projects/shell-interface
+      - name: Lint with ruff
+        run: uv run --package shell-interface ruff check --output-format=github projects/shell-interface
+      - name: Test with pytest
+        run: uv run --package shell-interface pytest --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html
+        working-directory: projects/shell-interface
+
+  check:
+    if: always()
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}

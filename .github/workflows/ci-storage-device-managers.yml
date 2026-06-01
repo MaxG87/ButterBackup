@@ -1,0 +1,43 @@
+name: storage-device-managers
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+        dependency-extras: ["", "--extra logging"]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: uv sync --package storage-device-managers ${{ matrix.dependency-extras }}
+      - name: Check formatting with ruff
+        run: uv run --package storage-device-managers ruff format --check projects/storage-device-managers
+      - name: Check import ordering with ruff
+        run: uv run --package storage-device-managers ruff check --output-format=github --select I projects/storage-device-managers
+      - name: Check static typing with mypy
+        run: uv run --package storage-device-managers mypy projects/storage-device-managers
+      - name: Lint with ruff
+        run: uv run --package storage-device-managers ruff check --output-format=github projects/storage-device-managers
+      - name: Test with pytest
+        run: uv run --package storage-device-managers pytest --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html
+        working-directory: projects/storage-device-managers
+
+  check:
+    if: always()
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}

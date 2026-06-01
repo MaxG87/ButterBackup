@@ -1,7 +1,7 @@
----
-name: Python package
+name: butter-backup
 
-on: [push]
+on:
+  push:
 
 jobs:
   build:
@@ -19,18 +19,19 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          uv sync ${{ matrix.dependency-extras }}
+          uv sync --package butter-backup ${{ matrix.dependency-extras }}
           sudo apt install e2fsprogs restic
       - name: Check formatting with ruff
-        run: uv run ruff format --check .
+        run: uv run --package butter-backup ruff format --check projects/butter-backup
       - name: Check import ordering with ruff
-        run: uv run ruff check --output-format=github --select I .
+        run: uv run --package butter-backup ruff check --output-format=github --select I projects/butter-backup
       - name: Check static typing with mypy
-        run: uv run mypy .
+        run: uv run --package butter-backup mypy projects/butter-backup
       - name: Lint with ruff
-        run: uv run ruff check --output-format=github .
+        run: uv run --package butter-backup ruff check --output-format=github projects/butter-backup
       - name: Test with pytest
-        run: uv run pytest --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html
+        run: uv run --package butter-backup pytest --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html
+        working-directory: projects/butter-backup
 
   check:
     if: always()
