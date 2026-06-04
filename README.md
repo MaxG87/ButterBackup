@@ -4,6 +4,6 @@ ButterBackup is a backup application. This repository is a monorepo that contain
 
 ## Project READMEs
 
-- ButterBackup (application): [docs/README.en.md](docs/README.en.md)
-- shell-interface (library): [https://github.com/MaxG87/shell-interface#readme](https://github.com/MaxG87/shell-interface#readme)
-- storage-device-managers (library): [https://github.com/MaxG87/storage-device-managers#readme](https://github.com/MaxG87/storage-device-managers#readme)
+- ButterBackup (application): [projects/butter-backup/README.md](projects/butter-backup/README.md)
+- shell-interface (library): [projects/shell-interface/README.md](projects/shell-interface/README.md)
+- storage-device-managers (library): [projects/storage-device-managers/README.md](projects/storage-device-managers/README.md)
