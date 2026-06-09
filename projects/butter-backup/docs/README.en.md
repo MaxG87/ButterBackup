@@ -1,4 +1,4 @@
-<img src="logo.png" alt="ButterBackup-Logo" height="150px" align="right">
+<img src="../logo.png" alt="ButterBackup-Logo" height="150px" align="right">
 
 # ButterBackup - Backups As Smooth As Butter!
 
