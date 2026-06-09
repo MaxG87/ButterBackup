@@ -4,8 +4,7 @@ from pathlib import Path
 
 import pytest
 import shell_interface as sh
-from click.testing import Result
-from typer.testing import CliRunner
+from typer.testing import CliRunner, Result
 
 from butter_backup import config_parser as cp
 from butter_backup.cli import app
