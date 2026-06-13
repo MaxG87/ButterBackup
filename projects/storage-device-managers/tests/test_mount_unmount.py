@@ -39,15 +39,16 @@ def test_mount_device(device_with_fs) -> None:
 
 
 @pytest.mark.parametrize("args", [[], [sdm.ValidCompressions.ZSTD9]])
-def test_mounted_device_without_compression(btrfs_device, args) -> None:
-    with sdm.mounted_device(btrfs_device, *args) as md:
+def test_mounted_device(device_with_fs, args) -> None:
+    device, _ = device_with_fs
+    with sdm.mounted_device(device, *args) as md:
         assert md.exists()
         assert md.is_dir()
-        assert sdm.is_mounted(btrfs_device)
-        assert md in sdm.get_mounted_devices()[str(btrfs_device)]
+        assert sdm.is_mounted(device)
+        assert md in sdm.get_mounted_devices()[str(device)]
     assert not md.exists()
-    assert not sdm.is_mounted(btrfs_device)
-    assert str(btrfs_device) not in sdm.get_mounted_devices()
+    assert not sdm.is_mounted(device)
+    assert str(device) not in sdm.get_mounted_devices()
 
 
 def test_mounted_device_takes_over_already_mounted_device(btrfs_device) -> None:
