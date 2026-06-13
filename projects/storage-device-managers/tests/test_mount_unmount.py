@@ -51,14 +51,15 @@ def test_mounted_device(device_with_fs, args) -> None:
     assert str(device) not in sdm.get_mounted_devices()
 
 
-def test_mounted_device_takes_over_already_mounted_device(btrfs_device) -> None:
+def test_mounted_device_takes_over_already_mounted_device(device_with_fs) -> None:
+    device, _ = device_with_fs
     compression = sdm.ValidCompressions.LZO
     with TemporaryDirectory() as td:
-        sdm.mount_btrfs_device(btrfs_device, Path(td), compression)
-        with sdm.mounted_device(btrfs_device, compression) as md:
-            assert sdm.is_mounted(btrfs_device)
-            assert md in sdm.get_mounted_devices()[str(btrfs_device)]
-        assert not sdm.is_mounted(btrfs_device)
+        sdm.mount_device(device, Path(td), compression)
+        with sdm.mounted_device(device, compression) as md:
+            assert sdm.is_mounted(device)
+            assert md in sdm.get_mounted_devices()[str(device)]
+        assert not sdm.is_mounted(device)
 
 
 @pytest.mark.skipif(
