@@ -113,7 +113,7 @@ requires-dist = [
     { name = "rich", marker = "extra == 'all'", specifier = ">=13.9.4" },
     { name = "shell-interface", editable = "projects/shell-interface" },
     { name = "storage-device-managers", editable = "projects/storage-device-managers" },
-    { name = "typer", specifier = ">=0.26.7" },
+    { name = "typer", specifier = ">=0.25.1" },
 ]
 provides-extras = ["all"]
 
@@ -126,7 +126,7 @@ dev = [
     { name = "pytest-cov", specifier = ">=7.1.0" },
     { name = "pytest-mock", specifier = ">=3.15.1" },
     { name = "pytest-xdist", specifier = ">=3.8.0" },
-    { name = "ruff", specifier = ">=0.15.16" },
+    { name = "ruff", specifier = ">=0.15.13" },
     { name = "types-pyyaml", specifier = ">=6.0.12.20260510" },
 ]
 
@@ -830,7 +830,7 @@ dev = [
     { name = "pdbpp", specifier = ">=0.12.1" },
     { name = "pytest", specifier = ">=8.4.2" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
-    { name = "ruff", specifier = ">=0.15.16" },
+    { name = "ruff", specifier = ">=0.15.12" },
 ]
 
 [[package]]
@@ -894,7 +894,7 @@ dev = [
     { name = "pytest-cov", specifier = ">=7.0.0" },
     { name = "pytest-mock", specifier = ">=3.15.1" },
     { name = "pytest-xdist", specifier = ">=3.8.0" },
-    { name = "ruff", specifier = ">=0.15.16" },
+    { name = "ruff", specifier = ">=0.15.7" },
 ]
 
 [[package]]
