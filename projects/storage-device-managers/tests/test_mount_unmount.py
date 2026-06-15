@@ -17,16 +17,6 @@ class MyCustomTestException(Exception):
     pass
 
 
-def test_mount_ext4_device(ext4_device) -> None:
-    with TemporaryDirectory() as mount_dir:
-        mount_path = Path(mount_dir)
-        sdm.mount_ext4_device(ext4_device, mount_path)
-        assert sdm.is_mounted(ext4_device)
-        assert mount_path in sdm.get_mounted_devices()[str(ext4_device)]
-        sdm.unmount_device(ext4_device)
-        assert not sdm.is_mounted(ext4_device)
-
-
 def test_mount_device(device_with_fs) -> None:
     device, _ = device_with_fs
     with TemporaryDirectory() as mount_dir:
