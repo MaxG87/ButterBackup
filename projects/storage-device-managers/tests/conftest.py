@@ -62,6 +62,18 @@ def _encrypted_btrfs_device_persistent(_big_file_persistent):
         yield btrfs_device, password_cmd
 
 
+@pytest.fixture(scope="session")
+def _encrypted_ext4_device_persistent(_big_file_persistent):
+    password_cmd = sdm.generate_passcmd()
+    with NamedTemporaryFile() as ntf:
+        ext4_device = Path(ntf.name)
+        shutil.copy(_big_file_persistent, ext4_device)
+        sdm.encrypt_device(ext4_device, password_cmd)
+        with sdm.decrypted_device(ext4_device, password_cmd) as decrypted:
+            sdm.mkfs_ext4(decrypted)
+        yield ext4_device, password_cmd
+
+
 @pytest.fixture
 def encrypted_btrfs_device(_encrypted_btrfs_device_persistent):
     """
@@ -81,7 +93,26 @@ def encrypted_btrfs_device(_encrypted_btrfs_device_persistent):
         yield file, pass_cmd
 
 
-@pytest.fixture(params=["encrypted_btrfs_device"])
+@pytest.fixture
+def encrypted_ext4_device(_encrypted_ext4_device_persistent):
+    """
+    Create encrypted BtrFS file system
+
+    Returns
+    -------
+    Path
+        destination of encrypted BtrFS file system
+    str
+        password command that echos password to STDOUT
+    """
+    ext4_device, pass_cmd = _encrypted_ext4_device_persistent
+    with NamedTemporaryFile() as ntf:
+        file = Path(ntf.name)
+        shutil.copy(ext4_device, file)
+        yield file, pass_cmd
+
+
+@pytest.fixture(params=["encrypted_btrfs_device", "encrypted_ext4_device"])
 def encrypted_device(request):
     # As of now, the fixture seems superfluous. However, it is kept in case
     # support for other file systems is added later on.
