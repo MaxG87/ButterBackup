@@ -9,6 +9,20 @@ import shell_interface as sh
 import storage_device_managers as sdm
 
 
+@pytest.fixture(
+    params=[
+        [],
+        [sdm.ValidCompressions.ZSTD9],
+        [sdm.ValidCompressions.ZLIB1],
+        [None],
+    ]
+)
+def compression_args(request) -> list[sdm.ValidCompressions]:
+    args: list[sdm.ValidCompressions] = request.param
+    return args
+
+
+@pytest.mark.parametrize("args", [[], [sdm.ValidCompressions.ZSTD9]])
 def in_docker_container() -> bool:
     return Path("/.dockerenv").exists()
 
@@ -17,21 +31,20 @@ class MyCustomTestException(Exception):
     pass
 
 
-def test_mount_device(device_with_fs) -> None:
+def test_mount_device(device_with_fs, compression_args) -> None:
     device, _ = device_with_fs
     with TemporaryDirectory() as mount_dir:
         mount_path = Path(mount_dir)
-        sdm.mount_device(device, mount_path)
+        sdm.mount_device(device, mount_path, *compression_args)
         assert sdm.is_mounted(device)
         assert mount_path in sdm.get_mounted_devices()[str(device)]
         sdm.unmount_device(device)
         assert not sdm.is_mounted(device)
 
 
-@pytest.mark.parametrize("args", [[], [sdm.ValidCompressions.ZSTD9]])
-def test_mounted_device(device_with_fs, args) -> None:
+def test_mounted_device(device_with_fs, compression_args) -> None:
     device, _ = device_with_fs
-    with sdm.mounted_device(device, *args) as md:
+    with sdm.mounted_device(device, *compression_args) as md:
         assert md.exists()
         assert md.is_dir()
         assert sdm.is_mounted(device)
@@ -41,12 +54,13 @@ def test_mounted_device(device_with_fs, args) -> None:
     assert str(device) not in sdm.get_mounted_devices()
 
 
-def test_mounted_device_takes_over_already_mounted_device(device_with_fs) -> None:
+def test_mounted_device_takes_over_already_mounted_device(
+    device_with_fs, compression_args
+) -> None:
     device, _ = device_with_fs
-    compression = sdm.ValidCompressions.LZO
     with TemporaryDirectory() as td:
-        sdm.mount_device(device, Path(td), compression)
-        with sdm.mounted_device(device, compression) as md:
+        sdm.mount_device(device, Path(td), *compression_args)
+        with sdm.mounted_device(device, *compression_args) as md:
             assert sdm.is_mounted(device)
             assert md in sdm.get_mounted_devices()[str(device)]
         assert not sdm.is_mounted(device)
@@ -68,15 +82,18 @@ def test_mounted_device_fails_on_not_unmountable_device() -> None:
             pass
 
 
-def test_mounted_device_unmounts_in_case_of_exception(btrfs_device) -> None:
+def test_mounted_device_unmounts_in_case_of_exception(
+    device_with_fs, compression_args
+) -> None:
+    device, _ = device_with_fs
     with pytest.raises(MyCustomTestException):
-        with sdm.mounted_device(btrfs_device, sdm.ValidCompressions.ZLIB1) as md:
+        with sdm.mounted_device(device, *compression_args) as md:
             # That the device is mounted properly is guaranteed by a test
             # above.
             raise MyCustomTestException
-    assert not sdm.is_mounted(btrfs_device), "Device is still mounted after exception."
+    assert not sdm.is_mounted(device), "Device is still mounted after exception."
     assert not md.exists(), "Mounted device still exists after exception."
-    assert str(btrfs_device) not in sdm.get_mounted_devices()
+    assert str(device) not in sdm.get_mounted_devices()
 
 
 @pytest.mark.parametrize("device", sdm.get_mounted_devices())
@@ -89,11 +106,12 @@ def test_is_mounted_rejects() -> None:
         assert not sdm.is_mounted(Path(tempd))
 
 
-def test_unmount_device(btrfs_device) -> None:
+def test_unmount_device(device_with_fs) -> None:
+    device, _ = device_with_fs
     with TemporaryDirectory() as mountpoint:
-        sdm.mount_btrfs_device(btrfs_device, Path(mountpoint))
-        sdm.unmount_device(btrfs_device)
-        assert not sdm.is_mounted(btrfs_device)
+        sdm.mount_device(device, Path(mountpoint))
+        sdm.unmount_device(device)
+        assert not sdm.is_mounted(device)
 
 
 def test_unmount_device_raises_unmounterror() -> None:
@@ -106,9 +124,9 @@ def test_unmount_device_raises_unmounterror() -> None:
 
 
 def test_mounted_device_does_not_delete_content_on_umount_error(
-    btrfs_device, mocker
+    device_with_fs, compression_args, mocker
 ) -> None:
-    compression = sdm.ValidCompressions.ZSTD15
+    device, _ = device_with_fs
     mocker.patch(
         "storage_device_managers.unmount_device",
         side_effect=sdm.UnmountError("Mocked unmount error"),
@@ -116,13 +134,13 @@ def test_mounted_device_does_not_delete_content_on_umount_error(
     user = sh.get_user()
     sentinel_text = "This file should not be deleted."
     with pytest.raises(sdm.UnmountError, match="Mocked unmount error"):
-        with sdm.mounted_device(btrfs_device, compression) as md:
+        with sdm.mounted_device(device, *compression_args) as md:
             sentinel = md / "sentinel-file"
             sdm.chown(md, user, recursive=True)
             sentinel.write_text("This file should not be deleted.")
     assert sentinel.exists(), "Sentinel file was deleted after unmount error."
     assert sentinel.read_text() == sentinel_text
-    assert sdm.is_mounted(btrfs_device)
+    assert sdm.is_mounted(device)
     mocker.stopall()
-    sdm.unmount_device(btrfs_device)
-    assert not sdm.is_mounted(btrfs_device)
+    sdm.unmount_device(device)
+    assert not sdm.is_mounted(device)
