@@ -9,21 +9,23 @@ import shell_interface as sh
 import storage_device_managers as sdm
 
 
-def test_sync_device_is_called_on_unmount(btrfs_device, mocker) -> None:
+def test_sync_device_is_called_on_unmount(device_with_fs, mocker) -> None:
+    device, _ = device_with_fs
     spy = mocker.spy(sdm, "sync_device")
     with TemporaryDirectory() as mount_dir:
-        sdm.mount_btrfs_device(btrfs_device, Path(mount_dir))
-        sdm.unmount_device(btrfs_device)
-    spy.assert_called_once_with(btrfs_device)
+        sdm.mount_device(device, Path(mount_dir))
+        sdm.unmount_device(device)
+    spy.assert_called_once_with(device)
 
 
-def test_sync_device_calls_sync_f_for_btrfs(btrfs_device, mocker) -> None:
+def test_sync_device_calls_sync_f(device_with_fs, mocker) -> None:
+    device, _ = device_with_fs
     with TemporaryDirectory() as mount_dir:
-        sdm.mount_btrfs_device(btrfs_device, Path(mount_dir))
+        sdm.mount_device(device, Path(mount_dir))
         spy = mocker.spy(sh, "run_cmd")
-        sdm.sync_device(btrfs_device)
-        sh.run_cmd(cmd=["sudo", "umount", btrfs_device])
-    assert call(cmd=["sudo", "sync", "-f", btrfs_device]) in spy.call_args_list
+        sdm.sync_device(device)
+        sh.run_cmd(cmd=["sudo", "umount", device])
+    assert call(cmd=["sudo", "sync", "-f", device]) in spy.call_args_list
 
 
 def test_sync_device_calls_btrfs_filesystem_sync_for_btrfs(
@@ -31,7 +33,7 @@ def test_sync_device_calls_btrfs_filesystem_sync_for_btrfs(
 ) -> None:
     with TemporaryDirectory() as mount_dir:
         mount_path = Path(mount_dir)
-        sdm.mount_btrfs_device(btrfs_device, mount_path)
+        sdm.mount_device(btrfs_device, mount_path)
         spy = mocker.spy(sh, "run_cmd")
         sdm.sync_device(btrfs_device)
         sh.run_cmd(cmd=["sudo", "umount", btrfs_device])
@@ -41,18 +43,9 @@ def test_sync_device_calls_btrfs_filesystem_sync_for_btrfs(
     )
 
 
-def test_sync_device_calls_sync_f_for_ext4(ext4_device, mocker) -> None:
-    with TemporaryDirectory() as mount_dir:
-        sdm.mount_ext4_device(ext4_device, Path(mount_dir))
-        spy = mocker.spy(sh, "run_cmd")
-        sdm.sync_device(ext4_device)
-        sh.run_cmd(cmd=["sudo", "umount", ext4_device])
-    assert call(cmd=["sudo", "sync", "-f", ext4_device]) in spy.call_args_list
-
-
 def test_sync_device_does_not_call_btrfs_sync_for_ext4(ext4_device, mocker) -> None:
     with TemporaryDirectory() as mount_dir:
-        sdm.mount_ext4_device(ext4_device, Path(mount_dir))
+        sdm.mount_device(ext4_device, Path(mount_dir))
         spy = mocker.spy(sh, "run_cmd")
         sdm.sync_device(ext4_device)
         sh.run_cmd(cmd=["sudo", "umount", ext4_device])
