@@ -35,9 +35,11 @@ def test_decrypted_device_raises_devicedecryptionerror() -> None:
     pass_cmd = sdm.generate_passcmd()
     with NamedTemporaryFile() as named_temp_file:
         device = Path(named_temp_file.name)
-        with pytest.raises(sdm.DeviceDecryptionError):
-            with sdm.decrypted_device(device=device, pass_cmd=pass_cmd):
-                pass
+        with (
+            pytest.raises(sdm.DeviceDecryptionError),
+            sdm.decrypted_device(device=device, pass_cmd=pass_cmd),
+        ):
+            pass
 
 
 def test_decrypt_device_roundtrip(encrypted_device) -> None:
@@ -66,9 +68,11 @@ def test_decrypted_device(encrypted_device) -> None:
 
 def test_decrypted_device_closes_in_case_of_exception(encrypted_device) -> None:
     device, pass_cmd = encrypted_device
-    with pytest.raises(MyCustomTestException):
-        with sdm.decrypted_device(device=device, pass_cmd=pass_cmd) as dd:
-            raise MyCustomTestException
+    with (
+        pytest.raises(MyCustomTestException),
+        sdm.decrypted_device(device=device, pass_cmd=pass_cmd) as dd,
+    ):
+        raise MyCustomTestException
     assert not dd.exists()
 
 
@@ -94,17 +98,15 @@ def test_decrypted_device_can_use_home_for_passcmd(encrypted_device) -> None:
 def test_symbolic_link_rejects_existing_dest(tmp_path: Path) -> None:
     with NamedTemporaryFile() as named_file:
         source = Path(named_file.name)
-        with pytest.raises(FileExistsError):
-            with sdm.symbolic_link(source, dest=tmp_path):
-                pass
+        with pytest.raises(FileExistsError), sdm.symbolic_link(source, dest=tmp_path):
+            pass
 
 
 def test_symbolic_link_rejects_missing_src() -> None:
     src = Path(get_random_filename())
     dest = Path(get_random_filename())
-    with pytest.raises(FileNotFoundError):
-        with sdm.symbolic_link(src=src, dest=dest):
-            pass
+    with pytest.raises(FileNotFoundError), sdm.symbolic_link(src=src, dest=dest):
+        pass
 
 
 def test_symbolic_link() -> None:
@@ -121,14 +123,13 @@ def test_symbolic_link() -> None:
 
 
 def test_symbolic_link_removes_link_in_case_of_exception() -> None:
-    with pytest.raises(MyCustomTestException):
-        with NamedTemporaryFile() as src_f:
-            source = Path(src_f.name)
-            dest_p = Path(get_random_filename())
-            assert not os.path.lexists(dest_p)
-            with sdm.symbolic_link(src=source, dest=dest_p):
-                assert os.path.lexists(dest_p)
-                raise MyCustomTestException
+    with pytest.raises(MyCustomTestException), NamedTemporaryFile() as src_f:
+        source = Path(src_f.name)
+        dest_p = Path(get_random_filename())
+        assert not os.path.lexists(dest_p)
+        with sdm.symbolic_link(src=source, dest=dest_p):
+            assert os.path.lexists(dest_p)
+            raise MyCustomTestException
     assert not os.path.lexists(dest_p)
 
 
@@ -190,9 +191,11 @@ def test_decrypted_device_raises_passcmderror_on_bad_pass_cmd(
 ) -> None:
     device, _ = encrypted_device
     bad_pass_cmd = "exit 1"
-    with pytest.raises(sh.PassCmdError):
-        with sdm.decrypted_device(device=device, pass_cmd=bad_pass_cmd):
-            pass
+    with (
+        pytest.raises(sh.PassCmdError),
+        sdm.decrypted_device(device=device, pass_cmd=bad_pass_cmd),
+    ):
+        pass
 
 
 def test_encrypt_device_raises_passcmderror_on_bad_pass_cmd(big_file) -> None:

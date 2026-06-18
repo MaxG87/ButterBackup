@@ -37,15 +37,14 @@ def test_btrfs_config_rejects_file_dest_collision(base_config, dest_dir: str):
 @given(base_config=valid_unparsed_empty_btrfs_config(), file_name=hu.filenames())
 def test_btrfs_config_rejects_filename_collision(base_config, file_name: str):
     base_config["Folders"] = {}
-    with TemporaryDirectory() as td1:
-        with TemporaryDirectory() as td2:
-            dirs = [td1, td2]
-            files = [Path(cur_dir) / file_name for cur_dir in dirs]
-            for f in files:
-                f.touch()
-            base_config["Files"] = [str(f) for f in files]
-            with pytest.raises(ValidationError, match=re.escape(file_name)):
-                cp.BtrFSRsyncConfig.model_validate(base_config)
+    with TemporaryDirectory() as td1, TemporaryDirectory() as td2:
+        dirs = [td1, td2]
+        files = [Path(cur_dir) / file_name for cur_dir in dirs]
+        for f in files:
+            f.touch()
+        base_config["Files"] = [str(f) for f in files]
+        with pytest.raises(ValidationError, match=re.escape(file_name)):
+            cp.BtrFSRsyncConfig.model_validate(base_config)
 
 
 @given(base_config=valid_unparsed_empty_btrfs_config())
@@ -75,18 +74,17 @@ def test_btrfs_config_expands_user(base_config):
     folder_dest=hu.filenames(),
 )
 def test_btrfs_config_rejects_duplicate_dest(base_config, folder_dest: str):
-    with TemporaryDirectory() as src1:
-        with TemporaryDirectory() as src2:
-            folders = {
-                "/usr/bin": "backup_bins",
-                src1: folder_dest,
-                "/var/log": "backup_logs",
-                src2: folder_dest,
-            }
-            base_config["Folders"] = folders
-            base_config["Files"] = []
-            with pytest.raises(ValidationError, match=re.escape(folder_dest)):
-                cp.BtrFSRsyncConfig.model_validate(base_config)
+    with TemporaryDirectory() as src1, TemporaryDirectory() as src2:
+        folders = {
+            "/usr/bin": "backup_bins",
+            src1: folder_dest,
+            "/var/log": "backup_logs",
+            src2: folder_dest,
+        }
+        base_config["Folders"] = folders
+        base_config["Files"] = []
+        with pytest.raises(ValidationError, match=re.escape(folder_dest)):
+            cp.BtrFSRsyncConfig.model_validate(base_config)
 
 
 @given(base_config=valid_unparsed_empty_btrfs_config())
@@ -183,13 +181,12 @@ def test_btrfs_config_accepts_valid_lzo(base_config) -> None:
 @given(base_config=valid_unparsed_empty_btrfs_config(), folder_dest=hu.filenames())
 def test_btrfs_config_json_roundtrip(base_config, folder_dest: str):
     assume(folder_dest != base_config["FilesDest"])
-    with TemporaryDirectory() as src_folder:
-        with NamedTemporaryFile() as src_file:
-            base_config["Folders"] = {src_folder: folder_dest}
-            base_config["Files"] = [src_file.name]
-            cfg = cp.BtrFSRsyncConfig.model_validate(base_config)
-            as_json = cfg.model_dump_json()
-            deserialised = cp.BtrFSRsyncConfig.model_validate_json(as_json)
+    with TemporaryDirectory() as src_folder, NamedTemporaryFile() as src_file:
+        base_config["Folders"] = {src_folder: folder_dest}
+        base_config["Files"] = [src_file.name]
+        cfg = cp.BtrFSRsyncConfig.model_validate(base_config)
+        as_json = cfg.model_dump_json()
+        deserialised = cp.BtrFSRsyncConfig.model_validate_json(as_json)
     assert cfg == deserialised
 
 

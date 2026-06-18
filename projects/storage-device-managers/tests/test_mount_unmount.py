@@ -77,20 +77,21 @@ def test_mounted_device_fails_on_not_unmountable_device() -> None:
         raise ValueError("No device mounted on / was found.")
 
     root = get_root_device()
-    with pytest.raises(sdm.UnmountError):
-        with sdm.mounted_device(root):
-            pass
+    with pytest.raises(sdm.UnmountError), sdm.mounted_device(root):
+        pass
 
 
 def test_mounted_device_unmounts_in_case_of_exception(
     device_with_fs, compression_args
 ) -> None:
     device, _ = device_with_fs
-    with pytest.raises(MyCustomTestException):
-        with sdm.mounted_device(device, *compression_args) as md:
-            # That the device is mounted properly is guaranteed by a test
-            # above.
-            raise MyCustomTestException
+    with (
+        pytest.raises(MyCustomTestException),
+        sdm.mounted_device(device, *compression_args) as md,
+    ):
+        # That the device is mounted properly is guaranteed by a test
+        # above.
+        raise MyCustomTestException
     assert not sdm.is_mounted(device), "Device is still mounted after exception."
     assert not md.exists(), "Mounted device still exists after exception."
     assert str(device) not in sdm.get_mounted_devices()
@@ -118,9 +119,8 @@ def test_unmount_device_raises_unmounterror() -> None:
     # This test calls unmount_device on a Path that is not mounted, which will cause
     # `umount` to fail. On such a failure, unmount_device is expected to raise an
     # UnmountError, which is what this test checks for.
-    with TemporaryDirectory() as mountpoint:
-        with pytest.raises(sdm.UnmountError):
-            sdm.unmount_device(Path(mountpoint))
+    with TemporaryDirectory() as mountpoint, pytest.raises(sdm.UnmountError):
+        sdm.unmount_device(Path(mountpoint))
 
 
 def test_mounted_device_does_not_delete_content_on_umount_error(
@@ -133,11 +133,13 @@ def test_mounted_device_does_not_delete_content_on_umount_error(
     )
     user = sh.get_user()
     sentinel_text = "This file should not be deleted."
-    with pytest.raises(sdm.UnmountError, match="Mocked unmount error"):
-        with sdm.mounted_device(device, *compression_args) as md:
-            sentinel = md / "sentinel-file"
-            sdm.chown(md, user, recursive=True)
-            sentinel.write_text("This file should not be deleted.")
+    with (
+        pytest.raises(sdm.UnmountError, match="Mocked unmount error"),
+        sdm.mounted_device(device, *compression_args) as md,
+    ):
+        sentinel = md / "sentinel-file"
+        sdm.chown(md, user, recursive=True)
+        sentinel.write_text("This file should not be deleted.")
     assert sentinel.exists(), "Sentinel file was deleted after unmount error."
     assert sentinel.read_text() == sentinel_text
     assert sdm.is_mounted(device)

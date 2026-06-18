@@ -414,10 +414,12 @@ def test_format_device_chowns_filesystem_to_user(
     assert len(config_lst) == 1
     config = config_lst[0]
 
-    with sdm.decrypted_device(big_file, config.DevicePassCmd) as decrypted:
-        with sdm.mounted_device(decrypted) as mounted:
-            owner = mounted.owner()
-            group = mounted.group()
+    with (
+        sdm.decrypted_device(big_file, config.DevicePassCmd) as decrypted,
+        sdm.mounted_device(decrypted) as mounted,
+    ):
+        owner = mounted.owner()
+        group = mounted.group()
     expected_user = sh.get_user()
     expected_group = sh.get_group(expected_user)
     assert owner == expected_user
