@@ -167,13 +167,21 @@ def decrypted_device(device: Path, pass_cmd: str) -> Iterator[Path]:
 
 @contextlib.contextmanager
 def mounted_device(
-    device: Path, compression: ValidCompressions | None = None
+    device: Path,
+    destination: Path | None = None,
+    *,
+    compression: ValidCompressions | None = None,
 ) -> Iterator[Path]:
-    """Mount a given BtrFS device
+    """Mount a given device
 
     Given a path pointing to a file-like object, this context manager will
-    mount it to some temporary directory and return its path. Upon exit, the
-    file-like object is unmounted again.
+    mount it and return the mount point path. Upon exit, the file-like object
+    is unmounted again.
+
+    If `destination` is given, the device is mounted to that directory and
+    the directory is left intact after the context exits. If `destination` is
+    ``None`` (the default), a temporary directory is created for the mount
+    and removed again upon exit.
 
     If `compression` is provided, a mount option specifying the transparent
     file system compression is set. Compression is only supported for BtrFS
@@ -184,6 +192,9 @@ def mounted_device(
     -----------
     device
         file-like object to be mounted
+    destination
+        directory to mount `device` to; if ``None``, a temporary directory
+        is created and removed after the context exits
     compression
         compression level to be used by BtrFS
 
@@ -194,7 +205,12 @@ def mounted_device(
     """
     if is_mounted(device):
         unmount_device(device)
-    with _temporary_directory() as mount_dir:
+    ctx: contextlib.AbstractContextManager[Path] = (
+        _temporary_directory()
+        if destination is None
+        else contextlib.nullcontext(destination)
+    )
+    with ctx as mount_dir:
         mount_device(device, mount_dir, compression)
         logger.success(
             f"Speichermedium {device} erfolgreich nach {mount_dir} gemountet."

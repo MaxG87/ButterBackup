@@ -73,8 +73,8 @@ with symbolic_link(src, dest) as link:
   - Decrypts a device using `cryptsetup` and returns a context-managed path.
   - Raises `shell_interface.PassCmdError` if the password command fails.
   - Raises `shell_interface.ShellInterfaceError` on other shell-related errors.
-- `mounted_device(device: Path, compression: ValidCompressions | None = None) -> Iterator[Path]`
-  - Mounts a device to a temporary directory, auto-detecting the file system type. For BtrFS, optional compression settings are supported.
+- `mounted_device(device: Path, destination: Path | None = None, *, compression: ValidCompressions | None = None) -> Iterator[Path]`
+  - Mounts a device, auto-detecting the file system type. For BtrFS, optional compression settings are supported. If `destination` is provided, the device is mounted there and the directory is left intact after the context exits; otherwise a temporary directory is used and removed afterwards.
 - `symbolic_link(src: Path, dest: Path) -> Iterator[Path]`
   - Creates and removes a symbolic link with root privileges.
 

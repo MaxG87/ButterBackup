@@ -121,7 +121,9 @@ def mounted_device(encrypted_device) -> t.Iterator[tuple[cp.DeviceConfiguration,
     config = encrypted_device
     with (
         sdm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted,
-        sdm.mounted_device(decrypted, config.compression()) as mounted_device,
+        sdm.mounted_device(
+            decrypted, compression=config.compression()
+        ) as mounted_device,
     ):
         if isinstance(config, cp.BtrFSRsyncConfig):
             # Ensure `FilesDest` is a file, initially. This ensures correct handling
