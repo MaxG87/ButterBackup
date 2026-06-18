@@ -51,11 +51,7 @@ warn_untyped_fields = true
 
 [tool.ruff]
 src = [".", "src/"]
-
-[tool.ruff.lint]
-select = ["A", "B", "C", "F", "I", "ISC", "PIE", "PL", "Q", "RUF", "SIM", "TID", "W", "YTT"]
-ignore = ["E", "PLC1901", "SIM117"]
-mccabe.max-complexity = 6
+extend = "../../pyproject.toml"
 
 [tool.uv.sources]
 shell-interface = { workspace = true }

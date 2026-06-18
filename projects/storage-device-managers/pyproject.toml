@@ -40,11 +40,8 @@ typecheck = ["pydantic"]
 
 [tool.ruff]
 src = [".", "src/"]
+extend = "../../pyproject.toml"
 
-[tool.ruff.lint]
-select = ["A", "B", "C", "F", "I", "ISC", "PIE", "PL", "Q", "RUF", "SIM", "TID", "W", "YTT"]
-ignore = ["E", "SIM117"]
-mccabe.max-complexity = 6
 
 [tool.uv.sources]
 shell-interface = { workspace = true }

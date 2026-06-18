@@ -33,3 +33,8 @@ addopts = [
     "--cov-fail-under", "85"
 ]
 testpaths = ["tests"]
+
+[tool.ruff.lint]
+select = ["A", "B", "C", "F", "I", "ISC", "PIE", "PL", "Q", "RUF", "SIM", "TID", "W", "YTT"]
+ignore = ["E"]
+mccabe.max-complexity = 6
