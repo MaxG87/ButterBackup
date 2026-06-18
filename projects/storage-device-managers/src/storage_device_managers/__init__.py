@@ -41,7 +41,6 @@ __all__ = [
     "is_mounted",
     "mkfs",
     "mount_device",
-    "mount_ext4_device",
     "mounted_device",
     "open_encrypted_device",
     "symbolic_link",
@@ -282,7 +281,7 @@ def _mount_btrfs_device(
     sh.run_cmd(cmd=cmd)
 
 
-def mount_ext4_device(device: Path, mount_dir: Path) -> None:
+def _mount_ext4_device(device: Path, mount_dir: Path) -> None:
     """
     Mount a given ext4 device
 
@@ -331,7 +330,7 @@ def mount_device(
         case "btrfs":
             _mount_btrfs_device(device, mount_dir, compression)
         case "ext4":
-            mount_ext4_device(device, mount_dir)
+            _mount_ext4_device(device, mount_dir)
         case _:
             cmd: sh.StrPathList = ["sudo", "mount", device, mount_dir]
             sh.run_cmd(cmd=cmd)
