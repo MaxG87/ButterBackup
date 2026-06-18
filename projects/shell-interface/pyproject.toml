@@ -29,15 +29,7 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.15.12",
 ]
-
-[tool.mypy]
-allow_any_unimported = false
-warn_unreachable = true
-enable_error_code = [
-    "possibly-undefined"
-]
-strict = true
-
+typecheck = ["pydantic"]
 
 [tool.pytest.ini_options]
 addopts = [

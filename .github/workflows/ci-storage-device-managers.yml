@@ -24,7 +24,7 @@ jobs:
       - name: Check import ordering with ruff
         run: uv run --package storage-device-managers ruff check --output-format=github --select I projects/storage-device-managers
       - name: Check static typing with mypy
-        run: uv run --package storage-device-managers mypy projects/storage-device-managers
+        run: uv run --group typecheck --package storage-device-managers mypy projects/storage-device-managers
       - name: Lint with ruff
         run: uv run --package storage-device-managers ruff check --output-format=github projects/storage-device-managers
       - name: Test with pytest

@@ -24,7 +24,7 @@ jobs:
       - name: Check import ordering with ruff
         run: uv run --package shell-interface ruff check --output-format=github --select I projects/shell-interface
       - name: Check static typing with mypy
-        run: uv run --package shell-interface mypy projects/shell-interface
+        run: uv run --group typecheck --package shell-interface mypy projects/shell-interface
       - name: Lint with ruff
         run: uv run --package shell-interface ruff check --output-format=github projects/shell-interface
       - name: Test with pytest
