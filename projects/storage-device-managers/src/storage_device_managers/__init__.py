@@ -40,11 +40,7 @@ __all__ = [
     "get_mounted_devices",
     "is_mounted",
     "mkfs",
-    "mkfs_btrfs",
-    "mkfs_ext4",
-    "mount_btrfs_device",
     "mount_device",
-    "mount_ext4_device",
     "mounted_device",
     "open_encrypted_device",
     "symbolic_link",
@@ -254,7 +250,7 @@ def symbolic_link(src: Path, dest: Path) -> Iterator[Path]:
         logger.success(f"Symlink von {src} nach {dest} erfolgreich entfernt.")
 
 
-def mount_btrfs_device(
+def _mount_btrfs_device(
     device: Path, mount_dir: Path, compression: ValidCompressions | None = None
 ) -> None:
     """
@@ -285,7 +281,7 @@ def mount_btrfs_device(
     sh.run_cmd(cmd=cmd)
 
 
-def mount_ext4_device(device: Path, mount_dir: Path) -> None:
+def _mount_ext4_device(device: Path, mount_dir: Path) -> None:
     """
     Mount a given ext4 device
 
@@ -332,9 +328,9 @@ def mount_device(
     fs = get_filesystem(device)
     match fs:
         case "btrfs":
-            mount_btrfs_device(device, mount_dir, compression)
+            _mount_btrfs_device(device, mount_dir, compression)
         case "ext4":
-            mount_ext4_device(device, mount_dir)
+            _mount_ext4_device(device, mount_dir)
         case _:
             cmd: sh.StrPathList = ["sudo", "mount", device, mount_dir]
             sh.run_cmd(cmd=cmd)
@@ -589,7 +585,7 @@ def get_filesystem(device: Path) -> str:
     return result.stdout.decode().strip()
 
 
-def mkfs_btrfs(device: Path) -> None:
+def _mkfs_btrfs(device: Path) -> None:
     """Format device with BtrFS
 
     Parameters:
@@ -602,7 +598,7 @@ def mkfs_btrfs(device: Path) -> None:
     sh.run_cmd(cmd=cmd)
 
 
-def mkfs_ext4(device: Path) -> None:
+def _mkfs_ext4(device: Path) -> None:
     """Format device with ext4
 
     Parameters:
@@ -630,9 +626,9 @@ def mkfs(device: Path, filesystem: ValidFileSystems) -> None:
     """
     match filesystem:
         case "btrfs":
-            mkfs_btrfs(device)
+            _mkfs_btrfs(device)
         case "ext4":
-            mkfs_ext4(device)
+            _mkfs_ext4(device)
         case _:
             t.assert_never(filesystem)
 
