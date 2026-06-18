@@ -146,7 +146,10 @@ def _open_device(
         _refresh_sudo(sudo_pass_cmd)
         decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
         sdm.mount_device(decrypted, mount_dir=mount_dir, compression=cfg.compression())
-    except:
+    except Exception:
+        # In case of **any** error, the mount dir should be removed to prevent littering
+        # the file system with empty directories. Hence the pokemon style exception
+        # handling.
         typer.echo(
             f"Speichermedium {cfg.Name} konnte nicht geöffnet werden. Es wird übersprungen."
         )
