@@ -25,11 +25,10 @@ def device_with_fs(request) -> tuple[Path, sdm.ValidFileSystems]:
 
 @pytest.fixture
 def mounted_directories():
-    with TemporaryDirectory() as src:
-        with TemporaryDirectory() as mountpoint:
-            sh.run_cmd(cmd=["sudo", "mount", "-o", "bind", src, mountpoint])
-            yield Path(src), Path(mountpoint)
-            sh.run_cmd(cmd=["sudo", "umount", mountpoint])
+    with TemporaryDirectory() as src, TemporaryDirectory() as mountpoint:
+        sh.run_cmd(cmd=["sudo", "mount", "-o", "bind", src, mountpoint])
+        yield Path(src), Path(mountpoint)
+        sh.run_cmd(cmd=["sudo", "umount", mountpoint])
 
 
 @pytest.fixture(scope="session")

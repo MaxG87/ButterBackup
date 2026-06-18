@@ -87,7 +87,7 @@ class BaseConfig(BaseModel, abc.ABC):
 
     @field_validator("ExcludePatternsFile", mode="before")
     def expand_tilde_in_exclude_patterns_file_name(
-        cls, maybe_exclude_patterns
+        cls, maybe_exclude_patterns: str | None
     ) -> str | None:
         if maybe_exclude_patterns is None:
             return None
@@ -112,7 +112,7 @@ class BtrFSRsyncConfig(BaseConfig):
     SubvolTimestampFmt: ClassVar[str] = "%F_%H:%M:%S"
 
     @field_validator("Files")
-    def source_file_names_must_be_unique(cls, files):
+    def source_file_names_must_be_unique(cls, files: set[FilePath]) -> set[FilePath]:
         file_names = Counter(f.name for f in files)
         cls.raise_with_message_upon_duplicate(file_names, ("Dateinamen", "Dateinamen"))
         return files
@@ -126,17 +126,17 @@ class BtrFSRsyncConfig(BaseConfig):
         return folders
 
     @field_validator("Files", mode="before")
-    def expand_tilde_in_file_sources(cls, files) -> list[str]:
+    def expand_tilde_in_file_sources(cls, files: t.Iterable[str]) -> list[str]:
         new = [str(Path(cur).expanduser()) for cur in files]
         return new
 
     @field_validator("Folders", mode="before")
-    def expand_tilde_in_folder_sources(cls, folders) -> dict[str, str]:
+    def expand_tilde_in_folder_sources(cls, folders: dict[str, str]) -> dict[str, str]:
         new = {str(Path(src).expanduser()): dest for src, dest in folders.items()}
         return new
 
     @model_validator(mode="after")
-    def files_dest_is_no_folder_dest(self):
+    def files_dest_is_no_folder_dest(self) -> t.Self:
         files_dest = self.FilesDest
         destinations = self.Folders.values()
         if files_dest in destinations:
@@ -169,7 +169,7 @@ class ResticConfig(BaseConfig):
     RepositoryPassCmd: str
 
     @field_validator("FilesAndFolders", mode="before")
-    def expand_tilde_in_sources(cls, files_and_folders) -> set[str]:
+    def expand_tilde_in_sources(cls, files_and_folders: t.Iterable[str]) -> set[str]:
         new = {str(Path(src).expanduser()) for src in files_and_folders}
         return new
 

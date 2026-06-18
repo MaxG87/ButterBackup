@@ -119,15 +119,17 @@ def encrypted_device(request) -> cp.DeviceConfiguration:
 @pytest.fixture
 def mounted_device(encrypted_device) -> t.Iterator[tuple[cp.DeviceConfiguration, Path]]:
     config = encrypted_device
-    with sdm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted:
-        with sdm.mounted_device(decrypted, config.compression()) as mounted_device:
-            if isinstance(config, cp.BtrFSRsyncConfig):
-                # Ensure `FilesDest` is a file, initially. This ensures correct handling
-                # of single files backup, even if an existing backup suffered from the
-                # erroneous behaviour of making FilesDest a file.
-                complemented = complement_configuration(config, Path("."))
-                backup_root = mounted_device / complemented.BackupRepositoryFolder
-                source_snapshot = bb.BtrFSRsyncBackend.get_source_snapshot(backup_root)
-                files_dest = source_snapshot / complemented.FilesDest
-                files_dest.touch()
-            yield config, mounted_device
+    with (
+        sdm.decrypted_device(config.device(), config.DevicePassCmd) as decrypted,
+        sdm.mounted_device(decrypted, config.compression()) as mounted_device,
+    ):
+        if isinstance(config, cp.BtrFSRsyncConfig):
+            # Ensure `FilesDest` is a file, initially. This ensures correct handling
+            # of single files backup, even if an existing backup suffered from the
+            # erroneous behaviour of making FilesDest a file.
+            complemented = complement_configuration(config, Path("."))
+            backup_root = mounted_device / complemented.BackupRepositoryFolder
+            source_snapshot = bb.BtrFSRsyncBackend.get_source_snapshot(backup_root)
+            files_dest = source_snapshot / complemented.FilesDest
+            files_dest.touch()
+        yield config, mounted_device

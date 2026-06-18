@@ -25,10 +25,12 @@ def directory_with_content(tmp_path):
 
 
 def test_chown_raises_valueerror():
-    with pytest.raises(ValueError, match=r"directory.*recursive"):
-        with NamedTemporaryFile() as temp_file:
-            file = Path(temp_file.name)
-            sdm.chown(file, file.owner(), recursive=True)
+    with (
+        pytest.raises(ValueError, match=r"directory.*recursive"),
+        NamedTemporaryFile() as temp_file,
+    ):
+        file = Path(temp_file.name)
+        sdm.chown(file, file.owner(), recursive=True)
 
 
 def test_chown_file(directory_with_content):

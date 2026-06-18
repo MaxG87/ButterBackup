@@ -74,12 +74,11 @@ def test_restic_config_device_ends_in_uuid(base_config) -> None:
 
 @given(base_config=valid_unparsed_empty_restic_config())
 def test_restic_config_json_roundtrip(base_config):
-    with TemporaryDirectory() as src_folder:
-        with NamedTemporaryFile() as src_file:
-            base_config["FilesAndFolders"] = {src_folder, src_file.name}
-            cfg = cp.ResticConfig.model_validate(base_config)
-            as_json = cfg.model_dump_json()
-            deserialised = cp.ResticConfig.model_validate_json(as_json)
+    with TemporaryDirectory() as src_folder, NamedTemporaryFile() as src_file:
+        base_config["FilesAndFolders"] = {src_folder, src_file.name}
+        cfg = cp.ResticConfig.model_validate(base_config)
+        as_json = cfg.model_dump_json()
+        deserialised = cp.ResticConfig.model_validate_json(as_json)
     assert cfg == deserialised
 
 

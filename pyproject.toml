@@ -6,3 +6,51 @@ dependencies = []
 
 [tool.uv.workspace]
 members = ["projects/*"]
+
+[tool.mypy]
+plugins = [
+  "pydantic.mypy"
+]
+allow_any_unimported = false
+warn_unreachable = true
+enable_error_code = [
+    "possibly-undefined"
+]
+strict = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+allow_incomplete_defs = true
+allow_untyped_defs = true
+disable_error_code = [
+    "possibly-undefined"
+]
+
+[tool.pytest.ini_options]
+addopts = [
+    "--cov", "src",
+    "--cov-branch",
+    "--cov-fail-under", "85"
+]
+testpaths = ["tests"]
+
+[tool.ruff.lint]
+select = [
+    "A",
+    "B",
+    "C",
+    "E",
+    "F",
+    "I",
+    "ISC",
+    "PIE",
+    "PL",
+    "Q",
+    "RUF",
+    "SIM",
+    "TID",
+    "W",
+    "YTT",
+]
+ignore = ["E501"]
+mccabe.max-complexity = 6

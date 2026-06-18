@@ -29,31 +29,11 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.15.12",
 ]
-
-[tool.mypy]
-allow_any_unimported = false
-warn_unreachable = true
-enable_error_code = [
-    "possibly-undefined"
-]
-strict = true
-
-
-[tool.pytest.ini_options]
-addopts = [
-    "--cov", "src",
-    "--cov-branch",
-    "--cov-fail-under", "75"
-]
-testpaths = ["tests"]
+typecheck = ["pydantic"]
 
 [tool.ruff]
 src = [".", "src/"]
-
-[tool.ruff.lint]
-select = ["A", "B", "C", "F", "I", "ISC", "PIE", "PL", "Q", "RUF", "SIM", "TID", "W", "YTT"]
-ignore = ["E"]
-mccabe.max-complexity = 6
+extend = "../../pyproject.toml"
 
 [build-system]
 requires = ["hatchling"]

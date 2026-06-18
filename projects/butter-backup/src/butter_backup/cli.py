@@ -146,7 +146,10 @@ def _open_device(
         _refresh_sudo(sudo_pass_cmd)
         decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
         sdm.mount_device(decrypted, mount_dir=mount_dir, compression=cfg.compression())
-    except:
+    except Exception:
+        # In case of **any** error, the mount dir should be removed to prevent littering
+        # the file system with empty directories. Hence the pokemon style exception
+        # handling.
         typer.echo(
             f"Speichermedium {cfg.Name} konnte nicht geöffnet werden. Es wird übersprungen."
         )
@@ -262,13 +265,15 @@ def backup(
             continue
         backend = bb.BackupBackend.from_config(cfg)
         _refresh_sudo(parsed_config.SudoPassCmd)
-        with sdm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted:
-            with sdm.mounted_device(decrypted, cfg.compression()) as mount_dir:
-                backend.do_backup(mount_dir, parsed_config.SudoPassCmd)
-                # A backup could take so long that the sudo session expires. In this
-                # case the user would have to enter the password again to unmount and
-                # close the device. To prevent this, the sudo session is refreshed.
-                _refresh_sudo(parsed_config.SudoPassCmd)
+        with (
+            sdm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted,
+            sdm.mounted_device(decrypted, cfg.compression()) as mount_dir,
+        ):
+            backend.do_backup(mount_dir, parsed_config.SudoPassCmd)
+            # A backup could take so long that the sudo session expires. In this
+            # case the user would have to enter the password again to unmount and
+            # close the device. To prevent this, the sudo session is refreshed.
+            _refresh_sudo(parsed_config.SudoPassCmd)
 
 
 @app.command()
