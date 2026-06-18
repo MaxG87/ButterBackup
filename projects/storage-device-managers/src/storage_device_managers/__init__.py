@@ -40,7 +40,6 @@ __all__ = [
     "get_mounted_devices",
     "is_mounted",
     "mkfs",
-    "mkfs_btrfs",
     "mkfs_ext4",
     "mount_btrfs_device",
     "mount_device",
@@ -589,7 +588,7 @@ def get_filesystem(device: Path) -> str:
     return result.stdout.decode().strip()
 
 
-def mkfs_btrfs(device: Path) -> None:
+def _mkfs_btrfs(device: Path) -> None:
     """Format device with BtrFS
 
     Parameters:
@@ -630,7 +629,7 @@ def mkfs(device: Path, filesystem: ValidFileSystems) -> None:
     """
     match filesystem:
         case "btrfs":
-            mkfs_btrfs(device)
+            _mkfs_btrfs(device)
         case "ext4":
             mkfs_ext4(device)
         case _:

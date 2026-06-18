@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+import typing as t
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
@@ -50,16 +51,16 @@ def big_file(_big_file_persistent: Path):
         yield file
 
 
-@pytest.fixture(scope="session", params=[sdm.mkfs_ext4, sdm.mkfs_btrfs])
+@pytest.fixture(scope="session", params=t.get_args(sdm.ValidFileSystems))
 def _encrypted_device_persistent(_big_file_persistent, request):
-    mkfs_func = request.param
+    file_system: sdm.ValidFileSystems = request.param
     password_cmd = sdm.generate_passcmd()
     with NamedTemporaryFile() as ntf:
         device = Path(ntf.name)
         shutil.copy(_big_file_persistent, device)
         sdm.encrypt_device(device, password_cmd)
         with sdm.decrypted_device(device, password_cmd) as decrypted:
-            mkfs_func(decrypted)
+            sdm.mkfs(decrypted, file_system)
         yield device, password_cmd
 
 
@@ -87,7 +88,7 @@ def _btrfs_device_persistent(_big_file_persistent):
     with NamedTemporaryFile() as ntf:
         btrfs_device = Path(ntf.name)
         shutil.copy(_big_file_persistent, btrfs_device)
-        sdm.mkfs_btrfs(btrfs_device)
+        sdm.mkfs(btrfs_device, "btrfs")
         yield btrfs_device
 
 
