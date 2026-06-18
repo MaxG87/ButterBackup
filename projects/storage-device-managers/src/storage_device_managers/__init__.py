@@ -45,7 +45,6 @@ __all__ = [
     "open_encrypted_device",
     "symbolic_link",
     "sync_device",
-    "temporary_directory",
     "unmount_device",
 ]
 
@@ -96,7 +95,7 @@ class ValidCompressions(enum.StrEnum):
 
 
 @contextlib.contextmanager
-def temporary_directory() -> Iterator[Path]:
+def _temporary_directory() -> Iterator[Path]:
     """Create a temporary directory
 
     This context manager will create a temporary directory and return its path.
@@ -195,7 +194,7 @@ def mounted_device(
     """
     if is_mounted(device):
         unmount_device(device)
-    with temporary_directory() as mount_dir:
+    with _temporary_directory() as mount_dir:
         mount_device(device, mount_dir, compression)
         logger.success(
             f"Speichermedium {device} erfolgreich nach {mount_dir} gemountet."
