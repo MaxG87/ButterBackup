@@ -43,16 +43,6 @@ dev = [
     "ruff>=0.15.13",
     "types-pyyaml>=6.0.12.20260510",
 ]
-
-
-[tool.pytest.ini_options]
-addopts = [
-    "--cov", "src",
-    "--cov-branch",
-    "--cov-fail-under", "85"
-]
-testpaths = ["tests"]
-
 [tool.pydantic-mypy]
 init_forbid_extra = true
 init_typed = true

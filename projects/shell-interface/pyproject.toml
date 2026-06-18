@@ -31,14 +31,6 @@ dev = [
 ]
 typecheck = ["pydantic"]
 
-[tool.pytest.ini_options]
-addopts = [
-    "--cov", "src",
-    "--cov-branch",
-    "--cov-fail-under", "75"
-]
-testpaths = ["tests"]
-
 [tool.ruff]
 src = [".", "src/"]
 

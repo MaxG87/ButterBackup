@@ -25,3 +25,11 @@ allow_untyped_defs = true
 disable_error_code = [
     "possibly-undefined"
 ]
+
+[tool.pytest.ini_options]
+addopts = [
+    "--cov", "src",
+    "--cov-branch",
+    "--cov-fail-under", "85"
+]
+testpaths = ["tests"]
