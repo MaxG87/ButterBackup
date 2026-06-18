@@ -35,6 +35,22 @@ addopts = [
 testpaths = ["tests"]
 
 [tool.ruff.lint]
-select = ["A", "B", "C", "F", "I", "ISC", "PIE", "PL", "Q", "RUF", "SIM", "TID", "W", "YTT"]
-ignore = ["E"]
+select = [
+    "A",
+    "B",
+    "C",
+    "E",
+    "F",
+    "I",
+    "ISC",
+    "PIE",
+    "PL",
+    "Q",
+    "RUF",
+    "SIM",
+    "TID",
+    "W",
+    "YTT",
+]
+ignore = ["E501"]
 mccabe.max-complexity = 6
