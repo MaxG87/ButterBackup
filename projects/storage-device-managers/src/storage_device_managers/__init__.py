@@ -40,7 +40,6 @@ __all__ = [
     "get_mounted_devices",
     "is_mounted",
     "mkfs",
-    "mount_btrfs_device",
     "mount_device",
     "mount_ext4_device",
     "mounted_device",
@@ -252,7 +251,7 @@ def symbolic_link(src: Path, dest: Path) -> Iterator[Path]:
         logger.success(f"Symlink von {src} nach {dest} erfolgreich entfernt.")
 
 
-def mount_btrfs_device(
+def _mount_btrfs_device(
     device: Path, mount_dir: Path, compression: ValidCompressions | None = None
 ) -> None:
     """
@@ -330,7 +329,7 @@ def mount_device(
     fs = get_filesystem(device)
     match fs:
         case "btrfs":
-            mount_btrfs_device(device, mount_dir, compression)
+            _mount_btrfs_device(device, mount_dir, compression)
         case "ext4":
             mount_ext4_device(device, mount_dir)
         case _:
