@@ -40,7 +40,6 @@ __all__ = [
     "get_mounted_devices",
     "is_mounted",
     "mkfs",
-    "mkfs_ext4",
     "mount_btrfs_device",
     "mount_device",
     "mount_ext4_device",
@@ -601,7 +600,7 @@ def _mkfs_btrfs(device: Path) -> None:
     sh.run_cmd(cmd=cmd)
 
 
-def mkfs_ext4(device: Path) -> None:
+def _mkfs_ext4(device: Path) -> None:
     """Format device with ext4
 
     Parameters:
@@ -631,7 +630,7 @@ def mkfs(device: Path, filesystem: ValidFileSystems) -> None:
         case "btrfs":
             _mkfs_btrfs(device)
         case "ext4":
-            mkfs_ext4(device)
+            _mkfs_ext4(device)
         case _:
             t.assert_never(filesystem)
 
