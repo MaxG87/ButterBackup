@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.5.0](https://github.com/MaxG87/ButterBackup/compare/v2.0.0...v3.5.0) (2026-06-19)
+
+
+### Features
+
+* Add destination parameter to mounted_device ([33b6738](https://github.com/MaxG87/ButterBackup/commit/33b6738a82276fab03259499b43de6225049acf1))
+* Create a missing destination ([f09ec5f](https://github.com/MaxG87/ButterBackup/commit/f09ec5f5f4f6b31f7a3589c9c1fa4329f0c44e31))
+
+
+### Miscellaneous Chores
+
+* release 0.14.0 ([ccff8ce](https://github.com/MaxG87/ButterBackup/commit/ccff8cedd9967678e41bfec8574a1007f4fd4723))
+* release 3.5.0 ([9296019](https://github.com/MaxG87/ButterBackup/commit/92960193a649f4f4342c428e7a28ec1425c60f75))
+* release v0.15.0 ([bd5bfcc](https://github.com/MaxG87/ButterBackup/commit/bd5bfcc8238268cc7c8d3c69af47f37fed175020))
+
 ## [2.0.0](https://github.com/MaxG87/storage-device-managers/compare/v1.0.2...v2.0.0) (2026-04-27)
 
 
