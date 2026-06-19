@@ -127,12 +127,12 @@ def test_is_mounted_rejects(tmp_path: Path) -> None:
     assert not sdm.is_mounted(tmp_path)
 
 
-def test_unmount_device(device_with_fs) -> None:
+def test_unmount_device(device_with_fs, tmp_path: Path) -> None:
     device, _ = device_with_fs
-    with TemporaryDirectory() as mountpoint:
-        sdm.mount_device(device, Path(mountpoint))
-        sdm.unmount_device(device)
-        assert not sdm.is_mounted(device)
+    mountpoint = tmp_path
+    sdm.mount_device(device, mountpoint)
+    sdm.unmount_device(device)
+    assert not sdm.is_mounted(device)
 
 
 def test_unmount_device_raises_unmounterror() -> None:
