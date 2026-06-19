@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.5.0](https://github.com/MaxG87/ButterBackup/compare/v2.0.0...v3.5.0) (2026-06-19)
+
+
+### Miscellaneous Chores
+
+* release 0.14.0 ([ccff8ce](https://github.com/MaxG87/ButterBackup/commit/ccff8cedd9967678e41bfec8574a1007f4fd4723))
+* release 3.5.0 ([9296019](https://github.com/MaxG87/ButterBackup/commit/92960193a649f4f4342c428e7a28ec1425c60f75))
+* release v0.15.0 ([bd5bfcc](https://github.com/MaxG87/ButterBackup/commit/bd5bfcc8238268cc7c8d3c69af47f37fed175020))
+
 ## [2.0.0](https://github.com/MaxG87/shell-interface/compare/v1.0.2...v2.0.0) (2026-04-26)
 
 
