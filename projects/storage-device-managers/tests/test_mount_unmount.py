@@ -76,15 +76,15 @@ def test_mounted_device(device_with_fs, compression_kwargs: CompressionKwargsT) 
 
 
 def test_mounted_device_takes_over_already_mounted_device(
-    device_with_fs, compression_kwargs: CompressionKwargsT
+    device_with_fs, tmp_path: Path, compression_kwargs: CompressionKwargsT
 ) -> None:
     device, _ = device_with_fs
-    with TemporaryDirectory() as td:
-        sdm.mount_device(device, Path(td), **compression_kwargs)
-        with sdm.mounted_device(device, **compression_kwargs) as md:
-            assert sdm.is_mounted(device)
-            assert md in sdm.get_mounted_devices()[str(device)]
-        assert not sdm.is_mounted(device)
+    destination = tmp_path
+    sdm.mount_device(device, destination, **compression_kwargs)
+    with sdm.mounted_device(device, **compression_kwargs) as md:
+        assert sdm.is_mounted(device)
+        assert md in sdm.get_mounted_devices()[str(device)]
+    assert not sdm.is_mounted(device)
 
 
 @pytest.mark.skipif(
