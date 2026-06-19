@@ -3,7 +3,6 @@ from __future__ import annotations
 import itertools
 import typing as t
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
 import pytest
 import shell_interface as sh
@@ -135,12 +134,13 @@ def test_unmount_device(device_with_fs, tmp_path: Path) -> None:
     assert not sdm.is_mounted(device)
 
 
-def test_unmount_device_raises_unmounterror() -> None:
+def test_unmount_device_raises_unmounterror(tmp_path: Path) -> None:
     # This test calls unmount_device on a Path that is not mounted, which will cause
     # `umount` to fail. On such a failure, unmount_device is expected to raise an
     # UnmountError, which is what this test checks for.
-    with TemporaryDirectory() as mountpoint, pytest.raises(sdm.UnmountError):
-        sdm.unmount_device(Path(mountpoint))
+    mountpoint = tmp_path
+    with pytest.raises(sdm.UnmountError):
+        sdm.unmount_device(mountpoint)
 
 
 def test_mounted_device_does_not_delete_content_on_umount_error(
