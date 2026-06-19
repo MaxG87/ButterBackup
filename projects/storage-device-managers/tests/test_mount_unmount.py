@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 import typing as t
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -25,6 +26,20 @@ class CompressionKwargsT(t.TypedDict):
 def compression_kwargs(request) -> CompressionKwargsT:
     kwargs: CompressionKwargsT = request.param
     return kwargs
+
+
+@pytest.fixture(
+    params=itertools.product(
+        ["ButterBackup", "nested/destination/directory"], [True, False]
+    ),
+)
+def destination(tmp_path: Path, request) -> Path:
+    request_param: tuple[str, bool] = request.param
+    destination_name, create_destination = request_param
+    destination = tmp_path / destination_name
+    if create_destination:
+        destination.mkdir(parents=True, exist_ok=True)
+    return destination
 
 
 @pytest.mark.parametrize("args", [[], [sdm.ValidCompressions.ZSTD9]])
@@ -154,12 +169,9 @@ def test_mounted_device_does_not_delete_content_on_umount_error(
 
 
 def test_mounted_device_with_destination(
-    device_with_fs,
-    compression_kwargs: CompressionKwargsT,
-    tmp_path: Path,
+    device_with_fs, destination: Path, compression_kwargs: CompressionKwargsT
 ) -> None:
     device, _ = device_with_fs
-    destination = tmp_path
     with sdm.mounted_device(device, destination, **compression_kwargs) as md:
         assert md == destination
         assert sdm.is_mounted(device)

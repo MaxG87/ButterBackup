@@ -181,7 +181,8 @@ def mounted_device(
     If `destination` is given, the device is mounted to that directory and
     the directory is left intact after the context exits. If `destination` is
     ``None`` (the default), a temporary directory is created for the mount
-    and removed again upon exit.
+    and removed again upon exit. If `destination` is given but does not exist,
+    it is created before mounting **but not removed again** after unmounting.
 
     If `compression` is provided, a mount option specifying the transparent
     file system compression is set. Compression is only supported for BtrFS
@@ -205,6 +206,8 @@ def mounted_device(
     """
     if is_mounted(device):
         unmount_device(device)
+    if destination is not None:
+        destination.mkdir(parents=True, exist_ok=True)
     ctx: contextlib.AbstractContextManager[Path] = (
         _temporary_directory()
         if destination is None
