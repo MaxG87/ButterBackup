@@ -51,15 +51,16 @@ class MyCustomTestException(Exception):
     pass
 
 
-def test_mount_device(device_with_fs, compression_kwargs: CompressionKwargsT) -> None:
+def test_mount_device(
+    device_with_fs, tmp_path: Path, compression_kwargs: CompressionKwargsT
+) -> None:
     device, _ = device_with_fs
-    with TemporaryDirectory() as mount_dir:
-        mount_path = Path(mount_dir)
-        sdm.mount_device(device, mount_path, **compression_kwargs)
-        assert sdm.is_mounted(device)
-        assert mount_path in sdm.get_mounted_devices()[str(device)]
-        sdm.unmount_device(device)
-        assert not sdm.is_mounted(device)
+    mount_dir = tmp_path
+    sdm.mount_device(device, mount_dir, **compression_kwargs)
+    assert sdm.is_mounted(device)
+    assert mount_dir in sdm.get_mounted_devices()[str(device)]
+    sdm.unmount_device(device)
+    assert not sdm.is_mounted(device)
 
 
 def test_mounted_device(device_with_fs, compression_kwargs: CompressionKwargsT) -> None:
