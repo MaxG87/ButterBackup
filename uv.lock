@@ -818,6 +818,9 @@ dev = [
     { name = "pytest-cov" },
     { name = "ruff" },
 ]
+typecheck = [
+    { name = "pydantic" },
+]
 
 [package.metadata]
 requires-dist = [{ name = "loguru", marker = "extra == 'logging'" }]
@@ -832,6 +835,7 @@ dev = [
     { name = "pytest-cov", specifier = ">=7.1.0" },
     { name = "ruff", specifier = ">=0.15.12" },
 ]
+typecheck = [{ name = "pydantic" }]
 
 [[package]]
 name = "shellingham"
@@ -876,6 +880,9 @@ dev = [
     { name = "pytest-xdist" },
     { name = "ruff" },
 ]
+typecheck = [
+    { name = "pydantic" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -896,6 +903,7 @@ dev = [
     { name = "pytest-xdist", specifier = ">=3.8.0" },
     { name = "ruff", specifier = ">=0.15.7" },
 ]
+typecheck = [{ name = "pydantic" }]
 
 [[package]]
 name = "tomli"
