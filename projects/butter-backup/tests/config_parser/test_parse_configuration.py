@@ -128,3 +128,19 @@ def test_parse_configuration_with_sudo_pass_cmd(
     raw = cfg.model_dump_json()
     result = cp.parse_configuration(raw)
     assert result == cfg
+
+
+def test_toml_parsing_preserves_sudo_pass_cmd() -> None:
+    toml_content = """\
+[butter-backup]
+SudoPassCmd = "echo sudo-password"
+
+[[butter-backup.device-configurations]]
+UUID = "12345678-1234-5678-1234-567812345678"
+DevicePassCmd = "echo device-password"
+BackupRepositoryFolder = "repo"
+RepositoryPassCmd = "echo repo-password"
+FilesAndFolders = []
+"""
+    result = cp.parse_configuration(toml_content)
+    assert result.SudoPassCmd == "echo sudo-password"
