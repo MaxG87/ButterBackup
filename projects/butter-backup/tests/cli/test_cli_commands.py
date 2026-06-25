@@ -260,16 +260,16 @@ def test_open_with_explicit_dest(
 ) -> None:
     config = encrypted_device
     expected_cryptsetup_map = Path(f"/dev/mapper/{config.UUID}")
-    config_file = tmp_path / "config.json"
-    wrapped_config = cp.Configuration(DeviceConfigurations=[config])
-    config_file.write_text(wrapped_config.model_dump_json())
     dest_dir = tmp_path / "mounts"
     dest_dir.mkdir()
     expected_mount_dir = dest_dir / config.Name
     if create_dest_subdir:
         expected_mount_dir.mkdir()
+    config_file = tmp_path / "config.json"
+    wrapped_config = cp.Configuration(DeviceConfigurations=[config], OpenDirectory=dest_dir)
+    config_file.write_text(wrapped_config.model_dump_json())
     open_result = runner.invoke(
-        app, ["open", str(dest_dir), "--config", str(config_file)]
+        app, ["open", "--config", str(config_file)]
     )
     assert open_result.exit_code == 0
     assert str(expected_mount_dir) in open_result.stdout
@@ -290,13 +290,13 @@ def test_open_shows_error_on_failure(runner, encrypted_device, tmp_path: Path) -
     config = encrypted_device.model_copy(
         update={"DevicePassCmd": "echo wrong_password"}
     )
-    config_file = tmp_path / "config.json"
-    wrapped_config = cp.Configuration(DeviceConfigurations=[config])
-    config_file.write_text(wrapped_config.model_dump_json())
     dest_dir = tmp_path / "mounts"
     dest_dir.mkdir()
+    config_file = tmp_path / "config.json"
+    wrapped_config = cp.Configuration(DeviceConfigurations=[config], OpenDirectory=dest_dir)
+    config_file.write_text(wrapped_config.model_dump_json())
     open_result = runner.invoke(
-        app, ["open", str(dest_dir), "--config", str(config_file)]
+        app, ["open", "--config", str(config_file)]
     )
     expected_msg = f"Speichermedium {config.Name} konnte nicht geöffnet werden. Es wird übersprungen."
     assert open_result.exit_code == 0
