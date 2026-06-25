@@ -3,6 +3,7 @@
 
 [butter-backup]
 SudoPassCmd = "gpg --decrypt ~/.local/share/passwords/sudo-password.gpg"
+# OpenDirectory = "/media/ButterBackup"  # optional: where to open devices
 
 [[butter-backup.device-configurations]]
 Name = "BtrFS Backup Example"

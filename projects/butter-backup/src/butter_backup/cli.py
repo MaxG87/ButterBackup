@@ -141,9 +141,10 @@ def _open_device(
     cfg: cp.DeviceConfiguration, base_dir: Path, sudo_pass_cmd: str | None
 ) -> None:
     mount_dir = base_dir / cfg.Name
-    mount_dir.mkdir(exist_ok=True)
+    created_mount_dir = False
     try:
         _refresh_sudo(sudo_pass_cmd)
+        created_mount_dir = sdm.ensure_directory(mount_dir)
         decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
         sdm.mount_device(decrypted, mount_dir=mount_dir, compression=cfg.compression())
     except Exception:
@@ -153,15 +154,16 @@ def _open_device(
         typer.echo(
             f"Speichermedium {cfg.Name} konnte nicht geöffnet werden. Es wird übersprungen."
         )
-        with contextlib.suppress(OSError):
-            mount_dir.rmdir()
+        if created_mount_dir:
+            with contextlib.suppress(sh.ShellInterfaceError):
+                cmd: sh.StrPathList = ["sudo", "rmdir", mount_dir]
+                sh.run_cmd(cmd=cmd)
     else:
         typer.echo(f"Speichermedium {cfg.Name} wurde in {mount_dir} geöffnet.")
 
 
 @app.command()
 def open(  # noqa: A001
-    dest: Path | None = typer.Argument(None),  # noqa: B008
     config: Path | None = CONFIG_OPTION,
     verbose: int = VERBOSITY_OPTION,
 ) -> None:
@@ -179,13 +181,14 @@ def open(  # noqa: A001
     oder durch Verwendung von `restic`. Nach erfolgreicher Wiederherstellung
     kann das Speichermedium mit `butter-backup close` wieder entfernt werden.
 
-    Optional kann ein Zielverzeichnis angegeben werden. Wenn angegeben, werden
-    die Speichermedien in Unterverzeichnissen dieses Verzeichnisses gemountet.
-    Andernfalls wird ein temporäres Verzeichnis erstellt.
+    Das Zielverzeichnis für die Speichermedien kann in der Konfiguration über
+    das Feld `OpenDirectory` festgelegt werden. Wenn nicht angegeben, wird ein
+    temporäres Verzeichnis erstellt.
     """
     setup_logging(verbose)
     parsed_config = _read_configuration(config)
-    base_dir = dest if dest is not None else Path(mkdtemp())
+    open_dir = parsed_config.OpenDirectory
+    base_dir = open_dir if open_dir is not None else Path(mkdtemp())
     for cfg in parsed_config.DeviceConfigurations:
         if _skip_device(
             cfg,
@@ -265,9 +268,13 @@ def backup(
             continue
         backend = bb.BackupBackend.from_config(cfg)
         _refresh_sudo(parsed_config.SudoPassCmd)
+        open_dir = parsed_config.OpenDirectory
+        dest = open_dir / cfg.Name if open_dir is not None else None
         with (
             sdm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted,
-            sdm.mounted_device(decrypted, compression=cfg.compression()) as mount_dir,
+            sdm.mounted_device(
+                decrypted, dest, compression=cfg.compression()
+            ) as mount_dir,
         ):
             backend.do_backup(mount_dir, parsed_config.SudoPassCmd)
             # A backup could take so long that the sudo session expires. In this

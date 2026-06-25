@@ -183,7 +183,15 @@ DeviceConfiguration = BtrFSRsyncConfig | ResticConfig
 class Configuration(BaseModel):
     model_config = ConfigDict(frozen=True)
     DeviceConfigurations: list[DeviceConfiguration]
+    OpenDirectory: Path | None = None
     SudoPassCmd: str | None = None
+
+    @field_validator("OpenDirectory", mode="before")
+    @classmethod
+    def expand_tilde_in_open_directory(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        return str(Path(v).expanduser())
 
     @model_validator(mode="after")
     def check_unique_names(self) -> t.Self:
@@ -194,6 +202,9 @@ class Configuration(BaseModel):
                 f"Duplikate in Gerätenamen entdeckt. Folgende Namen kommen doppelt vor: {' '.join(duplicates)}"
             )
         return self
+
+
+_TOML_DEVICE_CONFIGURATIONS_KEY = "device-configurations"
 
 
 def _parse_as_json(content: str) -> Any:
@@ -207,7 +218,11 @@ def _parse_as_json5(content: str) -> Any:
 def _parse_as_toml(content: str) -> Any:
     data = tomllib.loads(content)
     bb = data["butter-backup"]
-    return {"DeviceConfigurations": bb["device-configurations"]}
+    result: dict[str, Any] = {
+        k: v for k, v in bb.items() if k != _TOML_DEVICE_CONFIGURATIONS_KEY
+    }
+    result["DeviceConfigurations"] = bb[_TOML_DEVICE_CONFIGURATIONS_KEY]
+    return result
 
 
 def _parse_as_yaml(content: str) -> Any:
