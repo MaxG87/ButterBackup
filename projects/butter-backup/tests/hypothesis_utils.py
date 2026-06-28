@@ -23,6 +23,15 @@ def valid_path_components(min_size=1) -> st.SearchStrategy[str]:
     )
 
 
+def valid_path(min_depth=1) -> st.SearchStrategy[Path]:
+    if min_depth < 1:
+        raise ValueError("min_depth must be at least 1")
+    min_component_size = 1
+    return st.lists(valid_path_components(min_component_size), min_size=min_depth).map(
+        lambda components: Path("/".join(components))
+    )
+
+
 def valid_unparsed_empty_btrfs_config(
     exclude_file: Path | None,
 ) -> st.SearchStrategy[dict[str, t.Any]]:
@@ -72,4 +81,13 @@ def valid_unparsed_empty_restic_config(
 ) -> st.SearchStrategy[dict[str, t.Any]]:
     return valid_empty_restic_config(exclude_file).map(
         lambda config: config.model_dump(mode="json")
+    )
+
+
+def valid_empty_parent_config() -> st.SearchStrategy[cp.Configuration]:
+    return st.builds(
+        cp.Configuration,
+        DeviceConfigurations=st.just([]),
+        SudoPassCmd=st.text(),
+        OpenDirectory=st.none() | valid_path(),
     )

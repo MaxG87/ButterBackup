@@ -54,3 +54,8 @@ select = [
 ]
 ignore = ["E501"]
 mccabe.max-complexity = 6
+
+[dependency-groups]
+dev = [
+    "tomli-w>=1.2.0",
+]

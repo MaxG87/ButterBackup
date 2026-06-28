@@ -4,6 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
+import tomli_w
 from hypothesis import given
 from hypothesis import strategies as st
 from pydantic import ValidationError
@@ -130,17 +131,30 @@ def test_parse_configuration_with_sudo_pass_cmd(
     assert result == cfg
 
 
-def test_toml_parsing_preserves_sudo_pass_cmd() -> None:
-    toml_content = """\
-[butter-backup]
-SudoPassCmd = "echo sudo-password"
+@given(
+    open_directory=hu.valid_path().filter(lambda od: not str(od).startswith("~")),
+    sudo_pass_cmd=st.text(),
+    device_configurations=st.lists(
+        hu.valid_empty_restic_config(None) | hu.valid_empty_btrfs_config(None),
+        min_size=1,
+        unique_by=lambda cfg: cfg.Name,
+    ),
+)
+def test_toml_parsing_includes_all_fields(
+    open_directory: Path,
+    sudo_pass_cmd: str,
+    device_configurations: list[cp.ResticConfig | cp.BtrFSRsyncConfig],
+) -> None:
+    first = cp.Configuration(
+        DeviceConfigurations=device_configurations,
+        OpenDirectory=open_directory,
+        SudoPassCmd=sudo_pass_cmd,
+    )
+    toml_s = tomli_w.dumps(first.model_dump(mode="json", exclude_none=True))
+    second = cp.parse_configuration(toml_s)
+    json_s = json.dumps(second.model_dump(mode="json", exclude_none=True))
+    third = cp.parse_configuration(json_s)
+    assert first == second == third
 
-[[butter-backup.device-configurations]]
-UUID = "12345678-1234-5678-1234-567812345678"
-DevicePassCmd = "echo device-password"
-BackupRepositoryFolder = "repo"
-RepositoryPassCmd = "echo repo-password"
-FilesAndFolders = []
-"""
-    result = cp.parse_configuration(toml_content)
-    assert result.SudoPassCmd == "echo sudo-password"
+    # result = cp.parse_configuration(toml_content)
+    # assert result.SudoPassCmd == "echo sudo-password"fi
