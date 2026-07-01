@@ -141,9 +141,10 @@ def _open_device(
     cfg: cp.DeviceConfiguration, base_dir: Path, sudo_pass_cmd: str | None
 ) -> None:
     mount_dir = base_dir / cfg.Name
-    mount_dir.mkdir(parents=True, exist_ok=True)
+    created_mount_dir = False
     try:
         _refresh_sudo(sudo_pass_cmd)
+        created_mount_dir = sdm.ensure_directory(mount_dir)
         decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
         sdm.mount_device(decrypted, mount_dir=mount_dir, compression=cfg.compression())
     except Exception:
@@ -153,8 +154,9 @@ def _open_device(
         typer.echo(
             f"Speichermedium {cfg.Name} konnte nicht geöffnet werden. Es wird übersprungen."
         )
-        with contextlib.suppress(OSError):
-            mount_dir.rmdir()
+        if created_mount_dir:
+            with contextlib.suppress(sh.ShellInterfaceError):
+                sh.run_cmd(cmd=["sudo", "rmdir", mount_dir])
     else:
         typer.echo(f"Speichermedium {cfg.Name} wurde in {mount_dir} geöffnet.")
 

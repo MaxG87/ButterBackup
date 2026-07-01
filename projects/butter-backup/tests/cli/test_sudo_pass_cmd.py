@@ -59,6 +59,35 @@ def test_sudo_pass_cmd_is_used_in_open(
     )
 
 
+def test_open_uses_sudo_to_create_mount_dir(
+    runner: CliRunner,
+    encrypted_btrfs_device: cp.DeviceConfiguration,
+    mocker,
+    tmp_path: Path,
+) -> None:
+    dest_dir = tmp_path / "mounts"
+    wrapped_config = cp.Configuration(
+        DeviceConfigurations=[encrypted_btrfs_device],
+        OpenDirectory=dest_dir,
+    )
+    config_file = tmp_path / "config.json"
+    config_file.write_text(wrapped_config.model_dump_json())
+
+    ensure_directory = mocker.patch(
+        "storage_device_managers.ensure_directory", return_value=True
+    )
+    mocker.patch(
+        "storage_device_managers.open_encrypted_device",
+        return_value=Path("/dev/mapper/test"),
+    )
+    mocker.patch("storage_device_managers.mount_device")
+
+    result = runner.invoke(app, ["open", "--config", str(config_file)])
+
+    assert result.exit_code == 0
+    ensure_directory.assert_called_once_with(dest_dir / encrypted_btrfs_device.Name)
+
+
 def test_sudo_pass_cmd_is_used_in_backup(
     runner: CliRunner,
     encrypted_device: cp.DeviceConfiguration,
