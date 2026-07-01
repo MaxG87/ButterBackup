@@ -156,7 +156,8 @@ def _open_device(
         )
         if created_mount_dir:
             with contextlib.suppress(sh.ShellInterfaceError):
-                sh.run_cmd(cmd=["sudo", "rmdir", mount_dir])
+                cmd: sh.StrPathList = ["sudo", "rmdir", mount_dir]
+                sh.run_cmd(cmd=cmd)
     else:
         typer.echo(f"Speichermedium {cfg.Name} wurde in {mount_dir} geöffnet.")
 
