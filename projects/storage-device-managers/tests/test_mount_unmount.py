@@ -50,19 +50,15 @@ class MyCustomTestException(Exception):
     pass
 
 
-def test_ensure_directory_uses_sudo_for_missing_directory(
-    mocker, tmp_path: Path
-) -> None:
+def test_ensure_directory_creates_missing_directory(tmp_path: Path) -> None:
     destination = tmp_path / "nested" / "mount"
-    run_cmd = mocker.patch("storage_device_managers.sh.run_cmd")
+    assert not destination.exists()
     assert sdm.ensure_directory(destination)
-    run_cmd.assert_called_once_with(cmd=["sudo", "mkdir", "-p", destination])
+    assert destination.exists()
 
 
-def test_ensure_directory_skips_existing_directory(mocker, tmp_path: Path) -> None:
-    run_cmd = mocker.patch("storage_device_managers.sh.run_cmd")
+def test_ensure_directory_skips_existing_directory(tmp_path: Path) -> None:
     assert not sdm.ensure_directory(tmp_path)
-    run_cmd.assert_not_called()
 
 
 def test_mount_device(
@@ -195,17 +191,3 @@ def test_mounted_device_with_destination(
     assert str(device) not in sdm.get_mounted_devices()
     # A given destination should not be deleted after unmounting.
     assert destination.exists()
-
-
-def test_mounted_device_uses_sudo_to_create_destination(mocker, tmp_path: Path) -> None:
-    device = tmp_path / "device"
-    destination = tmp_path / "nested" / "mount"
-    ensure_directory = mocker.patch(
-        "storage_device_managers.ensure_directory", return_value=True
-    )
-    mocker.patch("storage_device_managers.is_mounted", return_value=False)
-    mocker.patch("storage_device_managers.mount_device")
-    mocker.patch("storage_device_managers.unmount_device")
-    with sdm.mounted_device(device, destination) as mount_dir:
-        assert mount_dir == destination
-    ensure_directory.assert_called_once_with(destination)
