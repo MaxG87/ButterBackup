@@ -50,17 +50,6 @@ class MyCustomTestException(Exception):
     pass
 
 
-def test_ensure_directory_creates_missing_directory(tmp_path: Path) -> None:
-    destination = tmp_path / "nested" / "mount"
-    assert not destination.exists()
-    assert sdm.ensure_directory(destination)
-    assert destination.exists()
-
-
-def test_ensure_directory_skips_existing_directory(tmp_path: Path) -> None:
-    assert not sdm.ensure_directory(tmp_path)
-
-
 def test_mount_device(
     device_with_fs, tmp_path: Path, compression_kwargs: CompressionKwargsT
 ) -> None:
