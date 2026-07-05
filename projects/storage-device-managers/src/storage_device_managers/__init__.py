@@ -35,6 +35,7 @@ __all__ = [
     "close_decrypted_device",
     "decrypted_device",
     "encrypt_device",
+    "ensure_directory",
     "generate_passcmd",
     "get_filesystem",
     "get_mounted_devices",
@@ -165,6 +166,27 @@ def decrypted_device(device: Path, pass_cmd: str) -> Iterator[Path]:
         )
 
 
+def ensure_directory(directory: Path) -> bool:
+    """Ensure a directory exists, creating it with root privileges if needed.
+
+    Parameters:
+    -----------
+    directory
+        directory that should exist
+
+    Returns:
+    --------
+    bool
+        ``True`` if the directory had to be created, ``False`` if it already
+        existed
+    """
+    if directory.is_dir():
+        return False
+    cmd: sh.StrPathList = ["sudo", "mkdir", "-p", directory]
+    sh.run_cmd(cmd=cmd)
+    return True
+
+
 @contextlib.contextmanager
 def mounted_device(
     device: Path,
@@ -182,7 +204,8 @@ def mounted_device(
     the directory is left intact after the context exits. If `destination` is
     ``None`` (the default), a temporary directory is created for the mount
     and removed again upon exit. If `destination` is given but does not exist,
-    it is created before mounting **but not removed again** after unmounting.
+    it is created with root privileges before mounting **but not removed
+    again** after unmounting.
 
     If `compression` is provided, a mount option specifying the transparent
     file system compression is set. Compression is only supported for BtrFS
@@ -207,7 +230,7 @@ def mounted_device(
     if is_mounted(device):
         unmount_device(device)
     if destination is not None:
-        destination.mkdir(parents=True, exist_ok=True)
+        ensure_directory(destination)
     ctx: contextlib.AbstractContextManager[Path] = (
         _temporary_directory()
         if destination is None
