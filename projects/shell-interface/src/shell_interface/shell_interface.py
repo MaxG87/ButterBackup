@@ -5,7 +5,6 @@ import os
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace
-from typing import List, Optional, Union
 
 try:
     from loguru import logger  # type: ignore[import, unused-ignore]
@@ -16,8 +15,8 @@ except ModuleNotFoundError:
     logger.debug = lambda msg: None  # type: ignore[assignment, unused-ignore]
     logger.error = lambda msg: None  # type: ignore[assignment, unused-ignore]
 
-StrPathList = List[Union[str, Path]]
-_CMD_LIST = Union[List[str], List[Path], StrPathList]
+StrPathList = list[str | Path]
+_CMD_LIST = list[str] | list[Path] | StrPathList
 
 
 class PassCmdError(RuntimeError):
@@ -31,7 +30,7 @@ class ShellInterfaceError(RuntimeError):
 def run_cmd(
     *,
     cmd: _CMD_LIST,
-    env: Optional[dict[str, str]] = None,
+    env: dict[str, str] | None = None,
     capture_output: bool = False,
 ) -> subprocess.CompletedProcess[bytes]:
     """
