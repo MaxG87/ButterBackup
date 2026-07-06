@@ -5,9 +5,10 @@ import json
 import os
 import sys
 import typing as t
+from collections.abc import Callable
 from pathlib import Path
 from tempfile import mkdtemp
-from typing import Any, Callable
+from typing import Any
 
 import shell_interface as sh
 import storage_device_managers as sdm
@@ -133,8 +134,8 @@ def _skip_device(
     return False
 
 
-CONFIG_OPTION = typer.Option(None, exists=True, dir_okay=False)
-VERBOSITY_OPTION = typer.Option(0, "--verbose", "-v", count=True)
+CONFIG_OPTION = typer.Option(exists=True, dir_okay=False)
+VERBOSITY_OPTION = typer.Option("--verbose", "-v", count=True)
 
 
 def _open_device(
@@ -161,9 +162,9 @@ def _open_device(
 
 @app.command()
 def open(  # noqa: A001
-    dest: Path | None = typer.Argument(None),  # noqa: B008
-    config: Path | None = CONFIG_OPTION,
-    verbose: int = VERBOSITY_OPTION,
+    dest: t.Annotated[Path | None, typer.Argument()] = None,
+    config: t.Annotated[Path | None, CONFIG_OPTION] = None,
+    verbose: t.Annotated[int, VERBOSITY_OPTION] = 0,
 ) -> None:
     """
     Öffne alle in der Konfiguration gelisteten Speichermedien
@@ -198,7 +199,10 @@ def open(  # noqa: A001
 
 
 @app.command()
-def close(config: Path | None = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None:
+def close(
+    config: t.Annotated[Path | None, CONFIG_OPTION] = None,
+    verbose: t.Annotated[int, VERBOSITY_OPTION] = 0,
+) -> None:
     """
     Schließe alle geöffneten Speichermedien
 
@@ -230,7 +234,8 @@ def close(config: Path | None = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) 
 
 @app.command()
 def backup(
-    config: Path | None = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION
+    config: t.Annotated[Path | None, CONFIG_OPTION] = None,
+    verbose: t.Annotated[int, VERBOSITY_OPTION] = 0,
 ) -> None:
     """
     Führe Sicherheitskopien durch
@@ -278,23 +283,27 @@ def backup(
 
 @app.command()
 def format_device(
-    backend: ValidBackends = typer.Argument(...),  # noqa: B008
-    device: Path = typer.Argument(  # noqa: B008
-        ..., exists=True, dir_okay=False, readable=False
-    ),
-    file_system: ValidFileSystems | None = typer.Option(  # noqa: B008
-        None,
-        "--file-system",
-        help="Dateisystem für das Restic-Backend. Andere Werte als `btrfs` nur für das"
-        "Restic-Backend gültig. Unterstützte Dateisysteme: btrfs, ext4.",
-    ),
-    config_to: Path | None = typer.Option(  # noqa: B008
-        None,
-        help="Datei, in welche die generierte Konfiguration geschrieben werden"
-        " soll. Die angegebene Datei darf nicht existieren. Wenn nicht"
-        " angegeben, wird die Konfiguration auf STDOUT ausgegeben.",
-    ),
-    verbose: int = VERBOSITY_OPTION,
+    backend: t.Annotated[ValidBackends, typer.Argument()],
+    device: t.Annotated[
+        Path, typer.Argument(exists=True, dir_okay=False, readable=False)
+    ],
+    file_system: t.Annotated[
+        ValidFileSystems | None,
+        typer.Option(
+            "--file-system",
+            help="Dateisystem für das Restic-Backend. Andere Werte als `btrfs` nur für das"
+            "Restic-Backend gültig. Unterstützte Dateisysteme: btrfs, ext4.",
+        ),
+    ] = None,
+    config_to: t.Annotated[
+        Path | None,
+        typer.Option(
+            help="Datei, in welche die generierte Konfiguration geschrieben werden"
+            " soll. Die angegebene Datei darf nicht existieren. Wenn nicht"
+            " angegeben, wird die Konfiguration auf STDOUT ausgegeben.",
+        ),
+    ] = None,
+    verbose: t.Annotated[int, VERBOSITY_OPTION] = 0,
 ) -> None:
     """
     Richtet Speichermedium für butter-backup ein

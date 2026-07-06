@@ -3,9 +3,10 @@ import itertools
 import os
 import typing as t
 from collections import Counter
+from collections.abc import Iterable
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Iterable, overload
+from typing import overload
 from uuid import uuid4
 
 import pytest
