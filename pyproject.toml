@@ -41,6 +41,7 @@ select = [
     "C",
     "E",
     "F",
+    "FURB",
     "I",
     "ISC",
     "PIE",
@@ -49,6 +50,7 @@ select = [
     "RUF",
     "SIM",
     "TID",
+    "UP",
     "W",
     "YTT",
 ]
