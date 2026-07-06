@@ -134,7 +134,7 @@ def _skip_device(
     return False
 
 
-CONFIG_OPTION = typer.Option(None, exists=True, dir_okay=False)
+CONFIG_OPTION = typer.Option(exists=True, dir_okay=False)
 VERBOSITY_OPTION = typer.Option(0, "--verbose", "-v", count=True)
 
 
@@ -163,7 +163,7 @@ def _open_device(
 @app.command()
 def open(  # noqa: A001
     dest: t.Annotated[Path | None, typer.Argument()] = None,
-    config: Path | None = CONFIG_OPTION,
+    config: t.Annotated[Path | None, CONFIG_OPTION] = None,
     verbose: int = VERBOSITY_OPTION,
 ) -> None:
     """
@@ -199,7 +199,10 @@ def open(  # noqa: A001
 
 
 @app.command()
-def close(config: Path | None = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) -> None:
+def close(
+    config: t.Annotated[Path | None, CONFIG_OPTION] = None,
+    verbose: int = VERBOSITY_OPTION,
+) -> None:
     """
     Schließe alle geöffneten Speichermedien
 
@@ -231,7 +234,8 @@ def close(config: Path | None = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION) 
 
 @app.command()
 def backup(
-    config: Path | None = CONFIG_OPTION, verbose: int = VERBOSITY_OPTION
+    config: t.Annotated[Path | None, CONFIG_OPTION] = None,
+    verbose: int = VERBOSITY_OPTION,
 ) -> None:
     """
     Führe Sicherheitskopien durch
