@@ -135,7 +135,7 @@ def _skip_device(
 
 
 CONFIG_OPTION = typer.Option(exists=True, dir_okay=False)
-VERBOSITY_OPTION = typer.Option(0, "--verbose", "-v", count=True)
+VERBOSITY_OPTION = typer.Option("--verbose", "-v", count=True)
 
 
 def _open_device(
@@ -164,7 +164,7 @@ def _open_device(
 def open(  # noqa: A001
     dest: t.Annotated[Path | None, typer.Argument()] = None,
     config: t.Annotated[Path | None, CONFIG_OPTION] = None,
-    verbose: int = VERBOSITY_OPTION,
+    verbose: t.Annotated[int, VERBOSITY_OPTION] = 0,
 ) -> None:
     """
     Öffne alle in der Konfiguration gelisteten Speichermedien
@@ -201,7 +201,7 @@ def open(  # noqa: A001
 @app.command()
 def close(
     config: t.Annotated[Path | None, CONFIG_OPTION] = None,
-    verbose: int = VERBOSITY_OPTION,
+    verbose: t.Annotated[int, VERBOSITY_OPTION] = 0,
 ) -> None:
     """
     Schließe alle geöffneten Speichermedien
@@ -235,7 +235,7 @@ def close(
 @app.command()
 def backup(
     config: t.Annotated[Path | None, CONFIG_OPTION] = None,
-    verbose: int = VERBOSITY_OPTION,
+    verbose: t.Annotated[int, VERBOSITY_OPTION] = 0,
 ) -> None:
     """
     Führe Sicherheitskopien durch
@@ -303,7 +303,7 @@ def format_device(
             " angegeben, wird die Konfiguration auf STDOUT ausgegeben.",
         ),
     ] = None,
-    verbose: int = VERBOSITY_OPTION,
+    verbose: t.Annotated[int, VERBOSITY_OPTION] = 0,
 ) -> None:
     """
     Richtet Speichermedium für butter-backup ein
