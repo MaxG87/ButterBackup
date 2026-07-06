@@ -5,9 +5,10 @@ import json
 import os
 import sys
 import typing as t
+from collections.abc import Callable
 from pathlib import Path
 from tempfile import mkdtemp
-from typing import Any, Callable
+from typing import Any
 
 import shell_interface as sh
 import storage_device_managers as sdm
