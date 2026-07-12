@@ -166,7 +166,7 @@ def decrypted_device(device: Path, pass_cmd: str) -> Iterator[Path]:
         )
 
 
-def ensure_directory(directory: Path) -> bool:
+def ensure_directory(directory: Path) -> Path | None:
     """Ensure a directory exists, creating it with root privileges if needed.
 
     Parameters:
@@ -176,15 +176,19 @@ def ensure_directory(directory: Path) -> bool:
 
     Returns:
     --------
-    bool
-        ``True`` if the directory had to be created, ``False`` if it already
-        existed
+    Path | None
+        The first missing ancestor that had to be created, or ``None`` if the
+        directory already existed
     """
     if directory.is_dir():
-        return False
+        return None
+    first_created = next(
+        (parent for parent in reversed(directory.parents) if not parent.is_dir()),
+        directory,
+    )
     cmd: sh.StrPathList = ["sudo", "mkdir", "-p", directory]
     sh.run_cmd(cmd=cmd)
-    return True
+    return first_created
 
 
 @contextlib.contextmanager

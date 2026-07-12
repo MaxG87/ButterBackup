@@ -31,20 +31,29 @@ def root_owned_tmp_path(tmp_path: Path) -> t.Iterable[Path]:
 
 
 def test_ensure_directory_creates_missing_directory(tmp_path: Path) -> None:
-    destination = tmp_path / "nested" / "mount"
+    destination = tmp_path / "mount"
     assert not destination.exists()
-    assert sdm.ensure_directory(destination)
+    assert sdm.ensure_directory(destination) == destination
+    assert destination.exists()
+
+
+def test_ensure_directory_returns_first_created_ancestor(tmp_path: Path) -> None:
+    expected = tmp_path / "grandparent"
+    destination = expected / "parent" / "child"
+    assert not destination.exists()
+    assert sdm.ensure_directory(destination) == expected
     assert destination.exists()
 
 
 def test_ensure_directory_creates_missing_directory_in_root_owned_path(
     root_owned_tmp_path: Path,
 ) -> None:
-    destination = root_owned_tmp_path / "nested" / "mount"
+    expected = root_owned_tmp_path / "nested"
+    destination = expected / "mount"
     assert not destination.exists()
-    assert sdm.ensure_directory(destination)
+    assert sdm.ensure_directory(destination) == expected
     assert destination.exists()
 
 
 def test_ensure_directory_skips_existing_directory(tmp_path: Path) -> None:
-    assert not sdm.ensure_directory(tmp_path)
+    assert sdm.ensure_directory(tmp_path) is None
