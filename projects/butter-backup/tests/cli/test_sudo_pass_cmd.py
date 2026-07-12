@@ -24,6 +24,29 @@ def runner():
     return CliRunner()
 
 
+@pytest.fixture
+def root_owned_tmp_path(tmp_path: Path) -> t.Iterable[Path]:
+    """
+    Create a temporary directory owned by root for testing
+    """
+    root_owned_path = tmp_path / "root_owned"
+    root_owned_path.mkdir()
+    current_user = sh.get_user()
+    current_group = sh.get_group(current_user)
+    chown_to_root: sh.StrPathList = ["sudo", "chown", "root:root", root_owned_path]
+    chown_to_user: sh.StrPathList = [
+        "sudo",
+        "chown",
+        f"{current_user}:{current_group}",
+        root_owned_path,
+    ]
+    sh.run_cmd(cmd=chown_to_root)
+    try:
+        yield root_owned_path
+    finally:
+        sh.run_cmd(cmd=chown_to_user)
+
+
 def _invalidate_sudo_session() -> None:
     sh.run_cmd(cmd=["sudo", "-k"])
 
@@ -35,13 +58,15 @@ def test_sudo_pass_cmd_is_used_in_open(
     tmp_path: Path,
 ) -> None:
     sudo_pass_cmd = "echo test_password"
+    dest_dir = tmp_path / "mounts"
+    dest_dir.mkdir()
     wrapped_config = cp.Configuration(
-        DeviceConfigurations=[encrypted_device], SudoPassCmd=sudo_pass_cmd
+        DeviceConfigurations=[encrypted_device],
+        OpenDirectory=dest_dir,
+        SudoPassCmd=sudo_pass_cmd,
     )
     config_file = tmp_path / "config.json"
     config_file.write_text(wrapped_config.model_dump_json())
-    dest_dir = tmp_path / "mounts"
-    dest_dir.mkdir()
 
     mock_pipe = mocker.patch("shell_interface.pipe_pass_cmd_to_real_cmd")
     mocker.patch(
@@ -50,11 +75,31 @@ def test_sudo_pass_cmd_is_used_in_open(
     )
     mocker.patch("storage_device_managers.mount_device")
 
-    runner.invoke(app, ["open", str(dest_dir), "--config", str(config_file)])
+    runner.invoke(app, ["open", "--config", str(config_file)])
 
     mock_pipe.assert_called_once_with(
         sudo_pass_cmd, ["sudo", "-Sv"], capture_output=True
     )
+
+
+def test_open_uses_sudo_to_create_mount_dir(
+    runner: CliRunner,
+    encrypted_btrfs_device: cp.DeviceConfiguration,
+    tmp_path: Path,
+    root_owned_tmp_path: Path,
+) -> None:
+    dest_dir = root_owned_tmp_path / "mounts"
+    wrapped_config = cp.Configuration(
+        DeviceConfigurations=[encrypted_btrfs_device],
+        OpenDirectory=dest_dir,
+    )
+    config_file = tmp_path / "config.json"
+    config_file.write_text(wrapped_config.model_dump_json())
+
+    result = runner.invoke(app, ["open", "--config", str(config_file)])
+    assert result.exit_code == 0
+    assert dest_dir.exists()
+    runner.invoke(app, ["close", "--config", str(config_file)])
 
 
 def test_sudo_pass_cmd_is_used_in_backup(

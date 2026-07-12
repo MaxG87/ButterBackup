@@ -142,9 +142,10 @@ def _open_device(
     cfg: cp.DeviceConfiguration, base_dir: Path, sudo_pass_cmd: str | None
 ) -> None:
     mount_dir = base_dir / cfg.Name
-    mount_dir.mkdir(exist_ok=True)
+    topmost_created_ancestor = None
     try:
         _refresh_sudo(sudo_pass_cmd)
+        topmost_created_ancestor = sdm.ensure_directory(mount_dir)
         decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
         sdm.mount_device(decrypted, mount_dir=mount_dir, compression=cfg.compression())
     except Exception:
@@ -154,15 +155,31 @@ def _open_device(
         typer.echo(
             f"Speichermedium {cfg.Name} konnte nicht geöffnet werden. Es wird übersprungen."
         )
-        with contextlib.suppress(OSError):
-            mount_dir.rmdir()
+        if topmost_created_ancestor is not None:
+            _rmdir_ancestor_path(start=topmost_created_ancestor, stop=base_dir)
     else:
         typer.echo(f"Speichermedium {cfg.Name} wurde in {mount_dir} geöffnet.")
 
 
+def _rmdir_ancestor_path(start: Path, stop: Path) -> None:
+    """
+    Remove all directories from `start` to `stop` (inclusive).
+
+    The directories are removed in a bottom-up manner. Execution stops at the first
+    non-empty directory or directly after removing stop, whatever comes first.
+    """
+    if not start.is_relative_to(stop):
+        raise ValueError(f"Start path {start} is not a subpath of stop path {stop}.")
+    current = start
+    while current.is_relative_to(stop):
+        with contextlib.suppress(sh.ShellInterfaceError):
+            cmd: sh.StrPathList = ["sudo", "rmdir", current]
+            sh.run_cmd(cmd=cmd)
+        current = current.parent
+
+
 @app.command()
 def open(  # noqa: A001
-    dest: t.Annotated[Path | None, typer.Argument()] = None,
     config: t.Annotated[Path | None, CONFIG_OPTION] = None,
     verbose: t.Annotated[int, VERBOSITY_OPTION] = 0,
 ) -> None:
@@ -180,13 +197,14 @@ def open(  # noqa: A001
     oder durch Verwendung von `restic`. Nach erfolgreicher Wiederherstellung
     kann das Speichermedium mit `butter-backup close` wieder entfernt werden.
 
-    Optional kann ein Zielverzeichnis angegeben werden. Wenn angegeben, werden
-    die Speichermedien in Unterverzeichnissen dieses Verzeichnisses gemountet.
-    Andernfalls wird ein temporäres Verzeichnis erstellt.
+    Das Zielverzeichnis für die Speichermedien kann in der Konfiguration über
+    das Feld `OpenDirectory` festgelegt werden. Wenn nicht angegeben, wird ein
+    temporäres Verzeichnis erstellt.
     """
     setup_logging(verbose)
     parsed_config = _read_configuration(config)
-    base_dir = dest if dest is not None else Path(mkdtemp())
+    open_dir = parsed_config.OpenDirectory
+    base_dir = open_dir if open_dir is not None else Path(mkdtemp())
     for cfg in parsed_config.DeviceConfigurations:
         if _skip_device(
             cfg,
@@ -270,9 +288,13 @@ def backup(
             continue
         backend = bb.BackupBackend.from_config(cfg)
         _refresh_sudo(parsed_config.SudoPassCmd)
+        open_dir = parsed_config.OpenDirectory
+        dest = open_dir / cfg.Name if open_dir is not None else None
         with (
             sdm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted,
-            sdm.mounted_device(decrypted, compression=cfg.compression()) as mount_dir,
+            sdm.mounted_device(
+                decrypted, dest, compression=cfg.compression()
+            ) as mount_dir,
         ):
             backend.do_backup(mount_dir, parsed_config.SudoPassCmd)
             # A backup could take so long that the sudo session expires. In this
