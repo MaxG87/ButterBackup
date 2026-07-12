@@ -142,10 +142,10 @@ def _open_device(
     cfg: cp.DeviceConfiguration, base_dir: Path, sudo_pass_cmd: str | None
 ) -> None:
     mount_dir = base_dir / cfg.Name
-    created_mount_dir = None
+    topmost_created_ancestor = None
     try:
         _refresh_sudo(sudo_pass_cmd)
-        created_mount_dir = sdm.ensure_directory(mount_dir)
+        topmost_created_ancestor = sdm.ensure_directory(mount_dir)
         decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
         sdm.mount_device(decrypted, mount_dir=mount_dir, compression=cfg.compression())
     except Exception:
@@ -155,12 +155,27 @@ def _open_device(
         typer.echo(
             f"Speichermedium {cfg.Name} konnte nicht geöffnet werden. Es wird übersprungen."
         )
-        if created_mount_dir is not None:
-            with contextlib.suppress(sh.ShellInterfaceError):
-                cmd: sh.StrPathList = ["sudo", "rmdir", mount_dir]
-                sh.run_cmd(cmd=cmd)
+        if topmost_created_ancestor is not None:
+            _rmdir_ancestor_path(start=topmost_created_ancestor, stop=base_dir)
     else:
         typer.echo(f"Speichermedium {cfg.Name} wurde in {mount_dir} geöffnet.")
+
+
+def _rmdir_ancestor_path(start: Path, stop: Path) -> None:
+    """
+    Remove all directories from `start` to `stop` (inclusive).
+
+    The directories are removed in a bottom-up manner. Execution stops at the first
+    non-empty directory or directly after removing stop, whatever comes first.
+    """
+    if not start.is_relative_to(stop):
+        raise ValueError(f"Start path {start} is not a subpath of stop path {stop}.")
+    current = start
+    while current.is_relative_to(stop):
+        with contextlib.suppress(sh.ShellInterfaceError):
+            cmd: sh.StrPathList = ["sudo", "rmdir", current]
+            sh.run_cmd(cmd=cmd)
+        current = current.parent
 
 
 @app.command()
