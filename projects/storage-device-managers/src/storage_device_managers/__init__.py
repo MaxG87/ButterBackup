@@ -11,6 +11,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from uuid import UUID, uuid4
 
+import msgspec
 import shell_interface as sh
 
 try:
@@ -404,12 +405,23 @@ def is_mounted(device: Path) -> bool:
     return True
 
 
+class _FindmntFilesystem(msgspec.Struct):
+    source: str
+    target: str
+    options: str
+    fstype: str = ""
+
+
+class _FindmntOutput(msgspec.Struct):
+    filesystems: list[_FindmntFilesystem]
+
+
 def get_mounted_devices() -> t.Mapping[str, t.Mapping[Path, MountOptions]]:
     """Get all mounted devices
 
-    This function will parse the output of `mount` and return everything that is mounted
-    to somewhere. The returned mapping maps device names (i.e. mount sources) to their
-    destinations and mount options.
+    This function will parse the output of `findmnt -l --json` and return everything
+    that is mounted to somewhere. The returned mapping maps device names (i.e. mount
+    sources) to their destinations and mount options.
 
     Since a source can be mounted to multiple (e.g. /dev/sda1 can be mounted to
     /home/{user1,user2}/Videos), the value of the mapping is another mapping. This inner
@@ -430,17 +442,13 @@ def get_mounted_devices() -> t.Mapping[str, t.Mapping[Path, MountOptions]]:
         },
     }
     """
-    # Example line:
-    # /dev/nvme0n1p2 on /boot type ext2 (rw,relatime)
-    raw_mounts = sh.run_cmd(cmd=["mount"], capture_output=True)
-    mount_lines = raw_mounts.stdout.decode().splitlines()
+    raw = sh.run_cmd(cmd=["findmnt", "-l", "--json"], capture_output=True)
+    parsed = msgspec.json.decode(raw.stdout, type=_FindmntOutput)
     mount_points: dict[str, dict[Path, MountOptions]] = defaultdict(dict)
-    for line in mount_lines:
-        device = line.split()[0]
-        dest = Path(line.split()[2])
-        raw_options = line.split()[5]
-        options = frozenset(raw_options.strip("()").split(","))
-        mount_points[device][dest] = options
+    for fs in parsed.filesystems:
+        dest = Path(fs.target)
+        options: MountOptions = frozenset(fs.options.split(","))
+        mount_points[fs.source][dest] = options
     return dict(mount_points)
 
 
