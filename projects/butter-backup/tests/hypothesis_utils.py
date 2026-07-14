@@ -17,9 +17,39 @@ def filenames(min_size=1) -> st.SearchStrategy[str]:
     )
 
 
-def valid_path_components(min_size=1) -> st.SearchStrategy[str]:
-    return st.text(min_size=min_size, max_size=128).filter(
-        lambda n: "/" not in n and "\x00" not in n and n not in {".", ".."}
+def valid_toml_text(min_size: int = 1) -> st.SearchStrategy[str]:
+    """Generate strings that are valid in TOML basic strings."""
+    return st.text(
+        alphabet=st.characters(
+            blacklist_categories=["Cc", "Cs"],
+            whitelist_characters="\t",
+        ),
+        min_size=min_size,
+    )
+
+
+def valid_path_components(min_size: int = 1) -> st.SearchStrategy[str]:
+    """
+    Generate valid path components
+
+    The path components will also be vaild in TOML strings.
+    """
+    return valid_toml_text(min_size).filter(
+        lambda n: "/" not in n and n not in {".", ".."}
+    )
+
+
+def valid_paths(min_depth=1) -> st.SearchStrategy[Path]:
+    """
+    Generate valid Unix paths
+
+    The paths will also be vaild in TOML strings.
+    """
+    if min_depth < 1:
+        raise ValueError("min_depth must be at least 1")
+    min_component_size = 1
+    return st.lists(valid_path_components(min_component_size), min_size=min_depth).map(
+        lambda components: Path("/".join(components))
     )
 
 
@@ -40,9 +70,9 @@ def valid_empty_btrfs_config(
         BackupRepositoryFolder=valid_path_components(),
         Compression=valid_compressions(),
         ExcludePatternsFile=st.just(exclude_file),
-        DevicePassCmd=st.text(),
+        DevicePassCmd=valid_toml_text(),
         Files=st.just([]),
-        FilesDest=st.text(),
+        FilesDest=valid_path_components(),
         Folders=st.just({}),
         UUID=st.uuids().map(str),
     )
@@ -57,12 +87,12 @@ def valid_empty_restic_config(
 ) -> st.SearchStrategy[cp.ResticConfig]:
     return st.builds(
         cp.ResticConfig,
-        BackupRepositoryFolder=st.text(),
+        BackupRepositoryFolder=valid_path_components(),
         ExcludePatternsFile=st.just(exclude_file),
-        DevicePassCmd=st.text(),
+        DevicePassCmd=valid_toml_text(),
         FilesAndFolders=st.just([]),
         Name=st.none() | valid_path_components(),
-        RepositoryPassCmd=st.text(),
+        RepositoryPassCmd=valid_toml_text(),
         UUID=st.uuids(),
     )
 
