@@ -5,6 +5,7 @@ from tempfile import TemporaryDirectory
 
 import pytest
 import tomli_w
+import yaml
 from hypothesis import given
 from hypothesis import strategies as st
 from pydantic import ValidationError
@@ -154,7 +155,11 @@ def test_toml_parsing_includes_all_fields(
     device_cfgs = raw.pop("DeviceConfigurations")
     toml_dict = {"butter-backup": {**raw, "device-configurations": device_cfgs}}
     toml_s = tomli_w.dumps(toml_dict)
-    second = cp.parse_configuration(toml_s)
-    json_s = json.dumps(second.model_dump(mode="json", exclude_none=True))
-    third = cp.parse_configuration(json_s)
-    assert first == second == third
+    from_toml = cp.parse_configuration(toml_s)
+    json_s = json.dumps(from_toml.model_dump(mode="json", exclude_none=True))
+    from_json = cp.parse_configuration(json_s)
+    yaml_s = yaml.safe_dump(from_json.model_dump(mode="json", exclude_none=True))
+    from_yaml = cp.parse_configuration(yaml_s)
+    assert first == from_toml
+    assert from_toml == from_json
+    assert from_json == from_yaml
