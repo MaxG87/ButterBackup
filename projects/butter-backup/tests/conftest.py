@@ -1,6 +1,8 @@
+import itertools
 import shutil
 import typing as t
 import uuid
+from contextlib import AbstractContextManager, contextmanager
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
@@ -12,6 +14,8 @@ from butter_backup import config_parser as cp
 from butter_backup import device_managers as dm
 
 from . import complement_configuration
+
+DEVICE_NAMES = ["Seagate Rot", "MyBackupDevice", None]
 
 
 @pytest.fixture(scope="session")
@@ -38,6 +42,27 @@ def big_file(_big_file_persistent):
         yield big_file
 
 
+@contextmanager
+def _btrfs_device_for_name(
+    persistent: tuple[Path, cp.BtrFSRsyncConfig],
+    device_name: str,
+) -> t.Iterator[cp.BtrFSRsyncConfig]:
+    # This implementation resets the UUID of the configuration. This causes the
+    # partition's UUID and the configuration's UUID to differ. Since the only
+    # relevance of the partition's UUID is to allow Linux to create the device
+    # node in /dev/disk/by-uuid, this is not a problem.
+    old_fs_file, old_config = persistent
+    with NamedTemporaryFile() as ntf:
+        big_file = Path(ntf.name)
+        shutil.copy(old_fs_file, big_file)
+        update: dict[str, str | uuid.UUID] = {"UUID": uuid.uuid4()}
+        if device_name is not None:
+            update["Name"] = device_name
+        config = old_config.model_copy(update=update)
+        with sdm.symbolic_link(big_file, config.device()):
+            yield config
+
+
 @pytest.fixture(scope="session")
 def _encrypted_btrfs_device_persistent(
     _big_file_persistent,
@@ -49,9 +74,10 @@ def _encrypted_btrfs_device_persistent(
         yield big_file, config
 
 
-@pytest.fixture
+@pytest.fixture(params=DEVICE_NAMES)
 def encrypted_btrfs_device(
     _encrypted_btrfs_device_persistent,
+    request: pytest.FixtureRequest,
 ) -> t.Iterator[cp.BtrFSRsyncConfig]:
     """
     Prepare device for ButterBackup and return its config
@@ -61,16 +87,25 @@ def encrypted_btrfs_device(
     config: BtrfsConfig
         configuration allowing to interact with the returned device
     """
+    with _btrfs_device_for_name(
+        _encrypted_btrfs_device_persistent, request.param
+    ) as config:
+        yield config
 
-    # This implementation resets the UUID of the configuration. This causes the
-    # partition's UUID and the configuration's UUID to differ. Since the only
-    # relevance of the partition's UUID is to allow Linux to create the device
-    # node in /dev/disk/by-uuid, this is not a problem.
-    old_fs_file, old_config = _encrypted_btrfs_device_persistent
+
+@contextmanager
+def _restic_device_for_name(
+    persistent: tuple[Path, cp.ResticConfig],
+    device_name: str,
+) -> t.Iterator[cp.ResticConfig]:
+    old_fs_file, old_config = persistent
     with NamedTemporaryFile() as ntf:
         big_file = Path(ntf.name)
         shutil.copy(old_fs_file, big_file)
-        config = old_config.model_copy(update={"UUID": uuid.uuid4()})
+        update: dict[str, str | uuid.UUID] = {"UUID": uuid.uuid4()}
+        if device_name is not None:
+            update["Name"] = device_name
+        config = old_config.model_copy(update=update)
         with sdm.symbolic_link(big_file, config.device()):
             yield config
 
@@ -84,9 +119,10 @@ def _encrypted_restic_device_persistent(_big_file_persistent):
         yield big_file, config
 
 
-@pytest.fixture
+@pytest.fixture(params=DEVICE_NAMES)
 def encrypted_restic_device(
     _encrypted_restic_device_persistent,
+    request: pytest.FixtureRequest,
 ) -> t.Iterator[cp.ResticConfig]:
     """
     Prepare device for Restic on BtrFS and return its config
@@ -96,24 +132,41 @@ def encrypted_restic_device(
     config: ResticConfig
         configuration allowing to interact with the returned device
     """
-
-    # This implementation resets the UUID of the configuration. This causes the
-    # partition's UUID and the configuration's UUID to differ. Since the only
-    # relevance of the partition's UUID is to allow Linux to create the device
-    # node in /dev/disk/by-uuid, this is not a problem.
-    old_fs_file, old_config = _encrypted_restic_device_persistent
-    with NamedTemporaryFile() as ntf:
-        big_file = Path(ntf.name)
-        shutil.copy(old_fs_file, big_file)
-        config = old_config.model_copy(update={"UUID": uuid.uuid4()})
-        with sdm.symbolic_link(big_file, config.device()):
-            yield config
+    with _restic_device_for_name(
+        _encrypted_restic_device_persistent, request.param
+    ) as config:
+        yield config
 
 
-@pytest.fixture(params=["encrypted_btrfs_device", "encrypted_restic_device"])
-def encrypted_device(request) -> cp.DeviceConfiguration:
-    config: cp.DeviceConfiguration = request.getfixturevalue(request.param)
-    return config
+@pytest.fixture(
+    params=[
+        pytest.param((kind, device_name), id=f"{kind}-{device_name}")
+        for kind, device_name in itertools.product(["btrfs", "restic"], DEVICE_NAMES)
+    ],
+)
+def encrypted_device(request) -> t.Iterable[cp.DeviceConfiguration]:
+    kind, device_name = request.param
+    device_context_manager: (
+        t.Callable[
+            [tuple[Path, cp.BtrFSRsyncConfig], str],
+            AbstractContextManager[cp.BtrFSRsyncConfig],
+        ]
+        | t.Callable[
+            [tuple[Path, cp.ResticConfig], str],
+            AbstractContextManager[cp.ResticConfig],
+        ]
+    )
+    if kind == "btrfs":
+        persistent = request.getfixturevalue("_encrypted_btrfs_device_persistent")
+        device_context_manager = _btrfs_device_for_name
+    elif kind == "restic":
+        persistent = request.getfixturevalue("_encrypted_restic_device_persistent")
+        device_context_manager = _restic_device_for_name
+    else:
+        raise ValueError(f"Unknown device kind: {kind}")
+
+    with device_context_manager(persistent, device_name) as config:
+        yield config
 
 
 @pytest.fixture
