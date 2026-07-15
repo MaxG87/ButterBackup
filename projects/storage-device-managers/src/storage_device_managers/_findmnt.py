@@ -1,4 +1,3 @@
-import json
 import typing as t
 from collections import defaultdict
 from pathlib import Path
@@ -7,6 +6,15 @@ import msgspec
 import shell_interface as sh
 
 MountOptions = frozenset[str]
+
+
+class _LoSetupDevice(msgspec.Struct):
+    name: str
+    back_file: str = msgspec.field(name="back-file")
+
+
+class _LoSetupOutput(msgspec.Struct):
+    loopdevices: list[_LoSetupDevice]
 
 
 class _FindmntFilesystem(msgspec.Struct):
@@ -27,12 +35,9 @@ def _get_loop_device_backing_files() -> dict[str, str]:
 
     Returns an empty mapping if ``losetup`` is unavailable or reports no devices.
     """
-    try:
-        raw = sh.run_cmd(cmd=["losetup", "--list", "--json"], capture_output=True)
-        data: dict[str, t.Any] = json.loads(raw.stdout)
-    except (sh.ShellInterfaceError, json.JSONDecodeError):
-        return {}
-    return {dev["name"]: dev["back-file"] for dev in data.get("loopdevices", [])}
+    raw = sh.run_cmd(cmd=["losetup", "--list", "--json"], capture_output=True)
+    parsed = msgspec.json.decode(raw.stdout, type=_LoSetupOutput)
+    return {dev.name: dev.back_file for dev in parsed.loopdevices}
 
 
 def get_mounted_devices() -> t.Mapping[str, t.Mapping[Path, MountOptions]]:
