@@ -1,5 +1,4 @@
-from __future__ import annotations
-
+import json
 import typing as t
 from collections import defaultdict
 from pathlib import Path
@@ -18,6 +17,22 @@ class _FindmntFilesystem(msgspec.Struct):
 
 class _FindmntOutput(msgspec.Struct):
     filesystems: list[_FindmntFilesystem]
+
+
+def _get_loop_device_backing_files() -> dict[str, str]:
+    """Return a mapping from loop device path to its backing file path.
+
+    Example return value:
+    {"/dev/loop3": "/tmp/tmpXXX", ...}
+
+    Returns an empty mapping if ``losetup`` is unavailable or reports no devices.
+    """
+    try:
+        raw = sh.run_cmd(cmd=["losetup", "--list", "--json"], capture_output=True)
+        data: dict[str, t.Any] = json.loads(raw.stdout)
+    except (sh.ShellInterfaceError, json.JSONDecodeError):
+        return {}
+    return {dev["name"]: dev["back-file"] for dev in data.get("loopdevices", [])}
 
 
 def get_mounted_devices() -> t.Mapping[str, t.Mapping[Path, MountOptions]]:
@@ -46,11 +61,15 @@ def get_mounted_devices() -> t.Mapping[str, t.Mapping[Path, MountOptions]]:
         },
     }
     """
-    raw = sh.run_cmd(cmd=["findmnt", "-l", "--json"], capture_output=True)
+    raw = sh.run_cmd(
+        cmd=["findmnt", "--list", "--json", "--nofsroot"], capture_output=True
+    )
     parsed = msgspec.json.decode(raw.stdout, type=_FindmntOutput)
+    loop_backing_mapping = _get_loop_device_backing_files()
     mount_points: dict[str, dict[Path, MountOptions]] = defaultdict(dict)
     for fs in parsed.filesystems:
+        source = loop_backing_mapping.get(fs.source, fs.source)
         dest = Path(fs.target)
         options: MountOptions = frozenset(fs.options.split(","))
-        mount_points[fs.source][dest] = options
+        mount_points[source][dest] = options
     return dict(mount_points)
