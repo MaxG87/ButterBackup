@@ -14,7 +14,6 @@ class _FindmntFilesystem(msgspec.Struct):
     source: str
     target: str
     options: str
-    fstype: str = ""
 
 
 class _FindmntOutput(msgspec.Struct):
