@@ -8,6 +8,7 @@ readme = "README.md"
 license = "GPL-3.0-or-later"
 dependencies = [
     "loguru>=0.7.3",
+    "msgspec>=0.21.1",
     "shell-interface",
 ]
 requires-python = ">=3.11"

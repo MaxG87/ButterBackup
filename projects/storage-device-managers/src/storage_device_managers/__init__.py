@@ -4,7 +4,6 @@ import secrets
 import string
 import tempfile
 import typing as t
-from collections import defaultdict
 from collections.abc import Iterator
 from importlib import metadata
 from pathlib import Path
@@ -12,6 +11,8 @@ from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 import shell_interface as sh
+
+from storage_device_managers._findmnt import MountOptions, get_mounted_devices
 
 try:
     from loguru import logger  # type: ignore[import, unused-ignore]
@@ -49,7 +50,6 @@ __all__ = [
     "unmount_device",
 ]
 
-MountOptions = frozenset[str]
 ValidFileSystems = t.Literal["btrfs", "ext4"]
 
 
@@ -402,46 +402,6 @@ def is_mounted(device: Path) -> bool:
         logger.info(f"Kein Mountpunkt für Speichermedium {device} gefunden.")
         return False
     return True
-
-
-def get_mounted_devices() -> t.Mapping[str, t.Mapping[Path, MountOptions]]:
-    """Get all mounted devices
-
-    This function will parse the output of `mount` and return everything that is mounted
-    to somewhere. The returned mapping maps device names (i.e. mount sources) to their
-    destinations and mount options.
-
-    Since a source can be mounted to multiple (e.g. /dev/sda1 can be mounted to
-    /home/{user1,user2}/Videos), the value of the mapping is another mapping. This inner
-    mapping maps mount destinations to their mount options.
-
-    Returns:
-    --------
-    t.Mapping[str, t.Mapping[Path, MountOptions]]
-        A mapping that maps mount sources (i.e. device names) to their
-        destinations and mount options.
-
-    Example Return Value:
-    ---------------------
-    {
-        "/dev/nvme0n1p2": {
-            Path("/boot"): frozenset({"rw", "relatime"}),
-            Path("/media/backup"): frozenset({"rw", "relatime", "compress=zstd:3"}),
-        },
-    }
-    """
-    # Example line:
-    # /dev/nvme0n1p2 on /boot type ext2 (rw,relatime)
-    raw_mounts = sh.run_cmd(cmd=["mount"], capture_output=True)
-    mount_lines = raw_mounts.stdout.decode().splitlines()
-    mount_points: dict[str, dict[Path, MountOptions]] = defaultdict(dict)
-    for line in mount_lines:
-        device = line.split()[0]
-        dest = Path(line.split()[2])
-        raw_options = line.split()[5]
-        options = frozenset(raw_options.strip("()").split(","))
-        mount_points[device][dest] = options
-    return dict(mount_points)
 
 
 def sync_device(device: Path) -> None:
