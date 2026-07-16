@@ -4,6 +4,8 @@ from tempfile import NamedTemporaryFile
 
 from butter_backup import config_parser as cp
 
+DEVICE_NAMES = ["Seagate Rot", "MyBackupDevice", None]
+
 
 def get_random_filename() -> str:
     with NamedTemporaryFile() as named_file:

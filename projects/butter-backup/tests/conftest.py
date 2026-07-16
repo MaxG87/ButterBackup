@@ -11,11 +11,15 @@ import storage_device_managers as sdm
 
 from butter_backup import backup_backends as bb
 from butter_backup import config_parser as cp
-from butter_backup import device_managers as dm
 
 from . import complement_configuration
 
 DEVICE_NAMES = ["Seagate Rot", "MyBackupDevice", None]
+
+pytest_plugins = [
+    "tests.fixtures.btrfs_rsync",
+    "tests.fixtures.restic",
+]
 
 
 @pytest.fixture(scope="session")
@@ -63,36 +67,6 @@ def _btrfs_device_for_name(
             yield config
 
 
-@pytest.fixture(scope="session")
-def _encrypted_btrfs_device_persistent(
-    _big_file_persistent,
-):
-    with NamedTemporaryFile() as ntf:
-        big_file = Path(ntf.name)
-        shutil.copy(_big_file_persistent, big_file)
-        config = dm.prepare_device_for_butterbackend(big_file)
-        yield big_file, config
-
-
-@pytest.fixture(params=DEVICE_NAMES)
-def encrypted_btrfs_device(
-    _encrypted_btrfs_device_persistent,
-    request: pytest.FixtureRequest,
-) -> t.Iterator[cp.BtrFSRsyncConfig]:
-    """
-    Prepare device for ButterBackup and return its config
-
-    Returns
-    -------
-    config: BtrfsConfig
-        configuration allowing to interact with the returned device
-    """
-    with _btrfs_device_for_name(
-        _encrypted_btrfs_device_persistent, request.param
-    ) as config:
-        yield config
-
-
 @contextmanager
 def _restic_device_for_name(
     persistent: tuple[Path, cp.ResticConfig],
@@ -108,34 +82,6 @@ def _restic_device_for_name(
         config = old_config.model_copy(update=update)
         with sdm.symbolic_link(big_file, config.device()):
             yield config
-
-
-@pytest.fixture(scope="session")
-def _encrypted_restic_device_persistent(_big_file_persistent):
-    with NamedTemporaryFile() as ntf:
-        big_file = Path(ntf.name)
-        shutil.copy(_big_file_persistent, big_file)
-        config = dm.prepare_device_for_resticbackend(big_file, "ext4")
-        yield big_file, config
-
-
-@pytest.fixture(params=DEVICE_NAMES)
-def encrypted_restic_device(
-    _encrypted_restic_device_persistent,
-    request: pytest.FixtureRequest,
-) -> t.Iterator[cp.ResticConfig]:
-    """
-    Prepare device for Restic on BtrFS and return its config
-
-    Returns
-    -------
-    config: ResticConfig
-        configuration allowing to interact with the returned device
-    """
-    with _restic_device_for_name(
-        _encrypted_restic_device_persistent, request.param
-    ) as config:
-        yield config
 
 
 @pytest.fixture(
