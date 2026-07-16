@@ -17,14 +17,21 @@ def filenames(min_size=1) -> st.SearchStrategy[str]:
     )
 
 
-def valid_toml_text(min_size: int = 1) -> st.SearchStrategy[str]:
-    """Generate strings that are valid in TOML basic strings."""
+def valid_toml_text(
+    min_size: int = 1, max_size: int | None = None
+) -> st.SearchStrategy[str]:
+    """Generate strings that are valid in TOML basic strings.
+
+    max_size should be set to 85 for valid path elements.
+    """
     return st.text(
         alphabet=st.characters(
             blacklist_categories=["Cc", "Cs"],
             whitelist_characters="\t",
+            max_codepoint=0xFFFF,
         ),
         min_size=min_size,
+        max_size=max_size,
     )
 
 
@@ -34,7 +41,7 @@ def valid_path_components(min_size: int = 1) -> st.SearchStrategy[str]:
 
     The path components will also be vaild in TOML strings.
     """
-    return valid_toml_text(min_size).filter(
+    return valid_toml_text(min_size, max_size=85).filter(
         lambda n: "/" not in n and n not in {".", ".."}
     )
 
