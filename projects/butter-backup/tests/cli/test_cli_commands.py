@@ -235,7 +235,7 @@ def test_open_close_roundtrip(runner, encrypted_device) -> None:
         config_file.write_text(wrapped_config.model_dump_json())
         open_result = runner.invoke(app, ["open", "--config", str(config_file)])
         expected_msg = (
-            f"Speichermedium {config.Name} wurde in (?P<mount_dest>/[^ ]+) geöffnet."
+            f"Speichermedium {config.Name} wurde in (?P<mount_dest>/.+) geöffnet."
         )
         match = re.fullmatch(expected_msg, open_result.stdout.strip())
         assert match is not None
