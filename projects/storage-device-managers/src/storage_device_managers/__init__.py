@@ -20,6 +20,7 @@ try:
     logger.disable("storage_device_managers")
 except ModuleNotFoundError:
     logger = SimpleNamespace()  # type: ignore[assignment, unused-ignore]
+    logger.debug = lambda msg: None  # type: ignore[assignment, unused-ignore]
     logger.success = lambda msg: None  # type: ignore[assignment, unused-ignore]
     logger.info = lambda msg: None  # type: ignore[assignment, unused-ignore]
 
@@ -45,6 +46,7 @@ __all__ = [
     "mount_device",
     "mounted_device",
     "open_encrypted_device",
+    "remove_empty_ancestors",
     "symbolic_link",
     "sync_device",
     "unmount_device",
@@ -189,6 +191,27 @@ def ensure_directory(directory: Path) -> Path | None:
     cmd: sh.StrPathList = ["sudo", "mkdir", "-p", directory]
     sh.run_cmd(cmd=cmd)
     return first_created
+
+
+def remove_empty_ancestors(start: Path, stop: Path) -> None:
+    """Remove empty directories from ``start`` up to ``stop`` inclusively.
+
+    Directories are removed bottom-up. Removal stops at the first failed
+    ``rmdir`` invocation, which is expected when a directory is not empty.
+    """
+    if not start.is_relative_to(stop):
+        raise ValueError(f"Start path {start} is not a subpath of stop path {stop}.")
+    current = start
+    while current.is_relative_to(stop):
+        cmd: sh.StrPathList = ["sudo", "rmdir", current]
+        try:
+            sh.run_cmd(cmd=cmd)
+        except sh.ShellInterfaceError:
+            logger.debug(
+                f"Aborting empty-directory cleanup at {current}: `rmdir` failed."
+            )
+            break
+        current = current.parent
 
 
 @contextlib.contextmanager
