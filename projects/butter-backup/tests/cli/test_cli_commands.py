@@ -465,7 +465,8 @@ def test_btrfs_backup_preserves_file_ownership_after_close(
     source_dir.mkdir()
     root_owned_file = source_dir / "root-owned.txt"
     root_owned_file.write_text("root-owned content")
-    sh.run_cmd(cmd=["sudo", "chown", "root:root", root_owned_file])
+    chown_root: sh.StrPathList = ["sudo", "chown", "root:root", root_owned_file]
+    sh.run_cmd(cmd=chown_root)
 
     config = encrypted_btrfs_device.model_copy(
         update={
