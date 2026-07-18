@@ -458,6 +458,43 @@ def test_do_backup_refuses_backup_when_device_is_already_open(
     assert expected_msg in result.stderr
 
 
+def test_btrfs_backup_preserves_file_ownership_after_close(
+    runner: CliRunner, encrypted_btrfs_device: cp.BtrFSRsyncConfig, tmp_path: Path
+) -> None:
+    source_dir = tmp_path / "source"
+    source_dir.mkdir()
+    root_owned_file = source_dir / "root-owned.txt"
+    root_owned_file.write_text("root-owned content")
+    sh.run_cmd(cmd=["sudo", "chown", "root:root", root_owned_file])
+
+    config = encrypted_btrfs_device.model_copy(
+        update={
+            "Files": set(),
+            "FilesDest": "single-files",
+            "Folders": {source_dir: "backup"},
+        }
+    )
+    config_file = tmp_path / "config.json"
+    wrapped = cp.Configuration(DeviceConfigurations=[config])
+    config_file.write_text(wrapped.model_dump_json())
+
+    backup_result = runner.invoke(app, ["backup", "--config", str(config_file)])
+    assert backup_result.exit_code == 0
+
+    reopen_result = runner.invoke(app, ["open", "--config", str(config_file)])
+    assert reopen_result.exit_code == 0
+    mount_dir = next(iter(sdm.get_mounted_devices()[str(config.map_name())]))
+    backup_repository = mount_dir / config.BackupRepositoryFolder
+    latest_snapshot = sorted(backup_repository.iterdir())[-1]
+    preserved_file = latest_snapshot / "backup" / root_owned_file.name
+
+    assert preserved_file.owner() == "root"
+    assert preserved_file.group() == "root"
+
+    final_close_result = runner.invoke(app, ["close", "--config", str(config_file)])
+    assert final_close_result.exit_code == 0
+
+
 def test_unmount_error_does_not_cause_content_deletion(
     runner: CliRunner, encrypted_device: cp.DeviceConfiguration, tmp_path: Path, mocker
 ) -> None:
