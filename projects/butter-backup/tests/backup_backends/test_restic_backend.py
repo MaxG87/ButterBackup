@@ -21,6 +21,10 @@ SECOND_BACKUP = TEST_RESOURCES / "second-backup"
 def test_do_backup_for_restic_adapts_ownership(
     source_directories, mounted_device
 ) -> None:
+    # restic needs to be run as root to be able to backup e.g. /home. However, then the
+    # entire backup repository is owned by root, preventing the user from working with
+    # it. This test ensures that the ownership of the backup repository is handed back
+    # to the user running the backup after the backup is finished.
     empty_config, device = mounted_device
     if not isinstance(empty_config, cp.ResticConfig):
         # This test works for ResticConfig only. However, encrypted_device on
