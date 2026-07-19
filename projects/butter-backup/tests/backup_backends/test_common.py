@@ -5,7 +5,7 @@ import pytest
 
 from . import get_expected_content, get_result_content, run_backup_cycle
 
-TEST_RESOURCES = Path(__file__).parent / "resources"
+TEST_RESOURCES = Path(__file__).parent.parent / "resources"
 EXCLUDE_FILE = TEST_RESOURCES / "exclude-file"
 FIRST_BACKUP = TEST_RESOURCES / "first-backup"
 SECOND_BACKUP = TEST_RESOURCES / "second-backup"
