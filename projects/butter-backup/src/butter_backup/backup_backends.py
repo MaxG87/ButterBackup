@@ -82,7 +82,7 @@ class BtrFSRsyncBackend(BackupBackend):
             user=user,
             group=group,
         )
-        sdm.chown(snapshot_root, user, group, recursive=False)
+        sdm.chown(snapshot_root, user, group, recursive=True)
 
     def snapshot(self, *, src: Path, backup_repository: Path) -> Path:
         timestamp = dt.datetime.now()
