@@ -3,6 +3,7 @@ import itertools
 import shutil
 from collections import defaultdict
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from uuid import uuid4
 
 import pytest
@@ -20,6 +21,18 @@ from . import (
 TEST_RESOURCES = Path(__file__).parent.parent / "resources"
 FIRST_BACKUP = TEST_RESOURCES / "first-backup"
 SECOND_BACKUP = TEST_RESOURCES / "second-backup"
+
+
+def get_uid_gid(path: Path) -> tuple[int, int]:
+    stat_info = path.stat()
+    return stat_info.st_uid, stat_info.st_gid
+
+
+def get_current_user_uid_gid() -> tuple[int, int]:
+    with NamedTemporaryFile() as tmp_file:
+        tmp_path = Path(tmp_file.name)
+        uid_gid = get_uid_gid(tmp_path)
+    return uid_gid
 
 
 @pytest.mark.parametrize(
@@ -109,12 +122,13 @@ def test_btrfs_backend_refreshes_sudo_session_in_do_backup(
     "source_directories",
     [[FIRST_BACKUP], [SECOND_BACKUP], [FIRST_BACKUP, SECOND_BACKUP]],
 )
-def test_do_backup_for_btrfs_rsync_preserves_ownership(
+def test_do_backup_for_btrfs_rsync_preserves_ownership_of_source_files(
     source_directories, mounted_device, tmp_path: Path
 ) -> None:
     empty_config, device = mounted_device
-    expected_uid = 1337
-    expected_gid = 1337
+    test_owner_uid = 1337
+    test_group_gid = 1337
+    expected_uid_gid = (test_owner_uid, test_group_gid)
     if not isinstance(empty_config, cp.BtrFSRsyncConfig):
         # This test works for BtrFSRsyncConfig only. However, encrypted_device on which
         # mounted_device depends on, is parameterised over all backends. Since this
@@ -128,7 +142,7 @@ def test_do_backup_for_btrfs_rsync_preserves_ownership(
             "sudo",
             "chown",
             "-R",
-            f"{expected_uid}:{expected_gid}",
+            f"{test_owner_uid}:{test_group_gid}",
             source_dir,
         ]
         rm_cmd: sh.StrPathList = ["sudo", "rm", "-r", source_dir]
@@ -139,16 +153,12 @@ def test_do_backup_for_btrfs_rsync_preserves_ownership(
 
     # Using dicts instead of sets allows to understand whose files' or folder's
     # ownership is not preserved.
-    expected_users = defaultdict(set)
-    expected_groups = defaultdict(set)
-    result_users = defaultdict(set)
-    result_groups = defaultdict(set)
+    expected_permissions = defaultdict(set)
+    result_permissions = defaultdict(set)
     for snapshot in (device / config.BackupRepositoryFolder).iterdir():
         for dest_dir in snapshot.iterdir():
             for cur_f in dest_dir.rglob("*"):
-                expected_users[expected_uid].add(cur_f)
-                expected_groups[expected_gid].add(cur_f)
-                result_users[cur_f.stat().st_uid].add(cur_f)
-                result_groups[cur_f.stat().st_gid].add(cur_f)
-    assert result_users == expected_users
-    assert result_groups == expected_groups
+                uid_gid = get_uid_gid(cur_f)
+                result_permissions[uid_gid].add(cur_f)
+                expected_permissions[expected_uid_gid].add(cur_f)
+    assert result_permissions == expected_permissions
