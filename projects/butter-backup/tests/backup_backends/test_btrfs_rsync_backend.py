@@ -1,5 +1,7 @@
 import datetime as dt
 import itertools
+import shutil
+from collections import defaultdict
 from pathlib import Path
 from uuid import uuid4
 
@@ -9,7 +11,11 @@ import shell_interface as sh
 from butter_backup import backup_backends as bb
 from butter_backup import config_parser as cp
 
-from . import get_expected_content, get_result_content, run_backup_cycle
+from . import (
+    get_expected_content,
+    get_result_content,
+    run_backup_cycle,
+)
 
 TEST_RESOURCES = Path(__file__).parent.parent / "resources"
 FIRST_BACKUP = TEST_RESOURCES / "first-backup"
@@ -97,3 +103,52 @@ def test_btrfs_backend_refreshes_sudo_session_in_do_backup(
     # Only one call before adapting ownership. The other calls are not covered by this
     # test to keep the setup simple.
     mock_refresh.assert_called_once_with(sudo_pass_cmd)
+
+
+@pytest.mark.parametrize(
+    "source_directories",
+    [[FIRST_BACKUP], [SECOND_BACKUP], [FIRST_BACKUP, SECOND_BACKUP]],
+)
+def test_do_backup_for_btrfs_rsync_preserves_ownership(
+    source_directories, mounted_device, tmp_path: Path
+) -> None:
+    empty_config, device = mounted_device
+    expected_uid = 1337
+    expected_gid = 1337
+    if not isinstance(empty_config, cp.BtrFSRsyncConfig):
+        # This test works for BtrFSRsyncConfig only. However, encrypted_device on which
+        # mounted_device depends on, is parameterised over all backends. Since this
+        # simplifies many other tests it seemed to be an acceptable tradeoff to
+        # short-circuit the test here.
+        return
+    for cur in source_directories:
+        source_dir = tmp_path / cur.name
+        shutil.copytree(cur, source_dir)
+        chown_cmd: sh.StrPathList = [
+            "sudo",
+            "chown",
+            "-R",
+            f"{expected_uid}:{expected_gid}",
+            source_dir,
+        ]
+        rm_cmd: sh.StrPathList = ["sudo", "rm", "-r", source_dir]
+        sh.run_cmd(cmd=chown_cmd)
+        config = run_backup_cycle(empty_config, source_dir, device)
+        # remove source dir to avoid permission issues with pytest and "user" 1337
+        sh.run_cmd(cmd=rm_cmd)
+
+    # Using dicts instead of sets allows to understand whose files' or folder's
+    # ownership is not preserved.
+    expected_users = defaultdict(set)
+    expected_groups = defaultdict(set)
+    result_users = defaultdict(set)
+    result_groups = defaultdict(set)
+    for snapshot in (device / config.BackupRepositoryFolder).iterdir():
+        for dest_dir in snapshot.iterdir():
+            for cur_f in dest_dir.rglob("*"):
+                expected_users[expected_uid].add(cur_f)
+                expected_groups[expected_gid].add(cur_f)
+                result_users[cur_f.stat().st_uid].add(cur_f)
+                result_groups[cur_f.stat().st_gid].add(cur_f)
+    assert result_users == expected_users
+    assert result_groups == expected_groups
