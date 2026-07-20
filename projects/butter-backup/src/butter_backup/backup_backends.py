@@ -82,6 +82,14 @@ class BtrFSRsyncBackend(BackupBackend):
             user=user,
             group=group,
         )
+        # The intention is to only change the ownership of the snapshot root, not its
+        # contents. However, since afterwards a backup using `rsync --delete` is
+        # performed, it is believed that changing the ownership of the snapshot root
+        # recursively is not incorrect neither. After the backup, every pre-existing
+        # file and folder will either have been deleted or will have been adapted to the
+        # correct ownership.
+        # Therefore, it is believed that writing test that fails if `recursive=True` is
+        # currently impossible.
         sdm.chown(snapshot_root, user, group, recursive=False)
 
     def snapshot(self, *, src: Path, backup_repository: Path) -> Path:
