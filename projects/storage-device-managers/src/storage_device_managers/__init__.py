@@ -7,21 +7,11 @@ import typing as t
 from collections.abc import Iterator
 from importlib import metadata
 from pathlib import Path
-from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 import shell_interface as sh
 
 from storage_device_managers._findmnt import MountOptions, get_mounted_devices
-
-try:
-    from loguru import logger  # type: ignore[import, unused-ignore]
-
-    logger.disable("storage_device_managers")
-except ModuleNotFoundError:
-    logger = SimpleNamespace()  # type: ignore[assignment, unused-ignore]
-    logger.success = lambda msg: None  # type: ignore[assignment, unused-ignore]
-    logger.info = lambda msg: None  # type: ignore[assignment, unused-ignore]
 
 __version__ = metadata.version(__name__)
 
@@ -154,14 +144,10 @@ def decrypted_device(device: Path, pass_cmd: str) -> Iterator[Path]:
         if cryptsetup returns a non-zero exit code
     """
     decrypted = open_encrypted_device(device, pass_cmd)
-    logger.success(f"Speichermedium {device} erfolgreich entschlüsselt.")
     try:
         yield decrypted
     finally:
         close_decrypted_device(decrypted)
-        logger.success(
-            f"Verschlüsselung des Speichermediums {device} erfolgreich geschlossen."
-        )
 
 
 @contextlib.contextmanager
@@ -215,16 +201,10 @@ def mounted_device(
     )
     with ctx as mount_dir:
         mount_device(device, mount_dir, compression)
-        logger.success(
-            f"Speichermedium {device} erfolgreich nach {mount_dir} gemountet."
-        )
         try:
             yield Path(mount_dir)
         finally:
             unmount_device(device)
-            logger.success(
-                "Speichermedium {device} erfolgreich ausgehangen.", device=device
-            )
 
 
 @contextlib.contextmanager
@@ -257,7 +237,6 @@ def symbolic_link(src: Path, dest: Path) -> Iterator[Path]:
     absolute_dest = dest.absolute()
     ln_cmd: sh.StrPathList = ["sudo", "ln", "-s", src.absolute(), absolute_dest]
     sh.run_cmd(cmd=ln_cmd)
-    logger.success(f"Symlink von {src} nach {dest} erfolgreich erstellt.")
     try:
         yield absolute_dest
     finally:
@@ -265,7 +244,6 @@ def symbolic_link(src: Path, dest: Path) -> Iterator[Path]:
         # all, the aimed for state has been reached.
         rm_cmd: sh.StrPathList = ["sudo", "rm", "-f", absolute_dest]
         sh.run_cmd(cmd=rm_cmd)
-        logger.success(f"Symlink von {src} nach {dest} erfolgreich entfernt.")
 
 
 def _mount_btrfs_device(
@@ -368,13 +346,7 @@ def is_mounted(device: Path) -> bool:
         True if `device` is mounted, False otherwise
     """
     device_as_str = str(device)
-    try:
-        mount_dest = get_mounted_devices()[device_as_str]
-        logger.info(f"Mount des Speichermediums {device} in {mount_dest} gefunden.")
-    except KeyError:
-        logger.info(f"Kein Mountpunkt für Speichermedium {device} gefunden.")
-        return False
-    return True
+    return device_as_str in get_mounted_devices()
 
 
 def sync_device(device: Path) -> None:

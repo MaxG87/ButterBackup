@@ -9,7 +9,6 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
-        dependency-extras: ["", "--extra logging"]
 
     steps:
       - uses: actions/checkout@v7
@@ -18,7 +17,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: uv sync --package storage-device-managers ${{ matrix.dependency-extras }}
+        run: uv sync --package storage-device-managers
       - name: Check formatting with ruff
         run: uv run --package storage-device-managers ruff format --check projects/storage-device-managers
       - name: Check import ordering with ruff
