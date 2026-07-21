@@ -99,13 +99,6 @@ def _get_default_file_system(backend: ValidBackends) -> ValidFileSystems:
             t.assert_never(backend)
 
 
-def _refresh_sudo(sudo_pass_cmd: str | None) -> None:
-    if sudo_pass_cmd is not None:
-        sh.pipe_pass_cmd_to_real_cmd(
-            sudo_pass_cmd, ["sudo", "-Sv"], capture_output=True
-        )
-
-
 def _skip_device(
     config: cp.DeviceConfiguration,
     *,
@@ -144,7 +137,7 @@ def _open_device(
     mount_dir = base_dir / cfg.Name
     topmost_created_ancestor = None
     try:
-        _refresh_sudo(sudo_pass_cmd)
+        sh.refresh_sudo(sudo_pass_cmd)
         topmost_created_ancestor = sh.ensure_directory(mount_dir)
         decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
         sdm.mount_device(decrypted, mount_dir=mount_dir, compression=cfg.compression())
@@ -245,7 +238,7 @@ def close(
                     device=cfg.Name,
                 )
                 continue
-            _refresh_sudo(parsed_config.SudoPassCmd)
+            sh.refresh_sudo(parsed_config.SudoPassCmd)
             sdm.unmount_device(map_name)
             sdm.close_decrypted_device(map_name)
 
@@ -287,7 +280,7 @@ def backup(
         ):
             continue
         backend = bb.BackupBackend.from_config(cfg)
-        _refresh_sudo(parsed_config.SudoPassCmd)
+        sh.refresh_sudo(parsed_config.SudoPassCmd)
         open_dir = parsed_config.OpenDirectory
         dest = open_dir / cfg.Name if open_dir is not None else None
         with (
@@ -300,7 +293,7 @@ def backup(
             # A backup could take so long that the sudo session expires. In this
             # case the user would have to enter the password again to unmount and
             # close the device. To prevent this, the sudo session is refreshed.
-            _refresh_sudo(parsed_config.SudoPassCmd)
+            sh.refresh_sudo(parsed_config.SudoPassCmd)
 
 
 @app.command()

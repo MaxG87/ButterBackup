@@ -10,13 +10,6 @@ from loguru import logger
 from . import config_parser as cp
 
 
-def _refresh_sudo(sudo_pass_cmd: str | None) -> None:
-    if sudo_pass_cmd is not None:
-        sh.pipe_pass_cmd_to_real_cmd(
-            sudo_pass_cmd, ["sudo", "-Sv"], capture_output=True
-        )
-
-
 class BackupBackend(abc.ABC):
     @abc.abstractmethod
     def do_backup(self, mount_dir: Path, sudo_pass_cmd: str | None = None) -> None: ...
@@ -51,12 +44,12 @@ class BtrFSRsyncBackend(BackupBackend):
         backup_root = self.snapshot(
             src=src_snapshot, backup_repository=backup_repository
         )
-        _refresh_sudo(sudo_pass_cmd)
+        sh.refresh_sudo(sudo_pass_cmd)
         self.adapt_ownership(backup_root)
 
         for src, dest_name in self.config.Folders.items():
             dest = backup_root / dest_name
-            _refresh_sudo(sudo_pass_cmd)
+            sh.refresh_sudo(sudo_pass_cmd)
             self.rsync_folder(src, dest, self.config.ExcludePatternsFile)
 
         files_dest = backup_root / self.config.FilesDest
@@ -64,7 +57,7 @@ class BtrFSRsyncBackend(BackupBackend):
             files_dest.unlink()
         files_dest.mkdir(parents=True, exist_ok=True)
         for src in self.config.Files:
-            _refresh_sudo(sudo_pass_cmd)
+            sh.refresh_sudo(sudo_pass_cmd)
             self.rsync_file(src, files_dest)
 
     @staticmethod
@@ -149,9 +142,9 @@ class ResticBackend(BackupBackend):
     def do_backup(self, mount_dir: Path, sudo_pass_cmd: str | None = None) -> None:
         logger.info(f"Beginne mit Restic-Backup für Speichermedium {self.config.Name}.")
         backup_repository = mount_dir / self.config.BackupRepositoryFolder
-        _refresh_sudo(sudo_pass_cmd)
+        sh.refresh_sudo(sudo_pass_cmd)
         self.copy_files(backup_repository)
-        _refresh_sudo(sudo_pass_cmd)
+        sh.refresh_sudo(sudo_pass_cmd)
         self.adapt_ownership(backup_repository)
 
     @staticmethod
@@ -167,6 +160,12 @@ class ResticBackend(BackupBackend):
         sh.chown(backup_repository, user, group, recursive=True)
 
     def copy_files(self, backup_repository: Path) -> None:
+        if len(self.config.FilesAndFolders) == 0:
+            logger.warning(
+                "Es wurden keine Dateien oder Ordner zum Sichern angegeben. "
+                "Es wird kein Backup durchgeführt."
+            )
+            return
         restic_cmd: sh.StrPathList = [
             "sudo",
             "restic",

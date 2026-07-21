@@ -9,6 +9,7 @@ from .shell_interface import (
     get_group,
     get_user,
     pipe_pass_cmd_to_real_cmd,
+    refresh_sudo,
     run_cmd,
 )
 
@@ -22,5 +23,6 @@ __all__ = [
     "get_group",
     "get_user",
     "pipe_pass_cmd_to_real_cmd",
+    "refresh_sudo",
     "run_cmd",
 ]

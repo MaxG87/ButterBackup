@@ -60,7 +60,7 @@ def test_restic_backend_refreshes_sudo_session_in_do_backup(
         UUID=uuid4(),
     )
     backend = bb.ResticBackend(config=config)
-    mock_refresh = mocker.patch("butter_backup.backup_backends._refresh_sudo")
+    mock_refresh = mocker.patch("butter_backup.backup_backends.sh.refresh_sudo")
     mocker.patch.object(bb.ResticBackend, "copy_files")
     mocker.patch.object(bb.ResticBackend, "adapt_ownership")
 

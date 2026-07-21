@@ -233,3 +233,23 @@ def chown(
     if recursive:
         chown_cmd.append("--recursive")
     run_cmd(cmd=chown_cmd)
+
+
+def refresh_sudo(sudo_pass_cmd: str | None) -> None:
+    """
+    Refresh sudo credentials, if a password command is providedo
+
+    Some use cases, most notably butter-backup and the library storage-device-managers,
+    require elevated privileges to run. Passing a password command for each and every
+    command that requires elevated privileges is cumbersome and error-prone.
+
+    A trade-off is to refresh the sudo cache once after long-running operations, so that
+    the user does not have to enter their password multiple times.
+
+    This function will run the provided password command and pipe its output to the
+    `sudo -Sv` command, which refreshes the sudo cache. If no password command is
+    provided, this function does nothing. Without a password command, the user will be
+    prompted for their password once needed.
+    """
+    if sudo_pass_cmd is not None:
+        pipe_pass_cmd_to_real_cmd(sudo_pass_cmd, ["sudo", "-Sv"], capture_output=True)

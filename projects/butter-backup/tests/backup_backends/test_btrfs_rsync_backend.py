@@ -104,7 +104,7 @@ def test_btrfs_backend_refreshes_sudo_session_in_do_backup(
         UUID=uuid4(),
     )
     backend = bb.BtrFSRsyncBackend(config=config)
-    mock_refresh = mocker.patch("butter_backup.backup_backends._refresh_sudo")
+    mock_refresh = mocker.patch("butter_backup.backup_backends.sh.refresh_sudo")
     mocker.patch.object(
         bb.BtrFSRsyncBackend, "get_source_snapshot", return_value=tmp_path
     )
