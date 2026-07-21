@@ -854,11 +854,6 @@ name = "shell-interface"
 version = "2.0.0"
 source = { editable = "projects/shell-interface" }
 
-[package.optional-dependencies]
-logging = [
-    { name = "loguru" },
-]
-
 [package.dev-dependencies]
 dev = [
     { name = "hypothesis" },
@@ -873,8 +868,6 @@ typecheck = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "loguru", marker = "extra == 'logging'" }]
-provides-extras = ["logging"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -915,11 +908,6 @@ dependencies = [
     { name = "shell-interface" },
 ]
 
-[package.optional-dependencies]
-logging = [
-    { name = "loguru" },
-]
-
 [package.dev-dependencies]
 dev = [
     { name = "hypothesis" },
@@ -938,11 +926,9 @@ typecheck = [
 [package.metadata]
 requires-dist = [
     { name = "loguru", specifier = ">=0.7.3" },
-    { name = "loguru", marker = "extra == 'logging'" },
     { name = "msgspec", specifier = ">=0.21.1" },
     { name = "shell-interface", editable = "projects/shell-interface" },
 ]
-provides-extras = ["logging"]
 
 [package.metadata.requires-dev]
 dev = [

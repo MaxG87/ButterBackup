@@ -1,19 +1,9 @@
 import os
 import subprocess
 from pathlib import Path
-from types import SimpleNamespace
 
 StrPathList = list[str | Path]
 _CMD_LIST = list[str] | list[Path] | StrPathList
-
-try:
-    from loguru import logger  # type: ignore[import, unused-ignore]
-
-    logger.disable("shell_interface")
-except ModuleNotFoundError:
-    logger = SimpleNamespace()  # type: ignore[assignment, unused-ignore]
-    logger.debug = lambda msg: None  # type: ignore[assignment, unused-ignore]
-    logger.error = lambda msg: None  # type: ignore[assignment, unused-ignore]
 
 
 class PassCmdError(RuntimeError):
@@ -64,12 +54,10 @@ def run_cmd(
     """
     if env is None:
         env = dict(os.environ)
-    logger.debug(f"Shell-Befehl ist `{cmd}`.")
     try:
         result = subprocess.run(cmd, capture_output=capture_output, check=True, env=env)
     except subprocess.CalledProcessError as e:
         errmsg = f"Shell-Befehl `{cmd}` ist fehlgeschlagen."
-        logger.error(errmsg)
         raise ShellInterfaceError(errmsg) from e
     return result
 
@@ -111,14 +99,12 @@ def pipe_pass_cmd_to_real_cmd(
     ShellInterfaceError
         if the real command returns a non-zero return code
     """
-    logger.debug(f"Shell-Befehl ist `{command}`.")
     try:
         pwd_proc = subprocess.run(
             pass_cmd, stdout=subprocess.PIPE, shell=True, check=True
         )
     except subprocess.CalledProcessError as e:
         errmsg = f"Shell-Befehl `{pass_cmd}` ist fehlgeschlagen."
-        logger.error(errmsg)
         raise PassCmdError(errmsg) from e
     try:
         completed_process = subprocess.run(
@@ -126,6 +112,5 @@ def pipe_pass_cmd_to_real_cmd(
         )
     except subprocess.CalledProcessError as e:
         errmsg = f"Shell-Befehl `{command}` ist fehlgeschlagen."
-        logger.error(errmsg)
         raise ShellInterfaceError(errmsg) from e
     return completed_process
