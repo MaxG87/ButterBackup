@@ -2,7 +2,6 @@ from collections import abc
 from pathlib import Path
 
 import pytest
-
 import shell_interface as sh
 
 
