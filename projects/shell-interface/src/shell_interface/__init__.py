@@ -10,6 +10,7 @@ from .shell_interface import (
     get_user,
     pipe_pass_cmd_to_real_cmd,
     refresh_sudo,
+    rmdir_up_to,
     run_cmd,
 )
 
@@ -24,5 +25,6 @@ __all__ = [
     "get_user",
     "pipe_pass_cmd_to_real_cmd",
     "refresh_sudo",
+    "rmdir_up_to",
     "run_cmd",
 ]

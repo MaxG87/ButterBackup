@@ -1,4 +1,3 @@
-import typing as t
 from pathlib import Path
 
 import pytest
@@ -12,24 +11,6 @@ def sudo_mkdir(path: Path) -> None:
     """
     sudo_mkdir_cmd: sh.StrPathList = ["sudo", "mkdir", "-p", path]
     sh.run_cmd(cmd=sudo_mkdir_cmd)
-
-
-@pytest.fixture
-def root_owned_tmp_path(tmp_path: Path) -> t.Iterable[Path]:
-    """
-    Create a temporary directory owned by root for testing
-    """
-    root_owned_path = tmp_path / "root_owned"
-    root_owned_path.mkdir()
-    current_user = sh.get_user()
-    current_group = sh.get_group(current_user)
-    sh.chown(root_owned_path, user="root", group="root", recursive=False)
-    try:
-        yield root_owned_path
-    finally:
-        sh.chown(
-            root_owned_path, user=current_user, group=current_group, recursive=False
-        )
 
 
 @pytest.mark.parametrize("destination", ["destDir", "dest dir with spaces"])

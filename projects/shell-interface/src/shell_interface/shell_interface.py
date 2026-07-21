@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import getpass
 import os
 import subprocess
@@ -253,3 +254,20 @@ def refresh_sudo(sudo_pass_cmd: str | None) -> None:
     """
     if sudo_pass_cmd is not None:
         pipe_pass_cmd_to_real_cmd(sudo_pass_cmd, ["sudo", "-Sv"], capture_output=True)
+
+
+def rmdir_up_to(start: Path, stop: Path) -> None:
+    """
+    Remove all directories from `start` to `stop` (inclusive).
+
+    The directories are removed in a bottom-up manner. Execution stops at the first
+    non-empty directory or directly after removing stop, whatever comes first.
+    """
+    if not start.is_relative_to(stop):
+        raise ValueError(f"Start path {start} is not a subpath of stop path {stop}.")
+    current = start
+    while current.is_relative_to(stop):
+        with contextlib.suppress(ShellInterfaceError):
+            cmd: StrPathList = ["sudo", "rmdir", current]
+            run_cmd(cmd=cmd)
+        current = current.parent

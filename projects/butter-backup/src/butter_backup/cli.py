@@ -149,26 +149,9 @@ def _open_device(
             f"Speichermedium {cfg.Name} konnte nicht geöffnet werden. Es wird übersprungen."
         )
         if topmost_created_ancestor is not None:
-            _rmdir_ancestor_path(start=topmost_created_ancestor, stop=base_dir)
+            sh.rmdir_up_to(start=topmost_created_ancestor, stop=base_dir)
     else:
         typer.echo(f"Speichermedium {cfg.Name} wurde in {mount_dir} geöffnet.")
-
-
-def _rmdir_ancestor_path(start: Path, stop: Path) -> None:
-    """
-    Remove all directories from `start` to `stop` (inclusive).
-
-    The directories are removed in a bottom-up manner. Execution stops at the first
-    non-empty directory or directly after removing stop, whatever comes first.
-    """
-    if not start.is_relative_to(stop):
-        raise ValueError(f"Start path {start} is not a subpath of stop path {stop}.")
-    current = start
-    while current.is_relative_to(stop):
-        with contextlib.suppress(sh.ShellInterfaceError):
-            cmd: sh.StrPathList = ["sudo", "rmdir", current]
-            sh.run_cmd(cmd=cmd)
-        current = current.parent
 
 
 @app.command()
