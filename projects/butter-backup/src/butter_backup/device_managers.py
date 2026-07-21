@@ -21,8 +21,7 @@ def prepare_device_for_butterbackend(device: Path) -> cp.BtrFSRsyncConfig:
         sdm.mkfs(decrypted, "btrfs")
         with sdm.mounted_device(decrypted) as mounted:
             backup_repository = mounted / backup_repository_folder
-            mkdir_cmd: sh.StrPathList = ["sudo", "mkdir", backup_repository]
-            sh.run_cmd(cmd=mkdir_cmd)
+            sh.ensure_directory(backup_repository)
 
             initial_subvol = backup_repository / date.today().strftime(
                 cp.BtrFSRsyncConfig.SubvolTimestampFmt

@@ -11,8 +11,7 @@ import shell_interface as sh
 @pytest.fixture
 def directory_with_content(tmp_path):
     subfolder = tmp_path / "subfolder"
-    mkdir_cmd: sh.StrPathList = ["sudo", "mkdir", subfolder]
-    sh.run_cmd(cmd=mkdir_cmd)
+    sh.ensure_directory(subfolder)
 
     file = tmp_path / "important-file"
     touch_cmd: sh.StrPathList = ["sudo", "touch", file]
