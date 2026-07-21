@@ -32,7 +32,6 @@ __all__ = [
     "UnmountError",
     "ValidCompressions",
     "ValidFileSystems",
-    "chown",
     "close_decrypted_device",
     "decrypted_device",
     "encrypt_device",
@@ -625,50 +624,3 @@ def generate_passcmd() -> str:
     alphabet = string.ascii_letters + string.digits
     passphrase = "".join(secrets.choice(alphabet) for _ in range(n_chars))
     return f"echo {passphrase}"
-
-
-def chown(
-    file_or_folder: Path,
-    /,
-    user: int | str,
-    group: int | str | None = None,
-    *,
-    recursive: bool,
-) -> None:
-    """Change user and group of a device or folder
-
-    This function will change the ownership as specified. It requires root
-    privileges and will ask for them if not available. If no group is given,
-    only the owner is changed.
-
-    If recursive is true, ownership information of all files and folders
-    contained by `file_or_folder` will be adapted.
-
-    If `file_or_folder` points to a file, `recursive` must be `False`.
-    Otherwise a ValueError will be raised.
-
-
-    Parameters:
-    -----------
-    user
-        user ID, either as name or as UID
-    group
-        group ID, either as name or as GID
-    recursive
-        whether or not to change ownership for content
-
-    Raises:
-    --------
-    ValueError
-        if `file_or_folder` is a file but `recursive` is `True`
-    """
-    if file_or_folder.is_file() and recursive:
-        raise ValueError(
-            "First argument must point to a directory if `recursive` is `True`!"
-        )
-
-    user_spec = str(user) if group is None else f"{user}:{group}"
-    chown_cmd: sh.StrPathList = ["sudo", "chown", user_spec, file_or_folder]
-    if recursive:
-        chown_cmd.append("--recursive")
-    sh.run_cmd(cmd=chown_cmd)

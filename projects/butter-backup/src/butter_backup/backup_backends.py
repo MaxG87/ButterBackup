@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import overload
 
 import shell_interface as sh
-import storage_device_managers as sdm
 from loguru import logger
 
 from . import config_parser as cp
@@ -90,7 +89,7 @@ class BtrFSRsyncBackend(BackupBackend):
         # correct ownership.
         # Therefore, it is believed that writing test that fails if `recursive=True` is
         # currently impossible.
-        sdm.chown(snapshot_root, user, group, recursive=False)
+        sh.chown(snapshot_root, user, group, recursive=False)
 
     def snapshot(self, *, src: Path, backup_repository: Path) -> Path:
         timestamp = dt.datetime.now()
@@ -165,7 +164,7 @@ class ResticBackend(BackupBackend):
             user=user,
             group=group,
         )
-        sdm.chown(backup_repository, user, group, recursive=True)
+        sh.chown(backup_repository, user, group, recursive=True)
 
     def copy_files(self, backup_repository: Path) -> None:
         restic_cmd: sh.StrPathList = [

@@ -33,18 +33,11 @@ def root_owned_tmp_path(tmp_path: Path) -> t.Iterable[Path]:
     root_owned_path.mkdir()
     current_user = sh.get_user()
     current_group = sh.get_group(current_user)
-    chown_to_root: sh.StrPathList = ["sudo", "chown", "root:root", root_owned_path]
-    chown_to_user: sh.StrPathList = [
-        "sudo",
-        "chown",
-        f"{current_user}:{current_group}",
-        root_owned_path,
-    ]
-    sh.run_cmd(cmd=chown_to_root)
+    sh.chown(root_owned_path, "root", "root", recursive=False)
     try:
         yield root_owned_path
     finally:
-        sh.run_cmd(cmd=chown_to_user)
+        sh.chown(root_owned_path, current_user, current_group, recursive=False)
 
 
 def _invalidate_sudo_session() -> None:

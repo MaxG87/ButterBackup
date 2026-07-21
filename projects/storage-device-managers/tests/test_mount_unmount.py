@@ -158,7 +158,7 @@ def test_mounted_device_does_not_delete_content_on_umount_error(
         sdm.mounted_device(device, **compression_kwargs) as md,
     ):
         sentinel = md / "sentinel-file"
-        sdm.chown(md, user, recursive=True)
+        sh.chown(md, user, recursive=True)
         sentinel.write_text("This file should not be deleted.")
     assert sentinel.exists(), "Sentinel file was deleted after unmount error."
     assert sentinel.read_text() == sentinel_text

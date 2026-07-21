@@ -8,7 +8,6 @@ from uuid import uuid4
 
 import pytest
 import shell_interface as sh
-import storage_device_managers as sdm
 
 from butter_backup import backup_backends as bb
 from butter_backup import config_parser as cp
@@ -65,7 +64,7 @@ def test_btrfs_backend_gracefully_handles_existing_snapshots_owned_by_root(
     latest_snapshot = sorted(snapshot_root.iterdir())[-1]
     for cur in itertools.chain(snapshot_root.glob("*"), snapshot_root.glob("*/*")):
         print(f"Changing ownership of {cur} to root:root")
-        sdm.chown(cur, "root", "root", recursive=False)
+        sh.chown(cur, "root", "root", recursive=False)
     sh.run_cmd(cmd=["sudo", "rm", "-rf", latest_snapshot / first_config.FilesDest])
 
     second_config = run_backup_cycle(empty_config, second_source, device)
@@ -140,7 +139,7 @@ def test_do_backup_for_btrfs_rsync_preserves_ownership_of_source_files(
         source_dir = tmp_path / cur.name
         shutil.copytree(cur, source_dir)
         rm_cmd: sh.StrPathList = ["sudo", "rm", "-r", source_dir]
-        sdm.chown(source_dir, f"{test_owner_uid}", f"{test_group_gid}", recursive=True)
+        sh.chown(source_dir, f"{test_owner_uid}", f"{test_group_gid}", recursive=True)
         config = run_backup_cycle(empty_config, source_dir, device)
         # remove source dir to avoid permission issues with pytest and "user" 1337
         sh.run_cmd(cmd=rm_cmd)

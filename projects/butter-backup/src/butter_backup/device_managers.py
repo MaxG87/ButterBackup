@@ -35,7 +35,7 @@ def prepare_device_for_butterbackend(device: Path) -> cp.BtrFSRsyncConfig:
                 initial_subvol,
             ]
             sh.run_cmd(cmd=subvol_cmd)
-            sdm.chown(mounted, user, group, recursive=True)
+            sh.chown(mounted, user, group, recursive=True)
 
     config = cp.BtrFSRsyncConfig(
         BackupRepositoryFolder=backup_repository_folder,
@@ -63,7 +63,6 @@ def prepare_device_for_resticbackend(
         sdm.mkfs(decrypted, file_system)
         with sdm.mounted_device(decrypted) as mounted:
             backup_repo = mounted / backup_repository_folder
-            mkdir_repo: sh.StrPathList = ["sudo", "mkdir", backup_repo]
             restic_init: sh.StrPathList = [
                 "sudo",
                 "restic",
@@ -71,9 +70,9 @@ def prepare_device_for_resticbackend(
                 "-r",
                 backup_repo,
             ]
-            sh.run_cmd(cmd=mkdir_repo)
+            sh.ensure_directory(backup_repo)
             sh.pipe_pass_cmd_to_real_cmd(repository_passcmd, restic_init)
-            sdm.chown(mounted, user, group, recursive=True)
+            sh.chown(mounted, user, group, recursive=True)
     config = cp.ResticConfig(
         BackupRepositoryFolder=backup_repository_folder,
         DevicePassCmd=device_passcmd,
