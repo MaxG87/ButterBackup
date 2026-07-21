@@ -25,22 +25,6 @@ def runner():
     return CliRunner()
 
 
-@pytest.fixture
-def root_owned_tmp_path(tmp_path: Path) -> t.Iterable[Path]:
-    """
-    Create a temporary directory owned by root for testing
-    """
-    root_owned_path = tmp_path / "root_owned"
-    root_owned_path.mkdir()
-    current_user = sh.get_user()
-    current_group = sh.get_group(current_user)
-    sh.chown(root_owned_path, "root", "root", recursive=False)
-    try:
-        yield root_owned_path
-    finally:
-        sh.chown(root_owned_path, current_user, current_group, recursive=False)
-
-
 def _assert_sudo_refresh_occurred_before_privileged_cmd(
     refresh_idx: list[int], other_sudo_idx: list[int]
 ) -> None:
