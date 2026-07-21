@@ -145,7 +145,7 @@ def _open_device(
     topmost_created_ancestor = None
     try:
         _refresh_sudo(sudo_pass_cmd)
-        topmost_created_ancestor = sdm.ensure_directory(mount_dir)
+        topmost_created_ancestor = sh.ensure_directory(mount_dir)
         decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
         sdm.mount_device(decrypted, mount_dir=mount_dir, compression=cfg.compression())
     except Exception:

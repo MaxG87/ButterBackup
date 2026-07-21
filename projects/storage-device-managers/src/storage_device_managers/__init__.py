@@ -36,7 +36,6 @@ __all__ = [
     "close_decrypted_device",
     "decrypted_device",
     "encrypt_device",
-    "ensure_directory",
     "generate_passcmd",
     "get_filesystem",
     "get_mounted_devices",
@@ -166,31 +165,6 @@ def decrypted_device(device: Path, pass_cmd: str) -> Iterator[Path]:
         )
 
 
-def ensure_directory(directory: Path) -> Path | None:
-    """Ensure a directory exists, creating it with root privileges if needed.
-
-    Parameters:
-    -----------
-    directory
-        directory that should exist
-
-    Returns:
-    --------
-    Path | None
-        The first missing ancestor that had to be created, or ``None`` if the
-        directory already existed
-    """
-    if directory.is_dir():
-        return None
-    first_created = next(
-        (parent for parent in reversed(directory.parents) if not parent.is_dir()),
-        directory,
-    )
-    cmd: sh.StrPathList = ["sudo", "mkdir", "-p", directory]
-    sh.run_cmd(cmd=cmd)
-    return first_created
-
-
 @contextlib.contextmanager
 def mounted_device(
     device: Path,
@@ -234,7 +208,7 @@ def mounted_device(
     if is_mounted(device):
         unmount_device(device)
     if destination is not None:
-        ensure_directory(destination)
+        sh.ensure_directory(destination)
     ctx: contextlib.AbstractContextManager[Path] = (
         _temporary_directory()
         if destination is None

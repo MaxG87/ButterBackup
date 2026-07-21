@@ -134,6 +134,31 @@ def pipe_pass_cmd_to_real_cmd(
     return completed_process
 
 
+def ensure_directory(directory: Path) -> Path | None:
+    """Ensure a directory exists, creating it with root privileges if needed.
+
+    Parameters:
+    -----------
+    directory
+        directory that should exist
+
+    Returns:
+    --------
+    Path | None
+        The first missing ancestor that had to be created, or ``None`` if the
+        directory already existed
+    """
+    if directory.is_dir():
+        return None
+    first_created = next(
+        (parent for parent in reversed(directory.parents) if not parent.is_dir()),
+        directory,
+    )
+    cmd: StrPathList = ["sudo", "mkdir", "-p", directory]
+    run_cmd(cmd=cmd)
+    return first_created
+
+
 def get_user() -> str:
     """Get user who started ButterBackup
 
