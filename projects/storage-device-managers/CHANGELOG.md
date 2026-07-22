@@ -1,5 +1,43 @@
 # Changelog
 
+## [3.5.0](https://github.com/MaxG87/ButterBackup/compare/v2.0.0...v3.5.0) (2026-07-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* The libraries storage-device-managers and shell-interface now don't log any output. Code that configured them accordingly, or depended on that, will break.
+
+### Features
+
+* Add destination parameter to mounted_device ([33b6738](https://github.com/MaxG87/ButterBackup/commit/33b6738a82276fab03259499b43de6225049acf1))
+* add msgspec dependency ([7c6dcbd](https://github.com/MaxG87/ButterBackup/commit/7c6dcbd006b8b2640d98d9805f25b28fe4ed92bb))
+* Create a missing destination ([f09ec5f](https://github.com/MaxG87/ButterBackup/commit/f09ec5f5f4f6b31f7a3589c9c1fa4329f0c44e31))
+* Return first created directory ancestor ([6ab58eb](https://github.com/MaxG87/ButterBackup/commit/6ab58ebfac9a783d3d654fb84acdca07ad08a17a))
+* **sdm:** Add ensure_directory for privileged mkdir ([f32d38f](https://github.com/MaxG87/ButterBackup/commit/f32d38fe6aed676569f423c90533fcbecdb49797))
+
+
+### Bug Fixes
+
+* rewrite get_mounted_devices using findmnt --json + msgspec ([2954d7e](https://github.com/MaxG87/ButterBackup/commit/2954d7eddc4508661b3162dcf3ceaf4720f9ce02))
+* **test:** Handle loopback devices to make test suite pass again ([c3126bc](https://github.com/MaxG87/ButterBackup/commit/c3126bc66d3a4c7cedd811eb63b2262fdafb9987))
+
+
+### Dependencies
+
+* Bump all prod and dev dependencies ([761d3e5](https://github.com/MaxG87/ButterBackup/commit/761d3e5a73ae26eabc04d5b5384726dfa4d72177))
+* **dev:** bump hypothesis in the development-dependencies group ([#128](https://github.com/MaxG87/ButterBackup/issues/128)) ([799133a](https://github.com/MaxG87/ButterBackup/commit/799133ac77ab54e4cd215acc6ce916624f6158ab))
+
+
+### Miscellaneous Chores
+
+* release 3.5.0 ([9296019](https://github.com/MaxG87/ButterBackup/commit/92960193a649f4f4342c428e7a28ec1425c60f75))
+* release v0.15.0 ([bd5bfcc](https://github.com/MaxG87/ButterBackup/commit/bd5bfcc8238268cc7c8d3c69af47f37fed175020))
+
+
+### Code Refactoring
+
+* Drop loguru from both libraries ([bdacc96](https://github.com/MaxG87/ButterBackup/commit/bdacc960d1a94b121f8401b1ed57f17ee5a3c241))
+
 ## [2.0.0](https://github.com/MaxG87/storage-device-managers/compare/v1.0.2...v2.0.0) (2026-04-27)
 
 

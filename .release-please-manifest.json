@@ -1,5 +1,5 @@
 {
-  "projects/butter-backup": "3.6.0",
-  "projects/shell-interface": "2.0.0",
-  "projects/storage-device-managers": "2.0.0"
+  "projects/butter-backup": "3.5.0",
+  "projects/shell-interface": "3.0.0",
+  "projects/storage-device-managers": "3.5.0"
 }
