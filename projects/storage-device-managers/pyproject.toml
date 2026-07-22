@@ -20,11 +20,6 @@ Repository = "https://github.com/MaxG87/storage-device-managers"
 Issues = "https://github.com/MaxG87/storage-device-managers/issues"
 Changelog = "https://github.com/MaxG87/storage-device-managers/blob/main/CHANGELOG.md"
 
-
-[project.optional-dependencies]
-logging = ["loguru"]
-
-
 [dependency-groups]
 dev = [
     "hypothesis>=6.155.7",

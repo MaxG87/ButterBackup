@@ -7,21 +7,11 @@ import typing as t
 from collections.abc import Iterator
 from importlib import metadata
 from pathlib import Path
-from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 import shell_interface as sh
 
 from storage_device_managers._findmnt import MountOptions, get_mounted_devices
-
-try:
-    from loguru import logger  # type: ignore[import, unused-ignore]
-
-    logger.disable("storage_device_managers")
-except ModuleNotFoundError:
-    logger = SimpleNamespace()  # type: ignore[assignment, unused-ignore]
-    logger.success = lambda msg: None  # type: ignore[assignment, unused-ignore]
-    logger.info = lambda msg: None  # type: ignore[assignment, unused-ignore]
 
 __version__ = metadata.version(__name__)
 
@@ -32,11 +22,9 @@ __all__ = [
     "UnmountError",
     "ValidCompressions",
     "ValidFileSystems",
-    "chown",
     "close_decrypted_device",
     "decrypted_device",
     "encrypt_device",
-    "ensure_directory",
     "generate_passcmd",
     "get_filesystem",
     "get_mounted_devices",
@@ -156,39 +144,10 @@ def decrypted_device(device: Path, pass_cmd: str) -> Iterator[Path]:
         if cryptsetup returns a non-zero exit code
     """
     decrypted = open_encrypted_device(device, pass_cmd)
-    logger.success(f"Speichermedium {device} erfolgreich entschlüsselt.")
     try:
         yield decrypted
     finally:
         close_decrypted_device(decrypted)
-        logger.success(
-            f"Verschlüsselung des Speichermediums {device} erfolgreich geschlossen."
-        )
-
-
-def ensure_directory(directory: Path) -> Path | None:
-    """Ensure a directory exists, creating it with root privileges if needed.
-
-    Parameters:
-    -----------
-    directory
-        directory that should exist
-
-    Returns:
-    --------
-    Path | None
-        The first missing ancestor that had to be created, or ``None`` if the
-        directory already existed
-    """
-    if directory.is_dir():
-        return None
-    first_created = next(
-        (parent for parent in reversed(directory.parents) if not parent.is_dir()),
-        directory,
-    )
-    cmd: sh.StrPathList = ["sudo", "mkdir", "-p", directory]
-    sh.run_cmd(cmd=cmd)
-    return first_created
 
 
 @contextlib.contextmanager
@@ -234,7 +193,7 @@ def mounted_device(
     if is_mounted(device):
         unmount_device(device)
     if destination is not None:
-        ensure_directory(destination)
+        sh.ensure_directory(destination)
     ctx: contextlib.AbstractContextManager[Path] = (
         _temporary_directory()
         if destination is None
@@ -242,16 +201,10 @@ def mounted_device(
     )
     with ctx as mount_dir:
         mount_device(device, mount_dir, compression)
-        logger.success(
-            f"Speichermedium {device} erfolgreich nach {mount_dir} gemountet."
-        )
         try:
             yield Path(mount_dir)
         finally:
             unmount_device(device)
-            logger.success(
-                "Speichermedium {device} erfolgreich ausgehangen.", device=device
-            )
 
 
 @contextlib.contextmanager
@@ -284,7 +237,6 @@ def symbolic_link(src: Path, dest: Path) -> Iterator[Path]:
     absolute_dest = dest.absolute()
     ln_cmd: sh.StrPathList = ["sudo", "ln", "-s", src.absolute(), absolute_dest]
     sh.run_cmd(cmd=ln_cmd)
-    logger.success(f"Symlink von {src} nach {dest} erfolgreich erstellt.")
     try:
         yield absolute_dest
     finally:
@@ -292,7 +244,6 @@ def symbolic_link(src: Path, dest: Path) -> Iterator[Path]:
         # all, the aimed for state has been reached.
         rm_cmd: sh.StrPathList = ["sudo", "rm", "-f", absolute_dest]
         sh.run_cmd(cmd=rm_cmd)
-        logger.success(f"Symlink von {src} nach {dest} erfolgreich entfernt.")
 
 
 def _mount_btrfs_device(
@@ -395,13 +346,7 @@ def is_mounted(device: Path) -> bool:
         True if `device` is mounted, False otherwise
     """
     device_as_str = str(device)
-    try:
-        mount_dest = get_mounted_devices()[device_as_str]
-        logger.info(f"Mount des Speichermediums {device} in {mount_dest} gefunden.")
-    except KeyError:
-        logger.info(f"Kein Mountpunkt für Speichermedium {device} gefunden.")
-        return False
-    return True
+    return device_as_str in get_mounted_devices()
 
 
 def sync_device(device: Path) -> None:
@@ -651,50 +596,3 @@ def generate_passcmd() -> str:
     alphabet = string.ascii_letters + string.digits
     passphrase = "".join(secrets.choice(alphabet) for _ in range(n_chars))
     return f"echo {passphrase}"
-
-
-def chown(
-    file_or_folder: Path,
-    /,
-    user: int | str,
-    group: int | str | None = None,
-    *,
-    recursive: bool,
-) -> None:
-    """Change user and group of a device or folder
-
-    This function will change the ownership as specified. It requires root
-    privileges and will ask for them if not available. If no group is given,
-    only the owner is changed.
-
-    If recursive is true, ownership information of all files and folders
-    contained by `file_or_folder` will be adapted.
-
-    If `file_or_folder` points to a file, `recursive` must be `False`.
-    Otherwise a ValueError will be raised.
-
-
-    Parameters:
-    -----------
-    user
-        user ID, either as name or as UID
-    group
-        group ID, either as name or as GID
-    recursive
-        whether or not to change ownership for content
-
-    Raises:
-    --------
-    ValueError
-        if `file_or_folder` is a file but `recursive` is `True`
-    """
-    if file_or_folder.is_file() and recursive:
-        raise ValueError(
-            "First argument must point to a directory if `recursive` is `True`!"
-        )
-
-    user_spec = str(user) if group is None else f"{user}:{group}"
-    chown_cmd: sh.StrPathList = ["sudo", "chown", user_spec, file_or_folder]
-    if recursive:
-        chown_cmd.append("--recursive")
-    sh.run_cmd(cmd=chown_cmd)
