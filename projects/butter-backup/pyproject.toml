@@ -13,7 +13,7 @@ dependencies = [
     "pyyaml>=6.0.3",
     "shell-interface",
     "storage-device-managers",
-    "typer>=0.25.1",
+    "typer>=0.27.0",
 ]
 
 [project.urls]
@@ -40,9 +40,9 @@ dev = [
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.1",
     "pytest-xdist>=3.8.0",
-    "ruff>=0.15.13",
+    "ruff>=0.15.16",
     "tomli-w>=1.2.0",
-    "types-pyyaml>=6.0.12.20260510",
+    "types-pyyaml>=6.0.12.20260518",
 ]
 [tool.pydantic-mypy]
 init_forbid_extra = true
