@@ -40,3 +40,30 @@ different device names.
 Furthermore, in some cases tests were added to ensure behaviour that was
 already correct. In these cases, the tested behaviour was considered important
 but its correctness was not guaranteed.
+
+# Breaking Changes
+
+- The default configuration file location has moved to the project-specific
+  subfolder $XDG_CONFIG_HOME/butter-backup. Existing configs in the old
+  location will need to be moved manually.
+- The format of the configuration file has changed. Now there is a backup
+  device indepentent supersection, which contains global configuration options.
+  What used to be the configuration is now the list `DeviceConfigurations` of
+  that supersection.
+
+# Added
+
+- **SudoPassCmd**: specify a command that refreshes the sudo cache, preventing
+  long-running backups from being interrupted by sudo timeouts.
+- **OpenDirectory configuration option**: backup devices are now opened in a
+  subfolder (named after the device's Name) of a configurable directory, making
+  opening paths predictable and reusable from shell history.
+- **Support for additional configuration file formats**: YAML, JSON5, and TOML.
+- **--file-system option for format-device**: format-device is able to create
+  Ext4 as an alternative to Btrfs when using the Restic backup module.
+
+# Improved reliability
+
+Significant work went into test coverage and correctness this release. Several
+long-standing bugs were fixed, including an issue where closing devices whose
+Name contains a space did not work correctly.
