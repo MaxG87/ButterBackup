@@ -15,23 +15,28 @@ predictable and former commonds from the shell history can be reused without
 adapting to some random opening path. This new logic is applied to subcommands
 `open` and `backup`.
 
-Another amazing new feature is the added support for other configuration file
-formats, including YAML, JSON5 and TOML. This allows users to choose the format
-that best suits their needs and preferences. The author switched to use JSON5,
-as he was annoyed by the lack of trailing commas in JSON.
+Another amazing new feature is the rework of configuration handling. Now
+ButterBackup's default configuration location is within a project-specific
+subfolder of $XDG_CONFIG_HOME. This gives a natural place for the configuration
+file and multiple exclusion rule files.
+
+Additionall, support for other configuration file formats was added, including
+YAML, JSON5 and TOML. This allows users to choose the format that best suits
+their needs and preferences. The author switched to use JSON5, as he was
+annoyed by the lack of trailing commas in JSON.
 
 In order to address file system corruption issues on external hard disks, the
-format-device command now includes a --file-system option. This allows
-users to set up a device using ext4 instead of btrfs when using the
-restic backup module. Some claim that ext4 is more stable than btrfs.
-While the author finds this claim questionable, the choice is now up to the
-users.
+format-device command now includes a --file-system option. This allows users to
+set up a device using Ext4 instead of BtrFS when using the Restic backup
+module. Some claim that Ext4 is more stable than BtrFS. While the author finds
+this claim questionable, the choice is now up to the users.
 
 There was extensive work on the tests and correctness. Due to this, several
-annoying bugs were fixed. Most notably, closing devices whose `Name` contains a
-space now works as expected. To drive this using tests, the test suite now runs
-for three different device names.
+bugs that were previously unnoticed were fixed. In addition, many annoying bugs
+were fixed. Most notably, closing devices whose `Name` contains a space now
+works as expected. To drive this using tests, the test suite now runs for three
+different device names.
 
-Furthermore, in some cases tests were added for correct behaviour. In these
-cases, the tested behaviour was considered important but its correctness was
-not guaranteed. In some cases this improved.
+Furthermore, in some cases tests were added to ensure behaviour that was
+already correct. In these cases, the tested behaviour was considered important
+but its correctness was not guaranteed.
