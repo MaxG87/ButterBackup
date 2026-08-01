@@ -40,7 +40,7 @@ class BtrFSRsyncBackend(BackupBackend):
         logger.info(f"Beginne mit BtrFS-Backup für Speichermedium {self.config.Name}.")
         backup_repository = mount_dir / self.config.BackupRepositoryFolder
         src_snapshot = self.get_source_snapshot(backup_repository)
-        logger.info(f"Basis-Sicherungskopie: {src_snapshot}.")
+        logger.info('Basis-Sicherungskopie: "{base}".', base=src_snapshot)
         backup_root = self.snapshot(
             src=src_snapshot, backup_repository=backup_repository
         )
@@ -140,7 +140,10 @@ class ResticBackend(BackupBackend):
     config: cp.ResticConfig
 
     def do_backup(self, mount_dir: Path, sudo_pass_cmd: str | None = None) -> None:
-        logger.info(f"Beginne mit Restic-Backup für Speichermedium {self.config.Name}.")
+        logger.info(
+            "Beginne mit Restic-Backup für Speichermedium {name}.",
+            name=self.config.Name,
+        )
         backup_repository = mount_dir / self.config.BackupRepositoryFolder
         sh.refresh_sudo(sudo_pass_cmd)
         self.copy_files(backup_repository)
