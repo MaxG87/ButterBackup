@@ -69,7 +69,7 @@ class BtrFSRsyncBackend(BackupBackend):
         user = sh.get_user()
         group = sh.get_group(user)
         logger.debug(
-            "Übertrage Besitzrechte von {backup_root} nicht-rekursiv an {user}:{group}.",
+            'Übertrage Besitzrechte von "{backup_root}" nicht-rekursiv an {user}:{group}.',
             backup_root=snapshot_root,
             user=user,
             group=group,
@@ -115,7 +115,7 @@ class BtrFSRsyncBackend(BackupBackend):
     @staticmethod
     def rsync_file(src: Path, dest: Path) -> None:
         cmd: sh.StrPathList = ["sudo", "rsync", "-ax", "--inplace", src, dest]
-        logger.debug("Sichere Datei {src} nach {dest}.", src=src, dest=dest)
+        logger.debug('Sichere Datei "{src}" nach "{dest}".', src=src, dest=dest)
         sh.run_cmd(cmd=cmd)
 
     @staticmethod
@@ -132,7 +132,7 @@ class BtrFSRsyncBackend(BackupBackend):
         ]
         if maybe_exclude_patterns is not None:
             cmd.extend(["--exclude-from", maybe_exclude_patterns])
-        logger.debug("Sichere Ordner {src} nach {dest}.", src=src, dest=dest)
+        logger.debug('Sichere Ordner "{src}" nach "{dest}".', src=src, dest=dest)
         cmd.extend([f"{src}/", dest])
         sh.run_cmd(cmd=cmd)
 
@@ -157,7 +157,7 @@ class ResticBackend(BackupBackend):
         user = sh.get_user()
         group = sh.get_group(user)
         logger.debug(
-            "Übertrage Besitzrechte von {backup_root} rekursiv an {user}:{group}.",
+            'Übertrage Besitzrechte von "{backup_root}" rekursiv an {user}:{group}.',
             backup_root=backup_repository,
             user=user,
             group=group,
