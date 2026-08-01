@@ -115,6 +115,7 @@ class BtrFSRsyncBackend(BackupBackend):
     @staticmethod
     def rsync_file(src: Path, dest: Path) -> None:
         cmd: sh.StrPathList = ["sudo", "rsync", "-ax", "--inplace", src, dest]
+        logger.debug("Sichere Datei {src} nach {dest}.", src=src, dest=dest)
         sh.run_cmd(cmd=cmd)
 
     @staticmethod
@@ -131,6 +132,7 @@ class BtrFSRsyncBackend(BackupBackend):
         ]
         if maybe_exclude_patterns is not None:
             cmd.extend(["--exclude-from", maybe_exclude_patterns])
+        logger.debug("Sichere Ordner {src} nach {dest}.", src=src, dest=dest)
         cmd.extend([f"{src}/", dest])
         sh.run_cmd(cmd=cmd)
 
