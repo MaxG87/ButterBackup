@@ -17,7 +17,7 @@ Changelog = "https://github.com/MaxG87/shell-interface/blob/main/CHANGELOG.md"
 
 [dependency-groups]
 dev = [
-    "hypothesis>=6.155.7",
+    "hypothesis>=6.163.0",
     "mypy>=2.1.0",
     "pdbpp>=0.12.1",
     "pytest>=9.0.3",
