@@ -2,6 +2,7 @@ import contextlib
 import enum
 import secrets
 import string
+import subprocess
 import tempfile
 import typing as t
 from collections.abc import Iterator
@@ -402,9 +403,12 @@ def unmount_device(device: Path) -> None:
     sync_device(device)
     cmd: sh.StrPathList = ["sudo", "umount", device]
     try:
-        sh.run_cmd(cmd=cmd)
+        sh.run_cmd(cmd=cmd, capture_output=True)
     except sh.ShellInterfaceError as e:
-        raise UnmountError from e
+        stderr = ""
+        if isinstance(e.__cause__, subprocess.CalledProcessError) and e.__cause__.stderr:
+            stderr = e.__cause__.stderr.decode(errors="replace").strip()
+        raise UnmountError(stderr) from e
 
 
 def open_encrypted_device(device: Path, pass_cmd: str) -> Path:
