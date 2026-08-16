@@ -234,7 +234,6 @@ def close(
             sdm.close_decrypted_device(map_name)
 
 
-
 @app.command()
 def backup(
     config: t.Annotated[Path | None, CONFIG_OPTION] = None,

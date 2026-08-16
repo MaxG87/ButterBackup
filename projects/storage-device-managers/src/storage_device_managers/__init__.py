@@ -49,7 +49,7 @@ class InvalidDecryptedDevice(ValueError):
     pass
 
 
-class UnmountError(RuntimeError):
+class UnmountError(sh.ShellInterfaceError):
     pass
 
 
@@ -404,7 +404,7 @@ def unmount_device(device: Path) -> None:
     try:
         sh.run_cmd(cmd=cmd, capture_output=True)
     except sh.ShellInterfaceError as e:
-        raise UnmountError(e.stderr.decode(errors="replace").strip()) from e
+        raise UnmountError(e.errmsg, e.stderr) from e
 
 
 def open_encrypted_device(device: Path, pass_cmd: str) -> Path:
