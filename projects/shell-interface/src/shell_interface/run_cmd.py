@@ -11,7 +11,9 @@ class PassCmdError(RuntimeError):
 
 
 class ShellInterfaceError(RuntimeError):
-    pass
+    def __init__(self, msg: str, stderr: bytes = b"") -> None:
+        super().__init__(msg)
+        self.stderr = stderr
 
 
 def run_cmd(
@@ -58,7 +60,7 @@ def run_cmd(
         result = subprocess.run(cmd, capture_output=capture_output, check=True, env=env)
     except subprocess.CalledProcessError as e:
         errmsg = f"Shell-Befehl `{cmd}` ist fehlgeschlagen."
-        raise ShellInterfaceError(errmsg) from e
+        raise ShellInterfaceError(errmsg, stderr=e.stderr or b"") from e
     return result
 
 
@@ -112,5 +114,5 @@ def pipe_pass_cmd_to_real_cmd(
         )
     except subprocess.CalledProcessError as e:
         errmsg = f"Shell-Befehl `{command}` ist fehlgeschlagen."
-        raise ShellInterfaceError(errmsg) from e
+        raise ShellInterfaceError(errmsg, stderr=e.stderr or b"") from e
     return completed_process
