@@ -136,6 +136,48 @@ dev = [
 name = "butterbackup"
 version = "0.1.0"
 source = { virtual = "." }
+dependencies = [
+    { name = "butter-backup" },
+    { name = "shell-interface" },
+    { name = "storage-device-managers" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "hypothesis" },
+    { name = "mypy" },
+    { name = "pdbpp" },
+    { name = "pydantic" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-mock" },
+    { name = "pytest-xdist" },
+    { name = "ruff" },
+    { name = "tomli-w" },
+    { name = "types-pyyaml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "butter-backup", editable = "projects/butter-backup" },
+    { name = "shell-interface", editable = "projects/shell-interface" },
+    { name = "storage-device-managers", editable = "projects/storage-device-managers" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "hypothesis", specifier = ">=6.163.0" },
+    { name = "mypy", specifier = ">=2.1.0" },
+    { name = "pdbpp", specifier = ">=0.12.1" },
+    { name = "pydantic", specifier = ">=2" },
+    { name = "pytest", specifier = ">=9.0.3" },
+    { name = "pytest-cov", specifier = ">=7.1.0" },
+    { name = "pytest-mock", specifier = ">=3.15.1" },
+    { name = "pytest-xdist", specifier = ">=3.8.0" },
+    { name = "ruff", specifier = ">=0.15.16" },
+    { name = "tomli-w", specifier = ">=1.2.0" },
+    { name = "types-pyyaml", specifier = ">=6.0.12.20260518" },
+]
 
 [[package]]
 name = "colorama"

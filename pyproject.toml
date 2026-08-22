@@ -2,10 +2,34 @@
 name = "butterbackup"
 version = "0.1.0"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "butter-backup",
+    "shell-interface",
+    "storage-device-managers",
+]
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.163.0",
+    "mypy>=2.1.0",
+    "pdbpp>=0.12.1",
+    "pydantic>=2",
+    "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
+    "pytest-mock>=3.15.1",
+    "pytest-xdist>=3.8.0",
+    "ruff>=0.15.16",
+    "tomli-w>=1.2.0",
+    "types-pyyaml>=6.0.12.20260518",
+]
 
 [tool.uv.workspace]
 members = ["projects/*"]
+
+[tool.uv.sources]
+butter-backup = { workspace = true }
+shell-interface = { workspace = true }
+storage-device-managers = { workspace = true }
 
 [tool.mypy]
 plugins = [
@@ -17,6 +41,11 @@ enable_error_code = [
     "possibly-undefined"
 ]
 strict = true
+files = [
+    "projects/butter-backup/src",
+    "projects/shell-interface/src",
+    "projects/storage-device-managers/src",
+]
 
 [[tool.mypy.overrides]]
 module = "tests.*"
