@@ -1,0 +1,47 @@
+# This workflow is used to ensure that the basic linting steps continue to work
+# when executed top-level. Initially, the workspace repository did not allow to
+# do so. This caused a lot of friction, as it was hard to figure out whether
+# some changes done in one project affected another one.
+#
+# To ensure that changes do not break the global linting accidentally, this
+# workflow is added.
+name: ensure-global-linting
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # One versions suffices to ensure that the linting works.
+        python-version: ["3.14"]
+
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: uv sync
+      - name: Check formatting with ruff
+        run: uv run ruff format
+      - name: Check import ordering with ruff
+        run: uv run ruff check --output-format=github --select I
+      - name: Lint with ruff
+        run: uv run ruff check --output-format=github
+      - name: Check static typing with mypy
+        run: uv run mypy
+
+  check:
+    if: always()
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
