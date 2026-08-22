@@ -1,6 +1,7 @@
 import os
 import subprocess
 from collections import abc
+from dataclasses import dataclass
 from pathlib import Path
 
 StrPathList = abc.Sequence[str | Path]
@@ -10,8 +11,10 @@ class PassCmdError(RuntimeError):
     pass
 
 
+@dataclass(frozen=True)
 class ShellInterfaceError(RuntimeError):
-    pass
+    errmsg: str
+    stderr: bytes | None
 
 
 def run_cmd(
@@ -58,7 +61,7 @@ def run_cmd(
         result = subprocess.run(cmd, capture_output=capture_output, check=True, env=env)
     except subprocess.CalledProcessError as e:
         errmsg = f"Shell-Befehl `{cmd}` ist fehlgeschlagen."
-        raise ShellInterfaceError(errmsg) from e
+        raise ShellInterfaceError(errmsg, e.stderr) from e
     return result
 
 
@@ -112,5 +115,5 @@ def pipe_pass_cmd_to_real_cmd(
         )
     except subprocess.CalledProcessError as e:
         errmsg = f"Shell-Befehl `{command}` ist fehlgeschlagen."
-        raise ShellInterfaceError(errmsg) from e
+        raise ShellInterfaceError(errmsg, e.stderr) from e
     return completed_process

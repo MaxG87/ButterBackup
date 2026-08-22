@@ -221,7 +221,14 @@ def close(
                 )
                 continue
             sh.refresh_sudo(parsed_config.SudoPassCmd)
-            sdm.unmount_device(map_name)
+            try:
+                sdm.unmount_device(map_name)
+            except sdm.UnmountError as e:
+                typer.echo(
+                    f"Speichermedium {cfg.Name} konnte nicht ausgehängt werden: {e}",
+                    err=True,
+                )
+                continue
             sdm.close_decrypted_device(map_name)
 
 
@@ -250,6 +257,7 @@ def backup(
     """
     setup_logging(verbose)
     parsed_config = _read_configuration(config)
+    had_unmount_error = False
     for cfg in parsed_config.DeviceConfigurations:
         if _skip_device(
             cfg,
@@ -265,17 +273,26 @@ def backup(
         sh.refresh_sudo(parsed_config.SudoPassCmd)
         open_dir = parsed_config.OpenDirectory
         dest = open_dir / cfg.Name if open_dir is not None else None
-        with (
-            sdm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted,
-            sdm.mounted_device(
-                decrypted, dest, compression=cfg.compression()
-            ) as mount_dir,
-        ):
-            backend.do_backup(mount_dir, parsed_config.SudoPassCmd)
-            # A backup could take so long that the sudo session expires. In this
-            # case the user would have to enter the password again to unmount and
-            # close the device. To prevent this, the sudo session is refreshed.
-            sh.refresh_sudo(parsed_config.SudoPassCmd)
+        try:
+            with (
+                sdm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted,
+                sdm.mounted_device(
+                    decrypted, dest, compression=cfg.compression()
+                ) as mount_dir,
+            ):
+                backend.do_backup(mount_dir, parsed_config.SudoPassCmd)
+                # A backup could take so long that the sudo session expires. In this
+                # case the user would have to enter the password again to unmount and
+                # close the device. To prevent this, the sudo session is refreshed.
+                sh.refresh_sudo(parsed_config.SudoPassCmd)
+        except sdm.UnmountError as e:
+            typer.echo(
+                f"Speichermedium {cfg.Name} konnte nicht ausgehängt werden: {e}",
+                err=True,
+            )
+            had_unmount_error = True
+    if had_unmount_error:
+        raise typer.Exit(1)
 
 
 @app.command()

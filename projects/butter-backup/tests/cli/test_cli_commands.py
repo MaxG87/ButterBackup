@@ -477,7 +477,7 @@ def test_unmount_error_does_not_cause_content_deletion(
     # This test "successfully" provoked the buggy behaviour before the bug was fixed.
     mocker.patch(
         "storage_device_managers.unmount_device",
-        side_effect=sdm.UnmountError("Mocked unmount error"),
+        side_effect=sdm.UnmountError("Mocked unmount error", b"Mocked stderr"),
     )
 
     config = complement_configuration(encrypted_device, tmp_path)
