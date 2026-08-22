@@ -43,8 +43,11 @@ enable_error_code = [
 strict = true
 files = [
     "projects/butter-backup/src",
+    "projects/butter-backup/tests",
     "projects/shell-interface/src",
+    "projects/shell-interface/tests",
     "projects/storage-device-managers/src",
+    "projects/storage-device-managers/tests",
 ]
 
 [[tool.mypy.overrides]]
