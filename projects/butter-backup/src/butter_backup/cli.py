@@ -228,6 +228,8 @@ def close(
                     f"Speichermedium {cfg.Name} konnte nicht ausgehängt werden: {e}",
                     err=True,
                 )
+                # The device is still mounted, so closing the decrypted device
+                # would fail. Leave it for the user to handle manually.
                 continue
             sdm.close_decrypted_device(map_name)
 
