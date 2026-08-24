@@ -153,6 +153,13 @@ def _open_device(
         typer.echo(f"Speichermedium {cfg.Name} wurde in {mount_dir} geöffnet.")
 
 
+def _unmount_errmsg(cfg: cp.DeviceConfiguration, e: sdm.UnmountError) -> str:
+    if e.stderr is None:
+        return f"Speichermedium {cfg.Name} konnte nicht ausgehängt werden. Es ist keine Fehlermeldung verfügbar."
+    stderr = e.stderr.decode("utf-8", errors="replace")
+    return f"Aushängen des Speichermediums {cfg.Name} ist fehlgeschlagen. Die Fehlermeldung ist: {stderr}"
+
+
 @app.command("open")
 def cli_open(
     config: t.Annotated[Path | None, CONFIG_OPTION] = None,
@@ -224,10 +231,7 @@ def close(
             try:
                 sdm.unmount_device(map_name)
             except sdm.UnmountError as e:
-                typer.echo(
-                    f"Speichermedium {cfg.Name} konnte nicht ausgehängt werden: {e}",
-                    err=True,
-                )
+                typer.echo(_unmount_errmsg(cfg, e), err=True)
                 # The device is still mounted, so closing the decrypted device
                 # would fail. Leave it for the user to handle manually.
                 continue
@@ -288,10 +292,7 @@ def backup(
                 # close the device. To prevent this, the sudo session is refreshed.
                 sh.refresh_sudo(parsed_config.SudoPassCmd)
         except sdm.UnmountError as e:
-            typer.echo(
-                f"Speichermedium {cfg.Name} konnte nicht ausgehängt werden: {e}",
-                err=True,
-            )
+            typer.echo(_unmount_errmsg(cfg, e), err=True)
             had_unmount_error = True
     if had_unmount_error:
         raise typer.Exit(1)
