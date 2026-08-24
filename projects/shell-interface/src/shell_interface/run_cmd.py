@@ -13,7 +13,7 @@ class PassCmdError(RuntimeError):
 
 @dataclass(frozen=True)
 class ShellInterfaceError(RuntimeError):
-    errmsg: str
+    command: StrPathList
     stderr: bytes | None
 
 
@@ -60,13 +60,12 @@ def run_cmd(
     try:
         result = subprocess.run(cmd, capture_output=capture_output, check=True, env=env)
     except subprocess.CalledProcessError as e:
-        errmsg = f"Shell-Befehl `{cmd}` ist fehlgeschlagen."
-        raise ShellInterfaceError(errmsg, e.stderr) from e
+        raise ShellInterfaceError(cmd, e.stderr) from e
     return result
 
 
 def pipe_pass_cmd_to_real_cmd(
-    pass_cmd: str, command: StrPathList, *, capture_output: bool = False
+    pass_cmd: str, cmd: StrPathList, *, capture_output: bool = False
 ) -> subprocess.CompletedProcess[bytes]:
     """
     Pipe result of first command to second command
@@ -83,7 +82,7 @@ def pipe_pass_cmd_to_real_cmd(
     -----------
     pass_cmd
         command to run in shell and whose output is piped to the second command
-    command
+    cmd
         command to run in shell and whose input is piped from the first command
     capture_output
         whether to capture the output of the real command; if `True`, the output is
@@ -111,9 +110,8 @@ def pipe_pass_cmd_to_real_cmd(
         raise PassCmdError(errmsg) from e
     try:
         completed_process = subprocess.run(
-            command, input=pwd_proc.stdout, check=True, capture_output=capture_output
+            cmd, input=pwd_proc.stdout, check=True, capture_output=capture_output
         )
     except subprocess.CalledProcessError as e:
-        errmsg = f"Shell-Befehl `{command}` ist fehlgeschlagen."
-        raise ShellInterfaceError(errmsg, e.stderr) from e
+        raise ShellInterfaceError(cmd, e.stderr) from e
     return completed_process

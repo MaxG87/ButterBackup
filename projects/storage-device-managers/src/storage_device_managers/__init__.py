@@ -404,7 +404,7 @@ def unmount_device(device: Path) -> None:
     try:
         sh.run_cmd(cmd=cmd, capture_output=True)
     except sh.ShellInterfaceError as e:
-        raise UnmountError(e.errmsg, e.stderr) from e
+        raise UnmountError(e.command, e.stderr) from e
 
 
 def open_encrypted_device(device: Path, pass_cmd: str) -> Path:
@@ -510,7 +510,7 @@ def encrypt_device(device: Path, password_cmd: str) -> UUID:
         str(new_uuid),
         device,
     ]
-    sh.pipe_pass_cmd_to_real_cmd(pass_cmd=password_cmd, command=format_cmd)
+    sh.pipe_pass_cmd_to_real_cmd(pass_cmd=password_cmd, cmd=format_cmd)
     return new_uuid
 
 

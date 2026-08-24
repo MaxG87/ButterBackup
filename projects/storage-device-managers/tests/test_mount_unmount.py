@@ -150,8 +150,8 @@ def test_unmount_device_preserves_shell_error_details(tmp_path: Path) -> None:
 
     exc = exc_info.value
     assert isinstance(exc, sh.ShellInterfaceError)
-    assert exc.errmsg.startswith("Shell-Befehl `['sudo', 'umount',")
-    assert str(mountpoint) in exc.errmsg
+    assert exc.command[:2] == ["sudo", "umount"]
+    assert mountpoint in exc.command
     assert exc.stderr is not None
     assert exc.stderr.strip()
 
