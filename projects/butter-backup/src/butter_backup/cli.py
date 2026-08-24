@@ -153,8 +153,8 @@ def _open_device(
         typer.echo(f"Speichermedium {cfg.Name} wurde in {mount_dir} geöffnet.")
 
 
-@app.command()
-def open(  # noqa: A001
+@app.command("open")
+def cli_open(
     config: t.Annotated[Path | None, CONFIG_OPTION] = None,
     verbose: t.Annotated[int, VERBOSITY_OPTION] = 0,
 ) -> None:
