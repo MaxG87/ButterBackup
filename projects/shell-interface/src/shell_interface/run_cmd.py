@@ -1,9 +1,9 @@
 import os
 import subprocess
+from collections import abc
 from pathlib import Path
 
-StrPathList = list[str | Path]
-_CMD_LIST = list[str] | list[Path] | StrPathList
+StrPathList = abc.Sequence[str | Path]
 
 
 class PassCmdError(RuntimeError):
@@ -16,7 +16,7 @@ class ShellInterfaceError(RuntimeError):
 
 def run_cmd(
     *,
-    cmd: _CMD_LIST,
+    cmd: StrPathList,
     env: dict[str, str] | None = None,
     capture_output: bool = False,
 ) -> subprocess.CompletedProcess[bytes]:
@@ -63,7 +63,7 @@ def run_cmd(
 
 
 def pipe_pass_cmd_to_real_cmd(
-    pass_cmd: str, command: _CMD_LIST, *, capture_output: bool = False
+    pass_cmd: str, command: StrPathList, *, capture_output: bool = False
 ) -> subprocess.CompletedProcess[bytes]:
     """
     Pipe result of first command to second command
