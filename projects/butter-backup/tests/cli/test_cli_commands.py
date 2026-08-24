@@ -430,8 +430,10 @@ def test_version(runner) -> None:
     result = runner.invoke(app, ["version"])
     lines = result.stdout.splitlines()
     assert len(lines) == 1
-    parts = lines[0].split(".")
-    assert len(parts) == 3  # noqa: PLR2004
+    major, minor, patch = lines[0].split(".")
+    assert major.isdecimal()
+    assert minor.isdecimal()
+    assert patch.isdecimal()
 
 
 @pytest.mark.parametrize("subprogram", ["open", "backup"])
