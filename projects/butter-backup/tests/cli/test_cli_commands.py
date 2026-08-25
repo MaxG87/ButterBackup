@@ -1,6 +1,8 @@
 import datetime as dt
 import re
 import time
+import types
+from contextlib import contextmanager
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from uuid import UUID
@@ -503,3 +505,84 @@ def test_unmount_error_does_not_cause_content_deletion(
     assert result.exit_code == 0
     assert mount_of_device.exists()  # Target directory should be kept after closing.
     assert sdm.is_mounted(mount_of_device) is False
+
+
+def test_close_prints_unmount_error_and_keeps_device_open(
+    runner: CliRunner, mocker
+) -> None:
+    map_name = Path("/dev/mapper/mock-device")
+    cfg = types.SimpleNamespace(
+        Name="mock-device",
+        device=lambda: Path("/tmp/mock-device"),
+        map_name=lambda: map_name,
+    )
+    parsed = types.SimpleNamespace(
+        DeviceConfigurations=[cfg], SudoPassCmd=None, OpenDirectory=None
+    )
+    mocker.patch.object(cli, "_read_configuration", return_value=parsed)
+    mocker.patch.object(Path, "exists", return_value=True)
+    mocker.patch.object(
+        cli.sdm,
+        "get_mounted_devices",
+        return_value={str(map_name): {Path("/mnt/mock"): frozenset()}},
+    )
+    mocker.patch.object(cli.sh, "refresh_sudo")
+    mocker.patch.object(
+        cli.sdm,
+        "unmount_device",
+        side_effect=sdm.UnmountError(["sudo", "umount", map_name], b"Mocked stderr\n"),
+    )
+    close_mock = mocker.patch.object(cli.sdm, "close_decrypted_device")
+
+    result = runner.invoke(app, ["close"])
+
+    assert result.exit_code == 0
+    assert (
+        "Aushängen des Speichermediums mock-device ist fehlgeschlagen." in result.stderr
+    )
+    assert "Mocked stderr" in result.stderr
+    close_mock.assert_not_called()
+
+
+def test_backup_keeps_unmount_error_as_primary_failure(
+    runner: CliRunner, mocker
+) -> None:
+    @contextmanager
+    def _failing_mounted_device(*_args, **_kwargs):
+        yield Path("/mnt/mock")
+        raise sdm.UnmountError(
+            ["sudo", "umount", Path("/dev/mapper/mock-device")], b"Mocked stderr\n"
+        )
+
+    cfg = types.SimpleNamespace(
+        Name="mock-device",
+        DevicePassCmd="echo pw",
+        device=lambda: Path("/dev/disk/by-uuid/mock-device"),
+        compression=lambda: None,
+    )
+    parsed = types.SimpleNamespace(
+        DeviceConfigurations=[cfg], SudoPassCmd=None, OpenDirectory=None
+    )
+    mocker.patch.object(cli, "_read_configuration", return_value=parsed)
+    mocker.patch.object(cli, "_skip_device", return_value=False)
+    backend = mocker.Mock()
+    mocker.patch.object(cli.bb.BackupBackend, "from_config", return_value=backend)
+    mocker.patch.object(cli.sh, "refresh_sudo")
+    mocker.patch.object(
+        cli.sdm, "open_encrypted_device", return_value=Path("/dev/mapper/mock-device")
+    )
+    close_cmd = ["sudo", "cryptsetup", "close", "mock-device"]
+    mocker.patch.object(
+        cli.sdm,
+        "close_decrypted_device",
+        side_effect=sh.ShellInterfaceError(close_cmd, None),
+    )
+    mocker.patch.object(cli.sdm, "mounted_device", _failing_mounted_device)
+
+    result = runner.invoke(app, ["backup"])
+
+    assert result.exit_code == 1
+    assert (
+        "Aushängen des Speichermediums mock-device ist fehlgeschlagen." in result.stderr
+    )
+    assert "Mocked stderr" in result.stderr

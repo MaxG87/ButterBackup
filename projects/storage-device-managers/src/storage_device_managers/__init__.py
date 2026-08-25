@@ -146,7 +146,13 @@ def decrypted_device(device: Path, pass_cmd: str) -> Iterator[Path]:
     decrypted = open_encrypted_device(device, pass_cmd)
     try:
         yield decrypted
-    finally:
+    except Exception:
+        with contextlib.suppress(sh.ShellInterfaceError):
+            # If cleanup follows another failure (e.g. an unmount error), keep the
+            # original exception as root cause.
+            close_decrypted_device(decrypted)
+        raise
+    else:
         close_decrypted_device(decrypted)
 
 
