@@ -549,10 +549,12 @@ def test_backup_keeps_unmount_error_as_primary_failure(
 ) -> None:
     @contextmanager
     def _failing_mounted_device(*_args, **_kwargs):
-        yield Path("/mnt/mock")
-        raise sdm.UnmountError(
-            ["sudo", "umount", Path("/dev/mapper/mock-device")], b"Mocked stderr\n"
-        )
+        try:
+            yield Path("/mnt/mock")
+        finally:
+            raise sdm.UnmountError(
+                ["sudo", "umount", Path("/dev/mapper/mock-device")], b"Mocked stderr\n"
+            )
 
     cfg = types.SimpleNamespace(
         Name="mock-device",

@@ -147,7 +147,7 @@ def decrypted_device(device: Path, pass_cmd: str) -> Iterator[Path]:
     try:
         yield decrypted
     except Exception:
-        with contextlib.suppress(sh.ShellInterfaceError):
+        with contextlib.suppress(Exception):
             # If cleanup follows another failure (e.g. an unmount error), keep the
             # original exception as root cause.
             close_decrypted_device(decrypted)
