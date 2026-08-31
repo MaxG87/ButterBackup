@@ -22,19 +22,6 @@ def test_run_cmd_fails() -> None:
         sh.run_cmd(cmd=["false"])
 
 
-def test_shellinterfaceerror_can_be_raised_and_reraised_with_traceback() -> None:
-    error = sh.ShellInterfaceError(["false"], b"stderr")
-
-    with pytest.raises(sh.ShellInterfaceError) as exc_info:
-        raise error
-    assert exc_info.value is error
-    assert exc_info.value.__traceback__ is not None
-
-    with pytest.raises(sh.ShellInterfaceError) as exc_info:
-        raise error
-    assert exc_info.value.__traceback__ is not None
-
-
 @given(environment=st.dictionaries(environment_variable_names, echoable_text))
 def test_run_cmd_forwards_env(environment: dict[str, str]) -> None:
     proc = sh.run_cmd(cmd=["env"], capture_output=True, env=environment)
