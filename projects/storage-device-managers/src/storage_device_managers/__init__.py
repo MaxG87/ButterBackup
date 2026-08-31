@@ -146,14 +146,34 @@ def decrypted_device(device: Path, pass_cmd: str) -> Iterator[Path]:
     decrypted = open_encrypted_device(device, pass_cmd)
     try:
         yield decrypted
-    except Exception:
-        with contextlib.suppress(Exception):
-            # If cleanup follows another failure (e.g. an unmount error), keep the
-            # original exception as root cause.
+    except UnmountError as exc:
+        # Closing the encrypted device is expected to fail too after an UnmountError. So
+        # the error handling of closing the encrypted device needs to reflect that.
+        try:
+            # Try closing the device anyways.
             close_decrypted_device(decrypted)
+        except Exception as close_exc:
+            # Failed. Report back both exceptions, so the callee can handle them as
+            # needed.
+            raise BaseExceptionGroup(
+                "closing the encrypted device failed while handling another error",
+                [exc, close_exc],
+            ) from None
+        else:
+            # Succeeded. Re-raise back the original exception for error handling.
+            raise
+    except Exception:
+        # If any other exception occurs, it is expected that closing the encrypted
+        # device will succeed. After all, the mounting context manager should have
+        # cleaned up the mount point already.
+        close_decrypted_device(decrypted)
         raise
     else:
         close_decrypted_device(decrypted)
+    finally:
+        # Assumed to be unreachable, because all exceptions are handled and the else
+        # block is executed if no exception occurs.
+        pass
 
 
 @contextlib.contextmanager
