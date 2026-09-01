@@ -1,7 +1,6 @@
 import datetime as dt
 import re
 import time
-import types
 import typing as t
 from contextlib import contextmanager
 from pathlib import Path
@@ -508,44 +507,42 @@ def test_unmount_error_does_not_cause_content_deletion(
     assert sdm.is_mounted(mount_of_device) is False
 
 
-def test_close_prints_unmount_error_and_keeps_device_open(
-    runner: CliRunner, mocker
+def test_close_handles_unmount_error_correctly(
+    runner: CliRunner, mocker, encrypted_device, tmp_path
 ) -> None:
-    map_name = Path("/dev/mapper/mock-device")
-    cfg = types.SimpleNamespace(
-        Name="mock-device",
-        device=lambda: Path("/tmp/mock-device"),
-        map_name=lambda: map_name,
-    )
-    parsed = types.SimpleNamespace(
-        DeviceConfigurations=[cfg], SudoPassCmd=None, OpenDirectory=None
-    )
-    mocker.patch.object(cli, "_read_configuration", return_value=parsed)
-    mocker.patch.object(Path, "exists", return_value=True)
-    mocker.patch.object(
-        cli.sdm,
-        "get_mounted_devices",
-        return_value={str(map_name): {Path("/mnt/mock"): frozenset()}},
-    )
-    mocker.patch.object(cli.sh, "refresh_sudo")
-    mocker.patch.object(
-        cli.sdm,
-        "unmount_device",
-        side_effect=sdm.UnmountError(["sudo", "umount", map_name], b"Mocked stderr\n"),
-    )
-    close_mock = mocker.patch.object(cli.sdm, "close_decrypted_device")
+    config = complement_configuration(encrypted_device, tmp_path)
+    prepare_tmp_path(config, tmp_path)
+    config_file = tmp_path / "config.json"
+    wrapped = cp.Configuration(DeviceConfigurations=[config])
+    config_file.write_text(wrapped.model_dump_json())
 
-    result = runner.invoke(app, ["close"])
-
+    result = runner.invoke(app, ["open", "--config", str(config_file)])
     assert result.exit_code == 0
-    assert (
-        "Aushängen des Speichermediums mock-device ist fehlgeschlagen." in result.stderr
+
+    # Hook in right after mounting to keep a file handle open, forcing a
+    # real unmount failure once the CLI tries to clean up.
+    original_unmount_device = sdm.unmount_device
+
+    @contextmanager
+    def _failing_unmount_device(device: Path):
+        raise sdm.UnmountError(["sudo", "umount", device], b"Mocked stderr")
+
+    mocker.patch.object(sdm, "unmount_device", _failing_unmount_device)
+    failing_result = runner.invoke(app, ["close", "--config", str(config_file)])
+    mocker.patch.object(sdm, "unmount_device", original_unmount_device)
+    result = runner.invoke(app, ["close", "--config", str(config_file)])
+    assert failing_result.exit_code == 1
+    assert result.exit_code == 0
+
+    lines = failing_result.stderr.splitlines()
+    assert len(lines) == 1
+    assert re.match(
+        "Aushängen des Speichermediums .* ist fehlgeschlagen. Die Fehlermeldung ist:",
+        lines[0],
     )
-    assert "Mocked stderr" in result.stderr
-    close_mock.assert_not_called()
 
 
-def test_backup_keeps_unmount_error_as_primary_failure(
+def test_backup_handles_unmount_error_correctly(
     runner: CliRunner, mocker, encrypted_device, tmp_path
 ) -> None:
     config = complement_configuration(encrypted_device, tmp_path)

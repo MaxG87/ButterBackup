@@ -235,6 +235,7 @@ def close(
     setup_logging(verbose)
     parsed_config = _read_configuration(config)
     mounted_devices = sdm.get_mounted_devices()
+    had_unmount_error = False
     for cfg in parsed_config.DeviceConfigurations:
         map_name = cfg.map_name()
         map_name_as_str = str(map_name)
@@ -254,10 +255,9 @@ def close(
                 sdm.unmount_device(map_name)
             except sdm.UnmountError as e:
                 typer.echo(_unmount_errmsg(cfg, e), err=True)
-                # The device is still mounted, so closing the decrypted device
-                # would fail. Leave it for the user to handle manually.
-                continue
+                had_unmount_error = True
             sdm.close_decrypted_device(map_name)
+    raise typer.Exit(had_unmount_error)
 
 
 @app.command()
