@@ -13,7 +13,7 @@ dependencies = [
     "pyyaml>=6.0.3",
     "shell-interface",
     "storage-device-managers",
-    "typer>=0.27.0",
+    "typer>=0.27.2",
 ]
 
 [project.urls]
