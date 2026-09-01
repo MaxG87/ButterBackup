@@ -22,7 +22,7 @@ Changelog = "https://github.com/MaxG87/storage-device-managers/blob/main/CHANGEL
 
 [dependency-groups]
 dev = [
-    "hypothesis>=6.163.0",
+    "hypothesis>=6.165.10",
     "mypy>=2.1.0",
     "pdbpp>=0.12.1",
     "pytest>=9.0.3",
