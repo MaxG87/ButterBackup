@@ -2,6 +2,7 @@ import datetime as dt
 import re
 import time
 import types
+import typing as t
 from contextlib import contextmanager
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -545,46 +546,42 @@ def test_close_prints_unmount_error_and_keeps_device_open(
 
 
 def test_backup_keeps_unmount_error_as_primary_failure(
-    runner: CliRunner, mocker
+    runner: CliRunner, mocker, encrypted_device, tmp_path
 ) -> None:
+    config = complement_configuration(encrypted_device, tmp_path)
+    prepare_tmp_path(config, tmp_path)
+    config_file = tmp_path / "config.json"
+    wrapped = cp.Configuration(DeviceConfigurations=[config])
+    config_file.write_text(wrapped.model_dump_json())
+
+    # Hook in right after mounting to keep a file handle open, forcing a
+    # real unmount failure once the CLI tries to clean up.
+    original_mounted_device = sdm.mounted_device
+    captured_mount_point: Path | None = None
+    captured_blocker: t.IO[str] | None = None
+
     @contextmanager
-    def _failing_mounted_device(*_args, **_kwargs):
-        try:
-            yield Path("/mnt/mock")
-        finally:
-            raise sdm.UnmountError(
-                ["sudo", "umount", Path("/dev/mapper/mock-device")], b"Mocked stderr\n"
-            )
+    def _busy_mounted_device(*args, **kwargs):
+        nonlocal captured_mount_point, captured_blocker
+        with original_mounted_device(*args, **kwargs) as mount_point:
+            captured_mount_point = mount_point
+            captured_blocker = open(mount_point / "busy-marker", "w")  # noqa: SIM115
+            yield mount_point
 
-    cfg = types.SimpleNamespace(
-        Name="mock-device",
-        DevicePassCmd="echo pw",
-        device=lambda: Path("/dev/disk/by-uuid/mock-device"),
-        compression=lambda: None,
-    )
-    parsed = types.SimpleNamespace(
-        DeviceConfigurations=[cfg], SudoPassCmd=None, OpenDirectory=None
-    )
-    mocker.patch.object(cli, "_read_configuration", return_value=parsed)
-    mocker.patch.object(cli, "_skip_device", return_value=False)
-    backend = mocker.Mock()
-    mocker.patch.object(cli.bb.BackupBackend, "from_config", return_value=backend)
-    mocker.patch.object(cli.sh, "refresh_sudo")
-    mocker.patch.object(
-        cli.sdm, "open_encrypted_device", return_value=Path("/dev/mapper/mock-device")
-    )
-    close_cmd = ["sudo", "cryptsetup", "close", "mock-device"]
-    mocker.patch.object(
-        cli.sdm,
-        "close_decrypted_device",
-        side_effect=sh.ShellInterfaceError(close_cmd, None),
-    )
-    mocker.patch.object(cli.sdm, "mounted_device", _failing_mounted_device)
+    mocker.patch.object(sdm, "mounted_device", _busy_mounted_device)
+    # result = runner.invoke(app, ["backup"])
+    result = runner.invoke(app, ["backup", "--config", str(config_file)])
 
-    result = runner.invoke(app, ["backup"])
+    # Clean-up
+    assert captured_blocker is not None
+    assert captured_mount_point is not None
+    captured_blocker.close()
+    sdm.unmount_device(captured_mount_point)
+    assert not captured_mount_point.is_mount()
+    sdm.close_decrypted_device(config.map_name())
 
     assert result.exit_code == 1
-    assert (
-        "Aushängen des Speichermediums mock-device ist fehlgeschlagen." in result.stderr
+    assert re.match(
+        "Aushängen des Speichermediums .* ist fehlgeschlagen. Die Fehlermeldung ist:",
+        result.stderr,
     )
-    assert "Mocked stderr" in result.stderr
