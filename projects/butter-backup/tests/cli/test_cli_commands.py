@@ -483,14 +483,12 @@ def test_unmount_error_does_not_cause_content_deletion(
     # This test "successfully" provoked the buggy behaviour before the bug was fixed.
     mocker.patch(
         "storage_device_managers.unmount_device",
-        side_effect=sdm.UnmountError("Mocked unmount error", b"Mocked stderr"),
+        side_effect=sdm.UnmountError(
+            ["sudo", "umount", encrypted_device.map_name()], b"Mocked stderr"
+        ),
     )
 
-    config = complement_configuration(encrypted_device, tmp_path)
-    prepare_tmp_path(config, tmp_path)
-    config_file = tmp_path / "config.json"
-    wrapped = cp.Configuration(DeviceConfigurations=[config])
-    config_file.write_text(wrapped.model_dump_json())
+    config_file = _prepare_config_file(encrypted_device, tmp_path)
 
     result = runner.invoke(app, ["backup", "--config", str(config_file)])
     assert result.exit_code == 1
@@ -498,8 +496,10 @@ def test_unmount_error_does_not_cause_content_deletion(
     # It is assumed that the device is still mounted, since the unmounting is mocked to
     # fail.
     mounts = sdm.get_mounted_devices()
-    mount_of_device = next(iter(mounts[str(config.map_name())]))
-    expected_backup_repository = mount_of_device / config.BackupRepositoryFolder
+    mount_of_device = next(iter(mounts[str(encrypted_device.map_name())]))
+    expected_backup_repository = (
+        mount_of_device / encrypted_device.BackupRepositoryFolder
+    )
     assert expected_backup_repository.exists()
     assert expected_backup_repository.is_dir()
     # Check that the device can be closed successfully after the failed unmount
