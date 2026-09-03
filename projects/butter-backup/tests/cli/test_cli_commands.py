@@ -514,11 +514,7 @@ def test_unmount_error_does_not_cause_content_deletion(
 def test_close_handles_unmount_error_correctly(
     runner: CliRunner, mocker, encrypted_device, tmp_path
 ) -> None:
-    config = complement_configuration(encrypted_device, tmp_path)
-    prepare_tmp_path(config, tmp_path)
-    config_file = tmp_path / "config.json"
-    wrapped = cp.Configuration(DeviceConfigurations=[config])
-    config_file.write_text(wrapped.model_dump_json())
+    config_file = _prepare_config_file(encrypted_device, tmp_path)
 
     result = runner.invoke(app, ["open", "--config", str(config_file)])
     assert result.exit_code == 0
