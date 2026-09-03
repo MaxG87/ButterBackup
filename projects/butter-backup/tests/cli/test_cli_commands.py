@@ -31,6 +31,17 @@ def wait_until_gone(p: Path, timeout: dt.timedelta = dt.timedelta(seconds=3)) ->
         time.sleep(0.01)  # Sleep a bit to avoid busy waiting
 
 
+def _prepare_config_file(
+    device_config: cp.DeviceConfiguration, parent_dir: Path
+) -> Path:
+    config = complement_configuration(device_config, parent_dir)
+    prepare_tmp_path(config, parent_dir)
+    config_file = parent_dir / "config.json"
+    wrapped_config = cp.Configuration(DeviceConfigurations=[config])
+    config_file.write_text(wrapped_config.model_dump_json())
+    return config_file
+
+
 @pytest.fixture
 def runner():
     return CliRunner()
@@ -445,18 +456,11 @@ def test_version(runner) -> None:
 def test_do_backup_refuses_backup_when_device_is_already_open(
     subprogram: str, runner: CliRunner, encrypted_device, tmp_path: Path
 ) -> None:
-    config = complement_configuration(encrypted_device, tmp_path)
-    prepare_tmp_path(config, tmp_path)
-
-    config_file = tmp_path / "config.json"
-
-    wrapped_config = cp.Configuration(DeviceConfigurations=[config])
-    config_file.write_text(wrapped_config.model_dump_json())
+    config_file = _prepare_config_file(encrypted_device, tmp_path)
     runner.invoke(app, ["open", "--config", str(config_file)])
     result = runner.invoke(app, [subprogram, "--config", str(config_file)])
-    expected_msg = (
-        f"Speichermedium {config.Name} ist bereits geöffnet. Es wird übersprungen."
-    )
+    runner.invoke(app, ["close", "--config", str(config_file)])
+    expected_msg = f"Speichermedium {encrypted_device.Name} ist bereits geöffnet. Es wird übersprungen."
 
     assert result.exit_code == 0
     assert expected_msg in result.stderr
@@ -575,7 +579,7 @@ def test_backup_handles_unmount_error_correctly(
     captured_blocker.close()
     sdm.unmount_device(captured_mount_point)
     assert not captured_mount_point.is_mount()
-    sdm.close_decrypted_device(config.map_name())
+    sdm.close_decrypted_device(encrypted_device.map_name())
 
     assert result.exit_code == 1
     assert re.match(
