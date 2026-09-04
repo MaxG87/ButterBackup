@@ -533,6 +533,7 @@ def test_close_handles_unmount_error_correctly(
     result = runner.invoke(app, ["close", "--config", str(config_file)])
     assert failing_result.exit_code == 1
     assert result.exit_code == 0
+    assert isinstance(failing_result.exception, SystemExit)
 
     stderr_lines = failing_result.stderr.splitlines()
     assert result.stdout == ""

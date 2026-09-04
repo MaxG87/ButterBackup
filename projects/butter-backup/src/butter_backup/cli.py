@@ -253,10 +253,11 @@ def close(
             sh.refresh_sudo(parsed_config.SudoPassCmd)
             try:
                 sdm.unmount_device(map_name)
-            except sdm.UnmountError as e:
-                typer.echo(_unmount_errmsg(cfg, e), err=True)
+            except* sdm.UnmountError as e:
+                _handle_unmount_error_exc_group(e, cfg)
                 had_unmount_error = True
-            sdm.close_decrypted_device(map_name)
+            else:
+                sdm.close_decrypted_device(map_name)
     raise typer.Exit(had_unmount_error)
 
 
