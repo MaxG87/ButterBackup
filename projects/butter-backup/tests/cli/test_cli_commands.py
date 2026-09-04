@@ -534,11 +534,12 @@ def test_close_handles_unmount_error_correctly(
     assert failing_result.exit_code == 1
     assert result.exit_code == 0
 
-    lines = failing_result.stderr.splitlines()
-    assert len(lines) == 1
+    stderr_lines = failing_result.stderr.splitlines()
+    assert result.stdout == ""
+    assert len(stderr_lines) == 1
     assert re.match(
         "Aushängen des Speichermediums .* ist fehlgeschlagen. Die Fehlermeldung ist:",
-        lines[0],
+        stderr_lines[0],
     )
 
 
@@ -574,6 +575,7 @@ def test_backup_handles_unmount_error_correctly(
     sdm.close_decrypted_device(encrypted_device.map_name())
 
     assert result.exit_code == 1
+    assert result.stdout == ""
     assert re.match(
         "Aushängen des Speichermediums .* ist fehlgeschlagen. Die Fehlermeldung ist:",
         result.stderr,
