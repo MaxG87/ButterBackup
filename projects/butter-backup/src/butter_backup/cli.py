@@ -317,8 +317,7 @@ def backup(
         except* sdm.UnmountError as e:
             _handle_unmount_error_exc_group(e, cfg)
             had_unmount_error = True
-    if had_unmount_error:
-        raise typer.Exit(1)
+    raise typer.Exit(had_unmount_error)
 
 
 @app.command()
