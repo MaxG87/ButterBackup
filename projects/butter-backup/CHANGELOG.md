@@ -1,5 +1,50 @@
 # Changelog
 
+## [3.5.0](https://github.com/MaxG87/ButterBackup/compare/v3.6.0...v3.5.0) (2026-09-05)
+
+
+### Features
+
+* Add destination parameter to mounted_device ([33b6738](https://github.com/MaxG87/ButterBackup/commit/33b6738a82276fab03259499b43de6225049acf1))
+* add OpenDirectory config field and remove open CLI dest argument ([a0162f3](https://github.com/MaxG87/ButterBackup/commit/a0162f3e1bc8fcc6eaed74f107ce3b64639fd35b))
+* Improve reporting on unmount errors ([d6a1418](https://github.com/MaxG87/ButterBackup/commit/d6a141873958d40b293bf1ad9dfb65d153b8beee))
+* Improve style of error reporting ([de9b75b](https://github.com/MaxG87/ButterBackup/commit/de9b75b9e6ff02763336812216afe3c44775d459))
+* Improve two minor logging details ([4860491](https://github.com/MaxG87/ButterBackup/commit/4860491dbfdcf983009bfd41491fa2fc01dc1a09))
+* Introduce and use OpenDest in configuration file ([0f1ec84](https://github.com/MaxG87/ButterBackup/commit/0f1ec84ca08603ca40330b5495e7f1131a39e084))
+* Logge Beginn von rsync-Aktionen auf DEBUG ([f5cf4e7](https://github.com/MaxG87/ButterBackup/commit/f5cf4e789ad20001611e3f61bc00635a8f123f45))
+* **sdm:** Add ensure_directory for privileged mkdir ([f32d38f](https://github.com/MaxG87/ButterBackup/commit/f32d38fe6aed676569f423c90533fcbecdb49797))
+
+
+### Bug Fixes
+
+* Actually fix stacktrace of subcommand close ([be65a34](https://github.com/MaxG87/ButterBackup/commit/be65a34f743643f89993ecb68736ddc8be56fe1a))
+* Add quotation marks to more paths. ([92cb8d0](https://github.com/MaxG87/ButterBackup/commit/92cb8d07930be5c7b520bc60bc09dd23d095cb74))
+* Fix behaviour on unmount error during backup ([d12819c](https://github.com/MaxG87/ButterBackup/commit/d12819cfb0015cfb8b3656b42f35846729fa9645))
+* **tests:** Restrict length of path elements ([8d9f62a](https://github.com/MaxG87/ButterBackup/commit/8d9f62aad48f1dd0f14ef20bfea93ca721c26021))
+
+
+### Dependencies
+
+* Bump all prod and dev dependencies ([761d3e5](https://github.com/MaxG87/ButterBackup/commit/761d3e5a73ae26eabc04d5b5384726dfa4d72177))
+* bump json5 in the production-dependencies group ([#127](https://github.com/MaxG87/ButterBackup/issues/127)) ([47145e2](https://github.com/MaxG87/ButterBackup/commit/47145e2b3ea524398a9d2771fda8c86981272139))
+* Bump typer in the production-dependencies group ([#147](https://github.com/MaxG87/ButterBackup/issues/147)) ([f8ac21f](https://github.com/MaxG87/ButterBackup/commit/f8ac21fc8e8b157065d4a91c0c68e7351309338c))
+* **dev:** Add tomli_w to dev dependencies ([866f13b](https://github.com/MaxG87/ButterBackup/commit/866f13b3633a648cee0147d09a04571e1f579234))
+* **dev:** bump hypothesis in the development-dependencies group ([#128](https://github.com/MaxG87/ButterBackup/issues/128)) ([799133a](https://github.com/MaxG87/ButterBackup/commit/799133ac77ab54e4cd215acc6ce916624f6158ab))
+* **dev:** Bump hypothesis in the development-dependencies group ([#144](https://github.com/MaxG87/ButterBackup/issues/144)) ([c21f937](https://github.com/MaxG87/ButterBackup/commit/c21f937e22fdc4371d179bcb48aaea283a416f2e))
+
+
+### Documentation
+
+* Add explaining commit to one test function ([36adef0](https://github.com/MaxG87/ButterBackup/commit/36adef08c96b5f1f939e5509468eb7600f60a751))
+* Add landing page README in 🇬🇧 and 🇩🇪 ([8327cbc](https://github.com/MaxG87/ButterBackup/commit/8327cbca05448b7d58b834b7d418ed202d4a2c99))
+* Add long comment why useful test is impossible ([f24b958](https://github.com/MaxG87/ButterBackup/commit/f24b958b618591a335c5e1d82d9ceae15ada7609))
+
+
+### Miscellaneous Chores
+
+* release 3.5.0 ([9296019](https://github.com/MaxG87/ButterBackup/commit/92960193a649f4f4342c428e7a28ec1425c60f75))
+* release v0.15.0 ([bd5bfcc](https://github.com/MaxG87/ButterBackup/commit/bd5bfcc8238268cc7c8d3c69af47f37fed175020))
+
 ## [3.6.0](https://github.com/MaxG87/ButterBackup/compare/v3.5.5...v3.6.0) (2026-04-15)
 
 
