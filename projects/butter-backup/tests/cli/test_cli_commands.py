@@ -12,6 +12,7 @@ import typer
 from loguru import logger
 from typer.testing import CliRunner
 
+from butter_backup import backup_backends as bb
 from butter_backup import cli
 from butter_backup import config_parser as cp
 from butter_backup.cli import app
@@ -503,3 +504,39 @@ def test_unmount_error_does_not_cause_content_deletion(
     assert result.exit_code == 0
     assert mount_of_device.exists()  # Target directory should be kept after closing.
     assert sdm.is_mounted(mount_of_device) is False
+
+
+def test_backup_with_missing_snapshot_prints_short_error_message(
+    runner: CliRunner, encrypted_device: cp.DeviceConfiguration, tmp_path: Path, mocker
+) -> None:
+    # THIS IS A REGRESSION TEST!
+    #
+    # A misconfigured (or corrupted) backup repository used to cause a misleading
+    # "ValueError: max() arg is an empty sequence" traceback, originating from an
+    # empty glob iterator. Instead, a single, clear error message should be printed
+    # and the remaining devices should still be processed.
+    if not isinstance(encrypted_device, cp.BtrFSRsyncConfig):
+        # This test works for BtrFSRsyncConfig only. However, encrypted_device is
+        # parameterised over all backends. Since this simplifies many other tests
+        # it seemed to be an acceptable tradeoff to short-circuit the test here.
+        return
+    mocker.patch(
+        "butter_backup.backup_backends.BtrFSRsyncBackend.do_backup",
+        side_effect=bb.NoBackupSnapshotFoundError("Mocked missing snapshot"),
+    )
+
+    config = complement_configuration(encrypted_device, tmp_path)
+    prepare_tmp_path(config, tmp_path)
+    config_file = tmp_path / "config.json"
+    wrapped = cp.Configuration(DeviceConfigurations=[config])
+    config_file.write_text(wrapped.model_dump_json())
+
+    result = runner.invoke(app, ["backup", "--config", str(config_file)])
+
+    assert result.exit_code == 0
+    expected_msg = (
+        f"Speichermedium {config.Name} wurde übersprungen, da kein gültiges "
+        "Backup-Repository gefunden wurde."
+    )
+    assert expected_msg in result.stderr
+    assert "Traceback" not in result.stderr

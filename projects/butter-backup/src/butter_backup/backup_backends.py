@@ -10,6 +10,10 @@ from loguru import logger
 from . import config_parser as cp
 
 
+class NoBackupSnapshotFoundError(RuntimeError):
+    """Raised when a BackupRepositoryFolder does not contain any snapshot."""
+
+
 class BackupBackend(abc.ABC):
     @abc.abstractmethod
     def do_backup(self, mount_dir: Path, sudo_pass_cmd: str | None = None) -> None: ...
@@ -62,7 +66,19 @@ class BtrFSRsyncBackend(BackupBackend):
 
     @staticmethod
     def get_source_snapshot(root: Path) -> Path:
-        return max(root.glob("202?-*"))
+        if not root.is_dir():
+            raise NoBackupSnapshotFoundError(
+                f'Das Backup-Repository "{root}" existiert nicht. Bitte prüfen '
+                "Sie, ob die Konfiguration einen Tippfehler enthält oder das "
+                "Speichermedium richtig eingebunden ist."
+            )
+        try:
+            return max(root.glob("202?-*"))
+        except ValueError as err:
+            raise NoBackupSnapshotFoundError(
+                f'Das Backup-Repository "{root}" enthält keine vorhandene '
+                "Sicherungskopie. Bitte prüfen Sie die Konfiguration."
+            ) from err
 
     @staticmethod
     def adapt_ownership(snapshot_root: Path) -> None:

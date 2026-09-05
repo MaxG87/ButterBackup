@@ -23,6 +23,20 @@ FIRST_BACKUP = TEST_RESOURCES / "first-backup"
 SECOND_BACKUP = TEST_RESOURCES / "second-backup"
 
 
+def test_get_source_snapshot_raises_clear_error_for_missing_repository(
+    tmp_path,
+) -> None:
+    with pytest.raises(bb.NoBackupSnapshotFoundError):
+        bb.BtrFSRsyncBackend.get_source_snapshot(tmp_path / "does-not-exist")
+
+
+def test_get_source_snapshot_raises_clear_error_for_empty_repository(
+    tmp_path,
+) -> None:
+    with pytest.raises(bb.NoBackupSnapshotFoundError):
+        bb.BtrFSRsyncBackend.get_source_snapshot(tmp_path)
+
+
 def get_uid_gid(path: Path) -> tuple[int, int]:
     stat_info = path.stat()
     return stat_info.st_uid, stat_info.st_gid

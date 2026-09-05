@@ -271,7 +271,14 @@ def backup(
                 decrypted, dest, compression=cfg.compression()
             ) as mount_dir,
         ):
-            backend.do_backup(mount_dir, parsed_config.SudoPassCmd)
+            try:
+                backend.do_backup(mount_dir, parsed_config.SudoPassCmd)
+            except bb.NoBackupSnapshotFoundError:
+                logger.error(
+                    f"Speichermedium {cfg.Name} wurde übersprungen, da kein "
+                    "gültiges Backup-Repository gefunden wurde."
+                )
+                continue
             # A backup could take so long that the sudo session expires. In this
             # case the user would have to enter the password again to unmount and
             # close the device. To prevent this, the sudo session is refreshed.
