@@ -146,22 +146,11 @@ def decrypted_device(device: Path, pass_cmd: str) -> Iterator[Path]:
     decrypted = open_encrypted_device(device, pass_cmd)
     try:
         yield decrypted
-    except UnmountError as exc:
-        # Closing the encrypted device is expected to fail too after an UnmountError. So
-        # the error handling of closing the encrypted device needs to reflect that.
-        try:
-            # Try closing the device anyways.
-            close_decrypted_device(decrypted)
-        except Exception as close_exc:
-            # Failed. Report back both exceptions, so the callee can handle them as
-            # needed.
-            raise BaseExceptionGroup(
-                "closing the encrypted device failed while handling another error",
-                [exc, close_exc],
-            ) from None
-        else:
-            # Succeeded. Re-raise back the original exception for error handling.
-            raise
+    except UnmountError:
+        # If unmounting fails, closing the decrypted device will also fail. Therefore,
+        # the decrypted device is not closed in this case. The exception is re-raised
+        # to inform the caller that unmounting failed.
+        raise
     except Exception:
         # If any other exception occurs, it is expected that closing the encrypted
         # device will succeed. After all, the mounting context manager should have
@@ -169,6 +158,8 @@ def decrypted_device(device: Path, pass_cmd: str) -> Iterator[Path]:
         close_decrypted_device(decrypted)
         raise
     else:
+        # If no exception occurs, the decrypted device is closed. This is the expected
+        # behaviour.
         close_decrypted_device(decrypted)
     finally:
         # Assumed to be unreachable, because all exceptions are handled and the else

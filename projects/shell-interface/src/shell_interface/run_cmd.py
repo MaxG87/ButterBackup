@@ -11,13 +11,19 @@ class PassCmdError(RuntimeError):
     pass
 
 
-@dataclass(frozen=False)
+@dataclass(frozen=False, eq=False)
 class ShellInterfaceError(RuntimeError):
     # Setting frozen=True would prevent updating `__traceback__` in the except blocks,
     # causing error handling to crash itself. Therefore frozen=False is used, contrary
     # to the usual practice of making dataclasses frozen.
     command: StrPathList
     stderr: bytes | None
+
+    def __hash__(self) -> int:
+        return id(self)
+
+    def __eq__(self, other: object) -> bool:
+        return hash(self) == hash(other)
 
 
 def run_cmd(

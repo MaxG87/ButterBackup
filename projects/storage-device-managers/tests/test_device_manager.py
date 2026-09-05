@@ -76,35 +76,6 @@ def test_decrypted_device_closes_in_case_of_exception(encrypted_device) -> None:
     assert not dd.exists()
 
 
-def test_decrypted_device_preserves_original_exception_when_close_fails(
-    encrypted_device, tmp_path
-) -> None:
-    encrypted_device, pass_cmd = encrypted_device
-    user = sh.get_user()
-    group = sh.get_group(user)
-    with (
-        pytest.raises(BaseExceptionGroup) as exc_info,
-        sdm.decrypted_device(encrypted_device, pass_cmd) as decrypted,
-        sdm.mounted_device(decrypted) as mounted,
-    ):
-        sh.chown(mounted, user=user, group=group, recursive=True)
-        close_cmd = ["sudo", "cryptsetup", "close", decrypted.name]
-        # Block unmounting by creating a file in the mount point. This will cause the
-        # entire clean-up to fail.
-        blocker = open(mounted / "busy-marker", "w")  # noqa: SIM115
-        raise MyCustomTestException
-    close_error = sh.ShellInterfaceError(close_cmd, None)
-
-    # Clean up manually, to prevent cluttering the host system.
-    blocker.close()
-    sdm.unmount_device(mounted)
-    sdm.close_decrypted_device(decrypted)
-
-    assert len(exc_info.value.exceptions) == 2  # noqa: PLR2004
-    assert isinstance(exc_info.value.exceptions[0], sdm.UnmountError)
-    assert exc_info.value.exceptions[1] == close_error
-
-
 def test_decrypted_device_raises_close_error_without_prior_exception(mocker) -> None:
     encrypted = Path("/dev/sdz1")
     decrypted = Path("/dev/mapper/mock-decrypted")

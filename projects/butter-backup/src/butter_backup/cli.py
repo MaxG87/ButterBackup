@@ -126,28 +126,6 @@ def _skip_device(
     return False
 
 
-def _handle_unmount_error_exc_group(
-    exc_group: ExceptionGroup, cfg: cp.DeviceConfiguration
-) -> None:
-    """
-    Handle a group of unmount errors.
-
-    Ensures that the input is well-formed. If so, prints the error message to stderr.
-    Otherwise, raises a RuntimeError.
-    """
-    if len(exc_group.exceptions) != 1:
-        raise RuntimeError(
-            f"Got {len(exc_group.exceptions)} unmount errors for device {cfg.Name}. Expected"
-            " exactly 1!"
-        ) from exc_group
-    unmount_error = exc_group.exceptions[0]
-    if not isinstance(unmount_error, sdm.UnmountError):
-        raise RuntimeError(
-            f"Got {type(unmount_error)} instead of UnmountError for device {cfg.Name}."
-        ) from exc_group
-    typer.echo(_unmount_errmsg(cfg, unmount_error), err=True)
-
-
 CONFIG_OPTION = typer.Option(exists=True, dir_okay=False)
 VERBOSITY_OPTION = typer.Option("--verbose", "-v", count=True)
 
@@ -253,8 +231,8 @@ def close(
             sh.refresh_sudo(parsed_config.SudoPassCmd)
             try:
                 sdm.unmount_device(map_name)
-            except* sdm.UnmountError as e:
-                _handle_unmount_error_exc_group(e, cfg)
+            except sdm.UnmountError as e:
+                typer.echo(_unmount_errmsg(cfg, e), err=True)
                 had_unmount_error = True
             else:
                 sdm.close_decrypted_device(map_name)
@@ -314,8 +292,8 @@ def backup(
                 # case the user would have to enter the password again to unmount and
                 # close the device. To prevent this, the sudo session is refreshed.
                 sh.refresh_sudo(parsed_config.SudoPassCmd)
-        except* sdm.UnmountError as e:
-            _handle_unmount_error_exc_group(e, cfg)
+        except sdm.UnmountError as e:
+            typer.echo(_unmount_errmsg(cfg, e), err=True)
             had_unmount_error = True
     raise typer.Exit(had_unmount_error)
 
