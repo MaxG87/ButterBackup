@@ -143,13 +143,26 @@ def test_unmount_device_raises_unmounterror(tmp_path: Path) -> None:
         sdm.unmount_device(mountpoint)
 
 
+def test_unmount_device_preserves_shell_error_details(tmp_path: Path) -> None:
+    mountpoint = tmp_path
+    with pytest.raises(sdm.UnmountError) as exc_info:
+        sdm.unmount_device(mountpoint)
+
+    exc = exc_info.value
+    assert isinstance(exc, sh.ShellInterfaceError)
+    assert exc.command[:2] == ["sudo", "umount"]
+    assert mountpoint in exc.command
+    assert exc.stderr is not None
+    assert exc.stderr.strip()
+
+
 def test_mounted_device_does_not_delete_content_on_umount_error(
     device_with_fs, compression_kwargs: CompressionKwargsT, mocker
 ) -> None:
     device, _ = device_with_fs
     mocker.patch(
         "storage_device_managers.unmount_device",
-        side_effect=sdm.UnmountError("Mocked unmount error"),
+        side_effect=sdm.UnmountError("Mocked unmount error", b"Mocked stderr"),
     )
     user = sh.get_user()
     sentinel_text = "This file should not be deleted."

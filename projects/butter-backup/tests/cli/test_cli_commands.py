@@ -1,6 +1,8 @@
 import datetime as dt
 import re
 import time
+import typing as t
+from contextlib import contextmanager
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from uuid import UUID
@@ -27,6 +29,17 @@ def wait_until_gone(p: Path, timeout: dt.timedelta = dt.timedelta(seconds=3)) ->
         if dt.datetime.now() - start > timeout:
             raise TimeoutError(f"Path {p} did not disappear in time.")
         time.sleep(0.01)  # Sleep a bit to avoid busy waiting
+
+
+def _prepare_config_file(
+    device_config: cp.DeviceConfiguration, parent_dir: Path
+) -> Path:
+    config = complement_configuration(device_config, parent_dir)
+    prepare_tmp_path(config, parent_dir)
+    config_file = parent_dir / "config.json"
+    wrapped_config = cp.Configuration(DeviceConfigurations=[config])
+    config_file.write_text(wrapped_config.model_dump_json())
+    return config_file
 
 
 @pytest.fixture
@@ -443,18 +456,11 @@ def test_version(runner) -> None:
 def test_do_backup_refuses_backup_when_device_is_already_open(
     subprogram: str, runner: CliRunner, encrypted_device, tmp_path: Path
 ) -> None:
-    config = complement_configuration(encrypted_device, tmp_path)
-    prepare_tmp_path(config, tmp_path)
-
-    config_file = tmp_path / "config.json"
-
-    wrapped_config = cp.Configuration(DeviceConfigurations=[config])
-    config_file.write_text(wrapped_config.model_dump_json())
+    config_file = _prepare_config_file(encrypted_device, tmp_path)
     runner.invoke(app, ["open", "--config", str(config_file)])
     result = runner.invoke(app, [subprogram, "--config", str(config_file)])
-    expected_msg = (
-        f"Speichermedium {config.Name} ist bereits geöffnet. Es wird übersprungen."
-    )
+    runner.invoke(app, ["close", "--config", str(config_file)])
+    expected_msg = f"Speichermedium {encrypted_device.Name} ist bereits geöffnet. Es wird übersprungen."
 
     assert result.exit_code == 0
     assert expected_msg in result.stderr
@@ -477,14 +483,12 @@ def test_unmount_error_does_not_cause_content_deletion(
     # This test "successfully" provoked the buggy behaviour before the bug was fixed.
     mocker.patch(
         "storage_device_managers.unmount_device",
-        side_effect=sdm.UnmountError("Mocked unmount error"),
+        side_effect=sdm.UnmountError(
+            ["sudo", "umount", encrypted_device.map_name()], b"Mocked stderr"
+        ),
     )
 
-    config = complement_configuration(encrypted_device, tmp_path)
-    prepare_tmp_path(config, tmp_path)
-    config_file = tmp_path / "config.json"
-    wrapped = cp.Configuration(DeviceConfigurations=[config])
-    config_file.write_text(wrapped.model_dump_json())
+    config_file = _prepare_config_file(encrypted_device, tmp_path)
 
     result = runner.invoke(app, ["backup", "--config", str(config_file)])
     assert result.exit_code == 1
@@ -492,8 +496,10 @@ def test_unmount_error_does_not_cause_content_deletion(
     # It is assumed that the device is still mounted, since the unmounting is mocked to
     # fail.
     mounts = sdm.get_mounted_devices()
-    mount_of_device = next(iter(mounts[str(config.map_name())]))
-    expected_backup_repository = mount_of_device / config.BackupRepositoryFolder
+    mount_of_device = next(iter(mounts[str(encrypted_device.map_name())]))
+    expected_backup_repository = (
+        mount_of_device / encrypted_device.BackupRepositoryFolder
+    )
     assert expected_backup_repository.exists()
     assert expected_backup_repository.is_dir()
     # Check that the device can be closed successfully after the failed unmount
@@ -503,3 +509,72 @@ def test_unmount_error_does_not_cause_content_deletion(
     assert result.exit_code == 0
     assert mount_of_device.exists()  # Target directory should be kept after closing.
     assert sdm.is_mounted(mount_of_device) is False
+
+
+def test_close_handles_unmount_error_correctly(
+    runner: CliRunner, mocker, encrypted_device, tmp_path
+) -> None:
+    config_file = _prepare_config_file(encrypted_device, tmp_path)
+
+    result = runner.invoke(app, ["open", "--config", str(config_file)])
+    assert result.exit_code == 0
+
+    # Hook in right after mounting to keep a file handle open, forcing a
+    # real unmount failure once the CLI tries to clean up.
+    original_unmount_device = sdm.unmount_device
+
+    @contextmanager
+    def _failing_unmount_device(device: Path):
+        raise sdm.UnmountError(["sudo", "umount", device], b"Mocked stderr")
+
+    mocker.patch.object(sdm, "unmount_device", _failing_unmount_device)
+    failing_result = runner.invoke(app, ["close", "--config", str(config_file)])
+    mocker.patch.object(sdm, "unmount_device", original_unmount_device)
+    result = runner.invoke(app, ["close", "--config", str(config_file)])
+    assert failing_result.exit_code == 1
+    assert result.exit_code == 0
+    assert isinstance(failing_result.exception, SystemExit)
+
+    stderr_lines = failing_result.stderr.splitlines()
+    assert result.stdout == ""
+    assert len(stderr_lines) == 1
+    assert re.match(
+        "Aushängen des Speichermediums .* ist fehlgeschlagen. Die Fehlermeldung ist:",
+        stderr_lines[0],
+    )
+
+
+def test_backup_handles_unmount_error_correctly(
+    runner: CliRunner, mocker, encrypted_device, tmp_path
+) -> None:
+    config_file = _prepare_config_file(encrypted_device, tmp_path)
+
+    # Hook in right after mounting to keep a file handle open, forcing a
+    # real unmount failure once the CLI tries to clean up.
+    original_mounted_device = sdm.mounted_device
+    captured_blocker: t.IO[str] | None = None
+
+    @contextmanager
+    def _busy_mounted_device(*args, **kwargs):
+        nonlocal captured_blocker
+        with original_mounted_device(*args, **kwargs) as mount_point:
+            captured_blocker = open(mount_point / "busy-marker", "w")  # noqa: SIM115
+            yield mount_point
+
+    mocker.patch.object(sdm, "mounted_device", _busy_mounted_device)
+    # result = runner.invoke(app, ["backup"])
+    backup_result = runner.invoke(app, ["backup", "--config", str(config_file)])
+
+    # Clean-up
+    assert captured_blocker is not None
+    captured_blocker.close()
+    close_result = runner.invoke(app, ["close", "--config", str(config_file)])
+    assert backup_result.exit_code == 1
+    assert close_result.exit_code == 0
+    assert isinstance(backup_result.exception, SystemExit)
+
+    assert backup_result.stdout == ""
+    assert re.match(
+        "Aushängen des Speichermediums .* ist fehlgeschlagen. Die Fehlermeldung ist:",
+        backup_result.stderr,
+    )

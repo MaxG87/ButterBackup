@@ -76,6 +76,24 @@ def test_decrypted_device_closes_in_case_of_exception(encrypted_device) -> None:
     assert not dd.exists()
 
 
+def test_decrypted_device_raises_close_error_without_prior_exception(mocker) -> None:
+    encrypted = Path("/dev/sdz1")
+    decrypted = Path("/dev/mapper/mock-decrypted")
+    close_cmd = ["sudo", "cryptsetup", "close", decrypted.name]
+    mocker.patch(
+        "storage_device_managers.open_encrypted_device", return_value=decrypted
+    )
+    mocker.patch(
+        "storage_device_managers.close_decrypted_device",
+        side_effect=sh.ShellInterfaceError(close_cmd, None),
+    )
+    with (
+        pytest.raises(sh.ShellInterfaceError),
+        sdm.decrypted_device(encrypted, "echo pw"),
+    ):
+        pass
+
+
 def test_decrypted_device_can_use_home_for_passcmd(encrypted_device) -> None:
     # Regression Test
     # Test if `decrypted_device` can use a program that is located in PATH. For

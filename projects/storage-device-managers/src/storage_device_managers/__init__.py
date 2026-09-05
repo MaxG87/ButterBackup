@@ -49,7 +49,7 @@ class InvalidDecryptedDevice(ValueError):
     pass
 
 
-class UnmountError(RuntimeError):
+class UnmountError(sh.ShellInterfaceError):
     pass
 
 
@@ -146,8 +146,25 @@ def decrypted_device(device: Path, pass_cmd: str) -> Iterator[Path]:
     decrypted = open_encrypted_device(device, pass_cmd)
     try:
         yield decrypted
-    finally:
+    except UnmountError:
+        # If unmounting fails, closing the decrypted device will also fail. Therefore,
+        # the decrypted device is not closed in this case. The exception is re-raised
+        # to inform the caller that unmounting failed.
+        raise
+    except Exception:
+        # If any other exception occurs, it is expected that closing the encrypted
+        # device will succeed. After all, the mounting context manager should have
+        # cleaned up the mount point already.
         close_decrypted_device(decrypted)
+        raise
+    else:
+        # If no exception occurs, the decrypted device is closed. This is the expected
+        # behaviour.
+        close_decrypted_device(decrypted)
+    finally:
+        # Assumed to be unreachable, because all exceptions are handled and the else
+        # block is executed if no exception occurs.
+        pass
 
 
 @contextlib.contextmanager
@@ -402,9 +419,9 @@ def unmount_device(device: Path) -> None:
     sync_device(device)
     cmd: sh.StrPathList = ["sudo", "umount", device]
     try:
-        sh.run_cmd(cmd=cmd)
+        sh.run_cmd(cmd=cmd, capture_output=True)
     except sh.ShellInterfaceError as e:
-        raise UnmountError from e
+        raise UnmountError(e.command, e.stderr) from e
 
 
 def open_encrypted_device(device: Path, pass_cmd: str) -> Path:
@@ -510,7 +527,7 @@ def encrypt_device(device: Path, password_cmd: str) -> UUID:
         str(new_uuid),
         device,
     ]
-    sh.pipe_pass_cmd_to_real_cmd(pass_cmd=password_cmd, command=format_cmd)
+    sh.pipe_pass_cmd_to_real_cmd(pass_cmd=password_cmd, cmd=format_cmd)
     return new_uuid
 
 

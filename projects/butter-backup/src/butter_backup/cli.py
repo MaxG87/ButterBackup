@@ -153,6 +153,13 @@ def _open_device(
         typer.echo(f"Speichermedium {cfg.Name} wurde in {mount_dir} geöffnet.")
 
 
+def _unmount_errmsg(cfg: cp.DeviceConfiguration, e: sdm.UnmountError) -> str:
+    if e.stderr is None:
+        return f"Speichermedium {cfg.Name} konnte nicht ausgehängt werden. Es ist keine Fehlermeldung verfügbar."
+    stderr = e.stderr.decode("utf-8", errors="replace")
+    return f"Aushängen des Speichermediums {cfg.Name} ist fehlgeschlagen. Die Fehlermeldung ist: {stderr}"
+
+
 @app.command("open")
 def cli_open(
     config: t.Annotated[Path | None, CONFIG_OPTION] = None,
@@ -206,6 +213,7 @@ def close(
     setup_logging(verbose)
     parsed_config = _read_configuration(config)
     mounted_devices = sdm.get_mounted_devices()
+    had_unmount_error = False
     for cfg in parsed_config.DeviceConfigurations:
         map_name = cfg.map_name()
         map_name_as_str = str(map_name)
@@ -221,8 +229,14 @@ def close(
                 )
                 continue
             sh.refresh_sudo(parsed_config.SudoPassCmd)
-            sdm.unmount_device(map_name)
-            sdm.close_decrypted_device(map_name)
+            try:
+                sdm.unmount_device(map_name)
+            except sdm.UnmountError as e:
+                typer.echo(_unmount_errmsg(cfg, e), err=True)
+                had_unmount_error = True
+            else:
+                sdm.close_decrypted_device(map_name)
+    raise typer.Exit(had_unmount_error)
 
 
 @app.command()
@@ -250,6 +264,7 @@ def backup(
     """
     setup_logging(verbose)
     parsed_config = _read_configuration(config)
+    had_unmount_error = False
     for cfg in parsed_config.DeviceConfigurations:
         if _skip_device(
             cfg,
@@ -265,17 +280,22 @@ def backup(
         sh.refresh_sudo(parsed_config.SudoPassCmd)
         open_dir = parsed_config.OpenDirectory
         dest = open_dir / cfg.Name if open_dir is not None else None
-        with (
-            sdm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted,
-            sdm.mounted_device(
-                decrypted, dest, compression=cfg.compression()
-            ) as mount_dir,
-        ):
-            backend.do_backup(mount_dir, parsed_config.SudoPassCmd)
-            # A backup could take so long that the sudo session expires. In this
-            # case the user would have to enter the password again to unmount and
-            # close the device. To prevent this, the sudo session is refreshed.
-            sh.refresh_sudo(parsed_config.SudoPassCmd)
+        try:
+            with (
+                sdm.decrypted_device(cfg.device(), cfg.DevicePassCmd) as decrypted,
+                sdm.mounted_device(
+                    decrypted, dest, compression=cfg.compression()
+                ) as mount_dir,
+            ):
+                backend.do_backup(mount_dir, parsed_config.SudoPassCmd)
+                # A backup could take so long that the sudo session expires. In this
+                # case the user would have to enter the password again to unmount and
+                # close the device. To prevent this, the sudo session is refreshed.
+                sh.refresh_sudo(parsed_config.SudoPassCmd)
+        except sdm.UnmountError as e:
+            typer.echo(_unmount_errmsg(cfg, e), err=True)
+            had_unmount_error = True
+    raise typer.Exit(had_unmount_error)
 
 
 @app.command()
