@@ -552,32 +552,29 @@ def test_backup_handles_unmount_error_correctly(
     # Hook in right after mounting to keep a file handle open, forcing a
     # real unmount failure once the CLI tries to clean up.
     original_mounted_device = sdm.mounted_device
-    captured_mount_point: Path | None = None
     captured_blocker: t.IO[str] | None = None
 
     @contextmanager
     def _busy_mounted_device(*args, **kwargs):
-        nonlocal captured_mount_point, captured_blocker
+        nonlocal captured_blocker
         with original_mounted_device(*args, **kwargs) as mount_point:
-            captured_mount_point = mount_point
             captured_blocker = open(mount_point / "busy-marker", "w")  # noqa: SIM115
             yield mount_point
 
     mocker.patch.object(sdm, "mounted_device", _busy_mounted_device)
     # result = runner.invoke(app, ["backup"])
-    result = runner.invoke(app, ["backup", "--config", str(config_file)])
+    backup_result = runner.invoke(app, ["backup", "--config", str(config_file)])
 
     # Clean-up
     assert captured_blocker is not None
-    assert captured_mount_point is not None
     captured_blocker.close()
-    sdm.unmount_device(captured_mount_point)
-    assert not captured_mount_point.is_mount()
-    sdm.close_decrypted_device(encrypted_device.map_name())
+    close_result = runner.invoke(app, ["close", "--config", str(config_file)])
+    assert backup_result.exit_code == 1
+    assert close_result.exit_code == 0
+    assert isinstance(backup_result.exception, SystemExit)
 
-    assert result.exit_code == 1
-    assert result.stdout == ""
+    assert backup_result.stdout == ""
     assert re.match(
         "Aushängen des Speichermediums .* ist fehlgeschlagen. Die Fehlermeldung ist:",
-        result.stderr,
+        backup_result.stderr,
     )
