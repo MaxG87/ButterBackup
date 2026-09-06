@@ -20,12 +20,16 @@ def _assert_is_error_result(result, expected_exit_code: int = 1) -> None:
     assert isinstance(result.exception, SystemExit)
 
 
-def _assert_output_is_single_line_errmsg(result, expected_snippets: set[str]) -> None:
+def _assert_output_is_single_line_errmsg(
+    result, expected_snippets: set[str], prohibited_snippets: set[str] | None = None
+) -> None:
     stderr_lines = result.stderr.splitlines()
     stdout_lines = result.stdout.splitlines()
+    prohibited_snippets = prohibited_snippets or set()
     assert stdout_lines == []
     assert len(stderr_lines) == 1
     assert all(snippet in stderr_lines[0] for snippet in expected_snippets)
+    assert all(snippet not in stderr_lines[0] for snippet in prohibited_snippets)
 
 
 @pytest.mark.parametrize(
@@ -166,7 +170,9 @@ def test_incorrect_backup_repository_field_has_explicit_log_message(
 
     # Check STDERR
     _assert_output_is_single_line_errmsg(
-        result, {incorrect_folder_name, encrypted_device.BackupRepositoryFolder}
+        result,
+        {incorrect_folder_name, encrypted_device.BackupRepositoryFolder},
+        {"PosixPath"},
     )
 
 

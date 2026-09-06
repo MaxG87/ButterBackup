@@ -47,11 +47,12 @@ class BtrFSRsyncBackend(BackupBackend):
         backup_repository = mount_dir / self.config.BackupRepositoryFolder
         if not backup_repository.exists():
             available_options = list(mount_dir.iterdir())
+            as_string = ", ".join(str(option) for option in available_options)
             logger.error(
                 "Das Backup-Repository {backup_repository} existiert nicht. Verfügbare"
                 "Optionen sind: {available}",
                 backup_repository=backup_repository,
-                available=available_options,
+                available=as_string,
             )
             return False
 
@@ -166,11 +167,12 @@ class ResticBackend(BackupBackend):
         backup_repository = mount_dir / self.config.BackupRepositoryFolder
         if not backup_repository.exists():
             available_options = list(mount_dir.iterdir())
+            as_string = ", ".join(str(option) for option in available_options)
             logger.error(
                 "Das Backup-Repository {backup_repository} existiert nicht. Verfügbare"
                 "Optionen sind: {available}",
                 backup_repository=backup_repository,
-                available=available_options,
+                available=as_string,
             )
             return False
         sh.refresh_sudo(sudo_pass_cmd)
