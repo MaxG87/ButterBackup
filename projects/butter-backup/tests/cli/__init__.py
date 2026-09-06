@@ -2,10 +2,22 @@ import typing as t
 from pathlib import Path
 
 from butter_backup import config_parser as cp
+from tests import complement_configuration
 
 
 def in_docker_container() -> bool:
     return Path("/.dockerenv").exists()
+
+
+def prepare_config_file(
+    device_config: cp.DeviceConfiguration, parent_dir: Path
+) -> Path:
+    config = complement_configuration(device_config, parent_dir)
+    prepare_tmp_path(config, parent_dir)
+    config_file = parent_dir / "config.json"
+    wrapped_config = cp.Configuration(DeviceConfigurations=[config])
+    config_file.write_text(wrapped_config.model_dump_json())
+    return config_file
 
 
 def prepare_tmp_path(config: cp.DeviceConfiguration, parent: Path) -> None:
