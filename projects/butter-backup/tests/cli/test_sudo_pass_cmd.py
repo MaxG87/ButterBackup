@@ -134,7 +134,6 @@ def test_sudo_session_is_refreshed_around_backup(
     other_idx = [
         i for i, c in enumerate(spy.call_args_list) if _is_non_refresh_sudo_cmd(c)
     ]
-
     assert len(refresh_idx) == expected_nof_refreshes
     _assert_sudo_refresh_occurred_before_privileged_cmd(refresh_idx, other_idx)
 
