@@ -156,7 +156,7 @@ def _open_device(
 def _unmount_errmsg(cfg: cp.DeviceConfiguration, e: sdm.UnmountError) -> str:
     if e.stderr is None:
         return f"Speichermedium {cfg.Name} konnte nicht ausgehängt werden. Es ist keine Fehlermeldung verfügbar."
-    stderr = e.stderr.decode("utf-8", errors="replace")
+    stderr = e.stderr.decode("utf-8", errors="replace").strip()
     return f"Aushängen des Speichermediums {cfg.Name} ist fehlgeschlagen. Die Fehlermeldung ist: {stderr}"
 
 

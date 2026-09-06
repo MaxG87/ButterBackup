@@ -21,14 +21,21 @@ def _assert_is_error_result(result, expected_exit_code: int = 1) -> None:
 
 
 def _assert_output_is_single_line_errmsg(
-    result, expected_snippets: set[str], prohibited_snippets: set[str] | None = None
+    result,
+    expected_snippets: set[str | re.Pattern[str]],
+    prohibited_snippets: set[str] | None = None,
 ) -> None:
     stderr_lines = result.stderr.splitlines()
     stdout_lines = result.stdout.splitlines()
     prohibited_snippets = prohibited_snippets or set()
     assert stdout_lines == []
     assert len(stderr_lines) == 1
-    assert all(snippet in stderr_lines[0] for snippet in expected_snippets)
+    assert all(
+        snippet in stderr_lines[0]
+        if isinstance(snippet, str)
+        else snippet.search(stderr_lines[0]) is not None
+        for snippet in expected_snippets
+    )
     assert all(snippet not in stderr_lines[0] for snippet in prohibited_snippets)
 
 
@@ -167,8 +174,6 @@ def test_incorrect_backup_repository_field_has_explicit_log_message(
 
     assert not encrypted_device.map_name().exists()  # Device closed successfully
     _assert_is_error_result(result, expected_exit_code=1)
-
-    # Check STDERR
     _assert_output_is_single_line_errmsg(
         result,
         {incorrect_folder_name, encrypted_device.BackupRepositoryFolder},
@@ -198,13 +203,13 @@ def test_close_handles_unmount_error_correctly(
     result = runner.invoke(app, ["close", "--config", str(config_file)])
     _assert_is_error_result(failing_result, expected_exit_code=1)
     assert result.exit_code == 0
-
-    stderr_lines = failing_result.stderr.splitlines()
-    assert result.stdout == ""
-    assert len(stderr_lines) == 1
-    assert re.match(
-        "Aushängen des Speichermediums .* ist fehlgeschlagen. Die Fehlermeldung ist:",
-        stderr_lines[0],
+    _assert_output_is_single_line_errmsg(
+        failing_result,
+        {
+            re.compile(
+                r"Aushängen des Speichermediums .* ist fehlgeschlagen. Die Fehlermeldung ist:"
+            )
+        },
     )
 
 
@@ -235,9 +240,11 @@ def test_backup_handles_unmount_error_correctly(
     close_result = runner.invoke(app, ["close", "--config", str(config_file)])
     _assert_is_error_result(backup_result, expected_exit_code=1)
     assert close_result.exit_code == 0
-
-    assert backup_result.stdout == ""
-    assert re.match(
-        "Aushängen des Speichermediums .* ist fehlgeschlagen. Die Fehlermeldung ist:",
-        backup_result.stderr,
+    _assert_output_is_single_line_errmsg(
+        backup_result,
+        {
+            re.compile(
+                r"Aushängen des Speichermediums .* ist fehlgeschlagen. Die Fehlermeldung ist:",
+            )
+        },
     )
