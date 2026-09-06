@@ -2,7 +2,6 @@ import re
 import typing as t
 from contextlib import contextmanager
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 
 import pytest
 import storage_device_managers as sdm
@@ -10,14 +9,8 @@ import storage_device_managers as sdm
 from butter_backup import cli
 from butter_backup import config_parser as cp
 from butter_backup.cli import app
-from tests import get_random_filename
 
-from . import in_docker_container, prepare_config_file
-
-
-def _assert_is_error_result(result, expected_exit_code: int = 1) -> None:
-    assert result.exit_code == expected_exit_code
-    assert isinstance(result.exception, SystemExit)
+from . import assert_is_error_result, in_docker_container, prepare_config_file
 
 
 def _assert_output_is_single_line_errmsg(
@@ -37,50 +30,6 @@ def _assert_output_is_single_line_errmsg(
         for snippet in expected_snippets
     )
     assert all(snippet not in stderr_lines[0] for snippet in prohibited_snippets)
-
-
-@pytest.mark.parametrize(
-    "subprogram",
-    ["backup", "close", "open"],
-)
-def test_subprograms_refuse_missing_config(subprogram, runner) -> None:
-    config_file = Path(get_random_filename())
-    result = runner.invoke(app, [subprogram, "--config", str(config_file)])
-    assert f"{config_file}" in result.stderr
-    _assert_is_error_result(result, expected_exit_code=2)
-
-
-@pytest.mark.skipif(in_docker_container(), reason="All files are readable for root")
-@pytest.mark.parametrize(
-    "subprogram",
-    ["backup", "close", "open"],
-)
-def test_subprograms_refuse_unreadable_file(subprogram, runner) -> None:
-    with NamedTemporaryFile(suffix=".json") as fh:
-        config_file = Path(fh.name)
-        config_file.chmod(0)
-        result = runner.invoke(app, [subprogram, "--config", str(config_file)])
-        assert f"{config_file}" in result.stderr
-        _assert_is_error_result(result, expected_exit_code=2)
-
-
-@pytest.mark.parametrize(
-    "subprogram",
-    ["backup", "close", "open"],
-)
-def test_subprograms_refuse_directories(subprogram, runner, tmp_path: Path) -> None:
-    tmp_path_as_str = str(tmp_path)
-    result = runner.invoke(app, [subprogram, "--config", tmp_path_as_str])
-    assert tmp_path_as_str in result.stderr
-    _assert_is_error_result(result, expected_exit_code=2)
-
-
-def test_open_refuses_missing_xdg_config(runner, tmp_path, monkeypatch) -> None:
-    xdg_config_dir = tmp_path / "nonexistent_config_dir"
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg_config_dir))
-    result = runner.invoke(app, ["open"])
-    assert str(xdg_config_dir) in result.stderr
-    _assert_is_error_result(result, expected_exit_code=2)
 
 
 @pytest.mark.skipif(
@@ -148,7 +97,7 @@ def test_unmount_error_does_not_cause_content_deletion(
     # unmount operation.
     mocker.stopall()
     close_result = runner.invoke(app, ["close", "--config", str(config_file)])
-    _assert_is_error_result(backup_result, expected_exit_code=1)
+    assert_is_error_result(backup_result, expected_exit_code=1)
     assert close_result.exit_code == 0
     assert expected_backup_repository_exists
     assert expected_backup_repository_is_dir
@@ -173,7 +122,7 @@ def test_incorrect_backup_repository_field_has_explicit_log_message(
     result = runner.invoke(app, ["backup", "--config", str(config_file)])
 
     assert not encrypted_device.map_name().exists()  # Device closed successfully
-    _assert_is_error_result(result, expected_exit_code=1)
+    assert_is_error_result(result, expected_exit_code=1)
     _assert_output_is_single_line_errmsg(
         result,
         {incorrect_folder_name, encrypted_device.BackupRepositoryFolder},
@@ -197,7 +146,7 @@ def test_close_handles_unmount_error_correctly(
     failing_result = runner.invoke(app, ["close", "--config", str(config_file)])
     mocker.stopall()
     result = runner.invoke(app, ["close", "--config", str(config_file)])
-    _assert_is_error_result(failing_result, expected_exit_code=1)
+    assert_is_error_result(failing_result, expected_exit_code=1)
     assert result.exit_code == 0
     _assert_output_is_single_line_errmsg(
         failing_result,
@@ -234,7 +183,7 @@ def test_backup_handles_unmount_error_correctly(
     assert captured_blocker is not None
     captured_blocker.close()
     close_result = runner.invoke(app, ["close", "--config", str(config_file)])
-    _assert_is_error_result(backup_result, expected_exit_code=1)
+    assert_is_error_result(backup_result, expected_exit_code=1)
     assert close_result.exit_code == 0
     _assert_output_is_single_line_errmsg(
         backup_result,

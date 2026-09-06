@@ -9,6 +9,11 @@ def in_docker_container() -> bool:
     return Path("/.dockerenv").exists()
 
 
+def assert_is_error_result(result, expected_exit_code: int = 1) -> None:
+    assert result.exit_code == expected_exit_code
+    assert isinstance(result.exception, SystemExit)
+
+
 def prepare_config_file(
     device_config: cp.DeviceConfiguration, parent_dir: Path
 ) -> Path:
