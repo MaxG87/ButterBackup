@@ -189,17 +189,13 @@ def test_close_handles_unmount_error_correctly(
     result = runner.invoke(app, ["open", "--config", str(config_file)])
     assert result.exit_code == 0
 
-    # Hook in right after mounting to keep a file handle open, forcing a
-    # real unmount failure once the CLI tries to clean up.
-    original_unmount_device = sdm.unmount_device
-
     @contextmanager
     def _failing_unmount_device(device: Path):
         raise sdm.UnmountError(["sudo", "umount", device], b"Mocked stderr")
 
     mocker.patch.object(sdm, "unmount_device", _failing_unmount_device)
     failing_result = runner.invoke(app, ["close", "--config", str(config_file)])
-    mocker.patch.object(sdm, "unmount_device", original_unmount_device)
+    mocker.stopall()
     result = runner.invoke(app, ["close", "--config", str(config_file)])
     _assert_is_error_result(failing_result, expected_exit_code=1)
     assert result.exit_code == 0
