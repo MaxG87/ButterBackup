@@ -287,7 +287,9 @@ def backup(
                     decrypted, dest, compression=cfg.compression()
                 ) as mount_dir,
             ):
-                backend.do_backup(mount_dir, parsed_config.SudoPassCmd)
+                had_unmount_error |= not backend.do_backup(
+                    mount_dir, parsed_config.SudoPassCmd
+                )
                 # A backup could take so long that the sudo session expires. In this
                 # case the user would have to enter the password again to unmount and
                 # close the device. To prevent this, the sudo session is refreshed.

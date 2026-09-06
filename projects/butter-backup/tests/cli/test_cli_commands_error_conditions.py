@@ -7,6 +7,7 @@ from tempfile import NamedTemporaryFile
 import pytest
 import storage_device_managers as sdm
 
+from butter_backup import cli
 from butter_backup import config_parser as cp
 from butter_backup.cli import app
 from tests import get_random_filename
@@ -17,6 +18,14 @@ from . import in_docker_container, prepare_config_file
 def _assert_is_error_result(result, expected_exit_code: int = 1) -> None:
     assert result.exit_code == expected_exit_code
     assert isinstance(result.exception, SystemExit)
+
+
+def _assert_output_is_single_line_errmsg(result, expected_snippets: set[str]) -> None:
+    stderr_lines = result.stderr.splitlines()
+    stdout_lines = result.stdout.splitlines()
+    assert stdout_lines == []
+    assert len(stderr_lines) == 1
+    assert all(snippet in stderr_lines[0] for snippet in expected_snippets)
 
 
 @pytest.mark.parametrize(
@@ -134,6 +143,31 @@ def test_unmount_error_does_not_cause_content_deletion(
     assert expected_backup_repository_is_dir
     assert mount_of_device.exists()  # Target directory should be kept after closing.
     assert sdm.is_mounted(mount_of_device) is False
+
+
+def test_incorrect_backup_repository_field_has_explicit_log_message(
+    runner, mocker, encrypted_device, tmp_path
+) -> None:
+    incorrect_folder_name = "FolderThatDoesNotExist"
+    config_file = prepare_config_file(encrypted_device, tmp_path)
+    config = cli._read_configuration(config_file)
+    broken_device_config = encrypted_device.model_copy(
+        update={"BackupRepositoryFolder": incorrect_folder_name}
+    )
+    broken_config = config.model_copy(
+        update={"DeviceConfigurations": [broken_device_config]}
+    )
+    config_file.write_text(broken_config.model_dump_json())
+
+    result = runner.invoke(app, ["backup", "--config", str(config_file)])
+
+    assert not encrypted_device.map_name().exists()  # Device closed successfully
+    _assert_is_error_result(result, expected_exit_code=1)
+
+    # Check STDERR
+    _assert_output_is_single_line_errmsg(
+        result, {incorrect_folder_name, encrypted_device.BackupRepositoryFolder}
+    )
 
 
 def test_close_handles_unmount_error_correctly(
