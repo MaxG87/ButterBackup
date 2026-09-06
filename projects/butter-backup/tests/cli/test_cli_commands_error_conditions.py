@@ -14,6 +14,11 @@ from tests import get_random_filename
 from . import in_docker_container, prepare_config_file
 
 
+def _assert_is_error_result(result, expected_exit_code: int = 1) -> None:
+    assert result.exit_code == expected_exit_code
+    assert isinstance(result.exception, SystemExit)
+
+
 @pytest.mark.parametrize(
     "subprogram",
     ["backup", "close", "open"],
@@ -22,7 +27,7 @@ def test_subprograms_refuse_missing_config(subprogram, runner) -> None:
     config_file = Path(get_random_filename())
     result = runner.invoke(app, [subprogram, "--config", str(config_file)])
     assert f"{config_file}" in result.stderr
-    assert result.exit_code != 0
+    _assert_is_error_result(result, expected_exit_code=2)
 
 
 @pytest.mark.skipif(in_docker_container(), reason="All files are readable for root")
@@ -36,7 +41,7 @@ def test_subprograms_refuse_unreadable_file(subprogram, runner) -> None:
         config_file.chmod(0)
         result = runner.invoke(app, [subprogram, "--config", str(config_file)])
         assert f"{config_file}" in result.stderr
-        assert result.exit_code != 0
+        _assert_is_error_result(result, expected_exit_code=2)
 
 
 @pytest.mark.parametrize(
@@ -47,7 +52,7 @@ def test_subprograms_refuse_directories(subprogram, runner, tmp_path: Path) -> N
     tmp_path_as_str = str(tmp_path)
     result = runner.invoke(app, [subprogram, "--config", tmp_path_as_str])
     assert tmp_path_as_str in result.stderr
-    assert result.exit_code != 0
+    _assert_is_error_result(result, expected_exit_code=2)
 
 
 def test_open_refuses_missing_xdg_config(runner, tmp_path, monkeypatch) -> None:
@@ -55,7 +60,7 @@ def test_open_refuses_missing_xdg_config(runner, tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg_config_dir))
     result = runner.invoke(app, ["open"])
     assert str(xdg_config_dir) in result.stderr
-    assert result.exit_code != 0
+    _assert_is_error_result(result, expected_exit_code=2)
 
 
 @pytest.mark.skipif(
@@ -105,8 +110,7 @@ def test_unmount_error_does_not_cause_content_deletion(
 
     config_file = prepare_config_file(encrypted_device, tmp_path)
 
-    result = runner.invoke(app, ["backup", "--config", str(config_file)])
-    assert result.exit_code == 1
+    backup_result = runner.invoke(app, ["backup", "--config", str(config_file)])
     # Check that BackupRepositoryFolder still exists after the failed unmount operation.
     # It is assumed that the device is still mounted, since the unmounting is mocked to
     # fail.
@@ -115,13 +119,19 @@ def test_unmount_error_does_not_cause_content_deletion(
     expected_backup_repository = (
         mount_of_device / encrypted_device.BackupRepositoryFolder
     )
-    assert expected_backup_repository.exists()
-    assert expected_backup_repository.is_dir()
-    # Check that the device can be closed successfully after the failed unmount
-    # operation.
+    # Cannot use assert here, as failure would prevent the clean-up code below from
+    # running.
+    expected_backup_repository_exists = expected_backup_repository.exists()
+    expected_backup_repository_is_dir = expected_backup_repository.is_dir()
+
+    # Clean-up: Check that the device can be closed successfully after the failed
+    # unmount operation.
     mocker.stopall()
-    result = runner.invoke(app, ["close", "--config", str(config_file)])
-    assert result.exit_code == 0
+    close_result = runner.invoke(app, ["close", "--config", str(config_file)])
+    _assert_is_error_result(backup_result, expected_exit_code=1)
+    assert close_result.exit_code == 0
+    assert expected_backup_repository_exists
+    assert expected_backup_repository_is_dir
     assert mount_of_device.exists()  # Target directory should be kept after closing.
     assert sdm.is_mounted(mount_of_device) is False
 
@@ -146,9 +156,8 @@ def test_close_handles_unmount_error_correctly(
     failing_result = runner.invoke(app, ["close", "--config", str(config_file)])
     mocker.patch.object(sdm, "unmount_device", original_unmount_device)
     result = runner.invoke(app, ["close", "--config", str(config_file)])
-    assert failing_result.exit_code == 1
+    _assert_is_error_result(failing_result, expected_exit_code=1)
     assert result.exit_code == 0
-    assert isinstance(failing_result.exception, SystemExit)
 
     stderr_lines = failing_result.stderr.splitlines()
     assert result.stdout == ""
@@ -184,9 +193,8 @@ def test_backup_handles_unmount_error_correctly(
     assert captured_blocker is not None
     captured_blocker.close()
     close_result = runner.invoke(app, ["close", "--config", str(config_file)])
-    assert backup_result.exit_code == 1
+    _assert_is_error_result(backup_result, expected_exit_code=1)
     assert close_result.exit_code == 0
-    assert isinstance(backup_result.exception, SystemExit)
 
     assert backup_result.stdout == ""
     assert re.match(
