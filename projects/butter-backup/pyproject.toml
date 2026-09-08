@@ -11,6 +11,7 @@ dependencies = [
     "loguru>=0.7.3",
     "pydantic>=2.13.4",
     "pyyaml>=6.0.3",
+    "rich>=13.9.4",
     "shell-interface",
     "storage-device-managers",
     "typer>=0.27.2",
@@ -21,12 +22,6 @@ Homepage = "https://github.com/MaxG87/ButterBackup"
 Repository = "https://github.com/MaxG87/ButterBackup"
 Issues = "https://github.com/MaxG87/ButterBackup/issues"
 Changelog = "https://github.com/MaxG87/ButterBackup/blob/main/CHANGELOG.md"
-
-
-[project.optional-dependencies]
-all = [
-    "rich>=13.9.4",
-]
 
 [project.scripts]
 butter-backup = "butter_backup.cli:cli"
