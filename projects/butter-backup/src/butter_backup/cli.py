@@ -156,7 +156,7 @@ def _open_device(
 def _unmount_errmsg(cfg: cp.DeviceConfiguration, e: sdm.UnmountError) -> str:
     if e.stderr is None:
         return f"Speichermedium {cfg.Name} konnte nicht ausgehängt werden. Es ist keine Fehlermeldung verfügbar."
-    stderr = e.stderr.decode("utf-8", errors="replace")
+    stderr = e.stderr.decode("utf-8", errors="replace").strip()
     return f"Aushängen des Speichermediums {cfg.Name} ist fehlgeschlagen. Die Fehlermeldung ist: {stderr}"
 
 
@@ -287,7 +287,9 @@ def backup(
                     decrypted, dest, compression=cfg.compression()
                 ) as mount_dir,
             ):
-                backend.do_backup(mount_dir, parsed_config.SudoPassCmd)
+                had_unmount_error |= not backend.do_backup(
+                    mount_dir, parsed_config.SudoPassCmd
+                )
                 # A backup could take so long that the sudo session expires. In this
                 # case the user would have to enter the password again to unmount and
                 # close the device. To prevent this, the sudo session is refreshed.

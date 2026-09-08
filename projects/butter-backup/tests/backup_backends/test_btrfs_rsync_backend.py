@@ -4,12 +4,10 @@ import shutil
 from collections import defaultdict
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from uuid import uuid4
 
 import pytest
 import shell_interface as sh
 
-from butter_backup import backup_backends as bb
 from butter_backup import config_parser as cp
 
 from . import (
@@ -88,34 +86,6 @@ def test_do_backup_for_btrfs_creates_snapshots_with_timestamp_names(
     latest_folder = sorted(backup_repository.iterdir())[-1]
     expected_date = dt.date.today().isoformat()
     assert expected_date in str(latest_folder)
-
-
-def test_btrfs_backend_refreshes_sudo_session_in_do_backup(
-    mocker, tmp_path: Path
-) -> None:
-    sudo_pass_cmd = "echo test_password"
-    config = cp.BtrFSRsyncConfig(
-        BackupRepositoryFolder="repo",
-        DevicePassCmd="echo pass",
-        Files=set(),
-        FilesDest="files",
-        Folders={},
-        Name="test-device",
-        UUID=uuid4(),
-    )
-    backend = bb.BtrFSRsyncBackend(config=config)
-    mock_refresh = mocker.patch("butter_backup.backup_backends.sh.refresh_sudo")
-    mocker.patch.object(
-        bb.BtrFSRsyncBackend, "get_source_snapshot", return_value=tmp_path
-    )
-    mocker.patch.object(bb.BtrFSRsyncBackend, "snapshot", return_value=tmp_path)
-    mocker.patch.object(bb.BtrFSRsyncBackend, "adapt_ownership")
-
-    backend.do_backup(tmp_path, sudo_pass_cmd)
-
-    # Only one call before adapting ownership. The other calls are not covered by this
-    # test to keep the setup simple.
-    mock_refresh.assert_called_once_with(sudo_pass_cmd)
 
 
 @pytest.mark.parametrize(

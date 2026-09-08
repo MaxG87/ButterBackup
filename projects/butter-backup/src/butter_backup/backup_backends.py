@@ -12,7 +12,13 @@ from . import config_parser as cp
 
 class BackupBackend(abc.ABC):
     @abc.abstractmethod
-    def do_backup(self, mount_dir: Path, sudo_pass_cmd: str | None = None) -> None: ...
+    def do_backup(self, mount_dir: Path, sudo_pass_cmd: str | None = None) -> bool:
+        """
+        Perform the backup operation.
+
+        The returned boolean indicates whether the backup was successful or not. If the
+        backup fails, it is expected that the method logs an appropriate error message.
+        """
 
     @overload
     @staticmethod
@@ -36,9 +42,20 @@ class BackupBackend(abc.ABC):
 class BtrFSRsyncBackend(BackupBackend):
     config: cp.BtrFSRsyncConfig
 
-    def do_backup(self, mount_dir: Path, sudo_pass_cmd: str | None = None) -> None:
+    def do_backup(self, mount_dir: Path, sudo_pass_cmd: str | None = None) -> bool:
         logger.info(f"Beginne mit BtrFS-Backup für Speichermedium {self.config.Name}.")
         backup_repository = mount_dir / self.config.BackupRepositoryFolder
+        if not backup_repository.exists():
+            available_options = list(mount_dir.iterdir())
+            as_string = ", ".join(str(option) for option in available_options)
+            logger.error(
+                "Das Backup-Repository {backup_repository} existiert nicht. Verfügbare"
+                "Optionen sind: {available}",
+                backup_repository=backup_repository,
+                available=as_string,
+            )
+            return False
+
         src_snapshot = self.get_source_snapshot(backup_repository)
         logger.info('Basis-Sicherungskopie: "{base}".', base=src_snapshot)
         backup_root = self.snapshot(
@@ -59,6 +76,7 @@ class BtrFSRsyncBackend(BackupBackend):
         for src in self.config.Files:
             sh.refresh_sudo(sudo_pass_cmd)
             self.rsync_file(src, files_dest)
+        return True
 
     @staticmethod
     def get_source_snapshot(root: Path) -> Path:
@@ -141,16 +159,27 @@ class BtrFSRsyncBackend(BackupBackend):
 class ResticBackend(BackupBackend):
     config: cp.ResticConfig
 
-    def do_backup(self, mount_dir: Path, sudo_pass_cmd: str | None = None) -> None:
+    def do_backup(self, mount_dir: Path, sudo_pass_cmd: str | None = None) -> bool:
         logger.info(
             "Beginne mit Restic-Backup für Speichermedium {name}.",
             name=self.config.Name,
         )
         backup_repository = mount_dir / self.config.BackupRepositoryFolder
+        if not backup_repository.exists():
+            available_options = list(mount_dir.iterdir())
+            as_string = ", ".join(str(option) for option in available_options)
+            logger.error(
+                "Das Backup-Repository {backup_repository} existiert nicht. Verfügbare"
+                "Optionen sind: {available}",
+                backup_repository=backup_repository,
+                available=as_string,
+            )
+            return False
         sh.refresh_sudo(sudo_pass_cmd)
         self.copy_files(backup_repository)
         sh.refresh_sudo(sudo_pass_cmd)
         self.adapt_ownership(backup_repository)
+        return True
 
     @staticmethod
     def adapt_ownership(backup_repository: Path) -> None:

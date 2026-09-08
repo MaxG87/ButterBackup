@@ -74,14 +74,12 @@ def test_sudo_pass_cmd_is_used_in_open(
     open_result = runner.invoke(app, ["open", "--config", str(config_file)])
     assert open_result.exit_code == 0, open_result.output
 
-    sudo_refresh_calls = [
-        i for i, c in enumerate(spy.call_args_list) if _is_sudo_refresh(c)
-    ]
-    other_privileged_calls = [
+    refresh_idx = [i for i, c in enumerate(spy.call_args_list) if _is_sudo_refresh(c)]
+    other_idx = [
         i for i, c in enumerate(spy.call_args_list) if _is_non_refresh_sudo_cmd(c)
     ]
-    assert sudo_refresh_calls and other_privileged_calls
-    assert max(sudo_refresh_calls) < min(other_privileged_calls)
+    assert refresh_idx and other_idx
+    assert max(refresh_idx) < min(other_idx)
 
 
 def test_open_uses_sudo_to_create_mount_dir(
@@ -134,7 +132,6 @@ def test_sudo_session_is_refreshed_around_backup(
     other_idx = [
         i for i, c in enumerate(spy.call_args_list) if _is_non_refresh_sudo_cmd(c)
     ]
-
     assert len(refresh_idx) == expected_nof_refreshes
     _assert_sudo_refresh_occurred_before_privileged_cmd(refresh_idx, other_idx)
 
