@@ -5,11 +5,11 @@
 This is a major release with several exciting new features and quite a few
 breaking changes. I'm quite proud of what came out of it.
 
-The star of the show is `SudoPassCmd`: a command that refreshes the sudo
-cache, so long-running backups no longer get interrupted by sudo timeouts.
-Almost as exciting is the rework of device opening: with the new
-`OpenDirectory` option, devices always open into a predictable subfolder
-named after the device, so old shell history actually keeps working.
+The star of the show is `SudoPassCmd`: a command that refreshes the sudo cache,
+so long-running backups no longer get interrupted by sudo timeouts. Almost as
+exciting is the rework of device opening: with the new `OpenDirectory` option,
+devices always open into a predictable subfolder named after the device, so
+canning commands in the shell history actually works.
 
 Configuration handling also got a substantial overhaul. ButterBackup now has
 a proper default config location under `$XDG_CONFIG_HOME`, and supports YAML,
@@ -21,6 +21,11 @@ devices with Ext4 instead of Btrfs when using the Restic module. I experienced
 corruption of Btrfs on undervolted external hard disks. There are reports that
 Ext4 is more stable in this scenario, so I added the option. I'm not fully
 convinced about this, but now it's your choice to make.
+
+Reporting on several error scenarios has been improved. Now, several errors
+that resulted in stack traces will print a single, concise error message
+instead. This should make it easier to understand what went wrong and how to
+fix it.
 
 Finally, this release includes a lot of under-the-hood test and correctness
 work, fixing several long-standing bugs along the way.
@@ -96,6 +101,9 @@ After (JSON5, global section with `DeviceConfigurations` key):
   will need to be moved manually.
 
 - Device opening paths have changed for the `open` and `backup` subcommands.
+
+- The dependency `rich` is no longer optional. Therefore, demanding it using
+  `-E rich` is no longer supported and will result in an error.
 
 ## Added
 
