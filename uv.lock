@@ -81,14 +81,10 @@ dependencies = [
     { name = "loguru" },
     { name = "pydantic" },
     { name = "pyyaml" },
+    { name = "rich" },
     { name = "shell-interface" },
     { name = "storage-device-managers" },
     { name = "typer" },
-]
-
-[package.optional-dependencies]
-all = [
-    { name = "rich" },
 ]
 
 [package.dev-dependencies]
@@ -111,12 +107,11 @@ requires-dist = [
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pyyaml", specifier = ">=6.0.3" },
-    { name = "rich", marker = "extra == 'all'", specifier = ">=13.9.4" },
+    { name = "rich", specifier = ">=13.9.4" },
     { name = "shell-interface", editable = "projects/shell-interface" },
     { name = "storage-device-managers", editable = "projects/storage-device-managers" },
-    { name = "typer", specifier = ">=0.27.2" },
+    { name = "typer", extras = ["rich"], specifier = ">=0.27.2" },
 ]
-provides-extras = ["all"]
 
 [package.metadata.requires-dev]
 dev = [
