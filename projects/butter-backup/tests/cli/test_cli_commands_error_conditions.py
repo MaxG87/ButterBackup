@@ -2,13 +2,11 @@ import re
 import typing as t
 from contextlib import contextmanager
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 import shell_interface as sh
 import storage_device_managers as sdm
 
-from butter_backup import backup_backends as bb
 from butter_backup import cli
 from butter_backup import config_parser as cp
 from butter_backup.cli import app
@@ -198,42 +196,66 @@ def test_backup_handles_unmount_error_correctly(
     )
 
 
-@pytest.mark.parametrize("subcommand", ["open", "close", "backup"])
-def test_pass_cmd_error_is_reported_as_single_line(
-    runner, mocker, tmp_path: Path, subcommand: str
+def test_open_handles_pass_cmd_error_with_single_line(
+    runner, mocker, encrypted_btrfs_device, tmp_path: Path
 ) -> None:
-    dummy_cfg = mocker.Mock()
-    dummy_cfg.Name = "dummy"
-    dummy_cfg.device.return_value = tmp_path / "dummy-device"
-    dummy_cfg.device.return_value.touch()
-    dummy_cfg.map_name.return_value = tmp_path / "dummy-map"
-    parsed_config = SimpleNamespace(
-        DeviceConfigurations=[dummy_cfg], SudoPassCmd="false", OpenDirectory=tmp_path
-    )
-    config_file = tmp_path / "config.json"
-    config_file.write_text("{}")
-
-    mocker.patch.object(cli, "_read_configuration", return_value=parsed_config)
-    mocker.patch.object(cli, "_skip_device", return_value=False)
+    config_file = prepare_config_file(encrypted_btrfs_device, tmp_path)
     mocker.patch.object(
         sh,
         "refresh_sudo",
         side_effect=sh.PassCmdError("Shell-Befehl `false` ist fehlgeschlagen."),
     )
-    mocker.patch.object(
-        sdm, "get_mounted_devices", return_value={str(dummy_cfg.map_name()): [tmp_path]}
-    )
-    mocker.patch.object(sdm, "unmount_device")
-    mocker.patch.object(sdm, "close_decrypted_device")
-    mocker.patch.object(bb.BackupBackend, "from_config", return_value=mocker.Mock())
-
-    result = runner.invoke(app, [subcommand, "--config", str(config_file)])
-
+    result = runner.invoke(app, ["open", "--config", str(config_file)])
     assert_is_error_result(result, expected_exit_code=1)
     _assert_output_is_single_line_errmsg(
         result,
         {
-            f"Passwort-Kommando in '{subcommand}' ist fehlgeschlagen: Shell-Befehl `false` ist fehlgeschlagen.",
+            "Passwort-Kommando in 'open' ist fehlgeschlagen: Shell-Befehl `false` ist fehlgeschlagen."
+        },
+        {"Traceback", "PassCmdError"},
+    )
+
+
+def test_close_handles_pass_cmd_error_with_single_line(
+    runner, mocker, encrypted_btrfs_device, tmp_path: Path
+) -> None:
+    config_file = prepare_config_file(encrypted_btrfs_device, tmp_path)
+    open_result = runner.invoke(app, ["open", "--config", str(config_file)])
+    assert open_result.exit_code == 0
+    mocker.patch.object(
+        sh,
+        "refresh_sudo",
+        side_effect=sh.PassCmdError("Shell-Befehl `false` ist fehlgeschlagen."),
+    )
+    failing_result = runner.invoke(app, ["close", "--config", str(config_file)])
+    mocker.stopall()
+    close_result = runner.invoke(app, ["close", "--config", str(config_file)])
+    assert_is_error_result(failing_result, expected_exit_code=1)
+    assert close_result.exit_code == 0
+    _assert_output_is_single_line_errmsg(
+        failing_result,
+        {
+            "Passwort-Kommando in 'close' ist fehlgeschlagen: Shell-Befehl `false` ist fehlgeschlagen."
+        },
+        {"Traceback", "PassCmdError"},
+    )
+
+
+def test_backup_handles_pass_cmd_error_with_single_line(
+    runner, mocker, encrypted_btrfs_device, tmp_path: Path
+) -> None:
+    config_file = prepare_config_file(encrypted_btrfs_device, tmp_path)
+    mocker.patch.object(
+        sh,
+        "refresh_sudo",
+        side_effect=sh.PassCmdError("Shell-Befehl `false` ist fehlgeschlagen."),
+    )
+    failing_result = runner.invoke(app, ["backup", "--config", str(config_file)])
+    assert_is_error_result(failing_result, expected_exit_code=1)
+    _assert_output_is_single_line_errmsg(
+        failing_result,
+        {
+            "Passwort-Kommando in 'backup' ist fehlgeschlagen: Shell-Befehl `false` ist fehlgeschlagen."
         },
         {"Traceback", "PassCmdError"},
     )

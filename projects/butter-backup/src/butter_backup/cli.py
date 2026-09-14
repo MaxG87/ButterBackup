@@ -176,7 +176,7 @@ def _unmount_errmsg(cfg: cp.DeviceConfiguration, e: sdm.UnmountError) -> str:
 
 def _close_single_device(
     cfg: cp.DeviceConfiguration,
-    mounted_devices: dict[str, set[Path]],
+    mounted_devices: t.Mapping[str, t.Mapping[Path, sdm.MountOptions]],
     sudo_pass_cmd: str | None,
 ) -> bool:
     map_name = cfg.map_name()
