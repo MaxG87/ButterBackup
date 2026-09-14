@@ -52,6 +52,15 @@ def _is_non_refresh_sudo_cmd(call: t.Any) -> bool:
     return ret
 
 
+def _assert_single_line_pass_cmd_error(result: Result, command: str) -> None:
+    stderr_lines = result.stderr.splitlines()
+    assert result.stdout == ""
+    assert len(stderr_lines) == 1
+    assert f"Passwort-Kommando in '{command}' ist fehlgeschlagen:" in stderr_lines[0]
+    assert "Traceback" not in stderr_lines[0]
+    assert "PassCmdError" not in stderr_lines[0]
+
+
 def test_sudo_pass_cmd_is_used_in_open(
     runner: CliRunner,
     encrypted_device: cp.DeviceConfiguration,
@@ -169,24 +178,17 @@ def test_sudo_session_is_refreshed_before_close(
     in_docker_container(), reason="Test is known to fail in Docker container"
 )
 @pytest.mark.parametrize(
-    "command,has_failed",
+    "command",
     [
-        (
-            "open",
-            lambda config, result: (
-                f"Speichermedium {config.Name} konnte nicht geöffnet werden."
-                in result.stdout
-            ),
-        ),
-        ("backup", lambda _, result: result.exit_code != 0),
-        ("close", lambda _, result: result.exit_code != 0),
+        "open",
+        "backup",
+        "close",
     ],
 )
 def test_open_requires_correct_sudo_pass_cmd(
     runner: CliRunner,
     encrypted_device: cp.DeviceConfiguration,
     command: str,
-    has_failed: t.Callable[[cp.DeviceConfiguration, Result], bool],
     tmp_path: Path,
 ) -> None:
     assert _SUDO_PASS_CMD is not None
@@ -210,7 +212,8 @@ def test_open_requires_correct_sudo_pass_cmd(
         runner.invoke(app, ["open", "--config", str(correct_config_file)])
 
     wrong_result = runner.invoke(app, [command, "--config", str(wrong_config_file)])
-    assert has_failed(config, wrong_result)
+    assert wrong_result.exit_code == 1
+    _assert_single_line_pass_cmd_error(wrong_result, command)
 
     # Correct password: open should succeed
     _invalidate_sudo_session()
