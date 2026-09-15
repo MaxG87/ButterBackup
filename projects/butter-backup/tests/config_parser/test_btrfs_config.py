@@ -205,6 +205,7 @@ def test_btrfs_config_rejects_invalid_name(
     invalid_name: str,
 ) -> None:
     config = {
+        "Backend": "btrfs-rsync",
         "BackupRepositoryFolder": "repo",
         "DevicePassCmd": "echo pass",
         "Files": [],

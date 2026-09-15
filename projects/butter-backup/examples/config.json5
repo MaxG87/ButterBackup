@@ -4,6 +4,7 @@
   // OpenDirectory: "/media/ButterBackup",  // optional: where to open devices
   DeviceConfigurations: [
     {
+      Backend: "btrfs-rsync",
       Name: "BtrFS Backup Example",
       UUID: "12345678-1234-5678-1234-567812345678",
       DevicePassCmd: "echo device-password",
@@ -14,6 +15,7 @@
       FilesDest: "single-files",
     },
     {
+      Backend: "restic",
       Name: "Restic Backup Example",
       UUID: "87654321-4321-8765-4321-876543218765",
       DevicePassCmd: "echo device-password",

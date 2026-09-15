@@ -2,7 +2,8 @@
 SudoPassCmd: "gpg --decrypt ~/.local/share/passwords/sudo-password.gpg"
 # OpenDirectory: "/media/ButterBackup"  # optional: where to open devices
 DeviceConfigurations:
-  - Name: "BtrFS Backup Example"
+  - Backend: "btrfs-rsync"
+    Name: "BtrFS Backup Example"
     UUID: "12345678-1234-5678-1234-567812345678"
     DevicePassCmd: "echo device-password"
     BackupRepositoryFolder: "ButterBackupRepo"
@@ -12,7 +13,8 @@ DeviceConfigurations:
     Files: []
     FilesDest: "single-files"
 
-  - Name: "Restic Backup Example"
+  - Backend: "restic"
+    Name: "Restic Backup Example"
     UUID: "87654321-4321-8765-4321-876543218765"
     DevicePassCmd: "echo device-password"
     BackupRepositoryFolder: "ResticRepo"

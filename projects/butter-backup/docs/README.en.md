@@ -115,6 +115,8 @@ The following restrictions apply to the entire list:
 
 - The list must **not be empty**.
 - The `Name` field must be **unique** within the list.
+- The `Backend` field determines the device configuration type and must be
+  either `btrfs-rsync` or `restic`.
 
 #### Common Fields for All Device Configurations
 
@@ -122,20 +124,21 @@ All device configurations share the following fields:
 
 | Field                    | Mandatory | Description                                                                                            |
 | ------------------------ | --------- | ------------------------------------------------------------------------------------------------------ |
+| `Backend`                | yes       | Device configuration type; allowed values are `btrfs-rsync` and `restic`                               |
 | `UUID`                   | yes       | The UUID of the backup device (can be determined using the command `sudo blkid -s UUID /dev/<device>`) |
 | `DevicePassCmd`          | yes       | Shell command that displays the password for device encryption                                         |
 | `BackupRepositoryFolder` | yes       | Name of the directory on the device to which the backup is being made                                  |
 | `Name`                   | no        | Display name of the configuration; must be a valid path component; is set to `UUID` if not specified   |
-| `Compression`            | no        | desired BtrFS compression (e.g. `zstd:3`, defaults to none)                                            |
 | `ExcludePatternsFile`    | no        | Path to a file with exclusion patterns (`rsync` format)                                                |
 
 #### Fields specific to BtrFSRsync
 
-| Field       | Mandatory | Description                                                                          |
-| ----------- | --------- | ------------------------------------------------------------------------------------ |
-| `Folders`   | yes       | Mapping of source directories to destination directory names on the device           |
-| `Files`     | yes       | Set of source files to be backed up individually                                     |
-| `FilesDest` | yes       | Name of destination directory on the device to which the individual files are copied |
+| Field         | Mandatory | Description                                                                          |
+| ------------- | --------- | ------------------------------------------------------------------------------------ |
+| `Compression` | no        | desired BtrFS compression (e.g. `zstd:3`, defaults to none)                          |
+| `Folders`     | yes       | Mapping of source directories to destination directory names on the device           |
+| `Files`       | yes       | Set of source files to be backed up individually                                     |
+| `FilesDest`   | yes       | Name of destination directory on the device to which the individual files are copied |
 
 For the BtrFSRsync module, the following additional restrictions apply:
 

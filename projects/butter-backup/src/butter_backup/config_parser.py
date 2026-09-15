@@ -105,6 +105,7 @@ class BaseConfig(BaseModel, abc.ABC):
 
 class BtrFSRsyncConfig(BaseConfig):
     model_config = ConfigDict(extra="forbid", frozen=True)
+    Backend: t.Literal["btrfs-rsync"] = "btrfs-rsync"
     Files: set[FilePath]
     FilesDest: str
     Folders: FoldersT
@@ -165,6 +166,7 @@ class BtrFSRsyncConfig(BaseConfig):
 
 class ResticConfig(BaseConfig):
     model_config = ConfigDict(extra="forbid", frozen=True)
+    Backend: t.Literal["restic"] = "restic"
     FilesAndFolders: set[FilePath | DirectoryPath]
     RepositoryPassCmd: str
 
@@ -177,7 +179,9 @@ class ResticConfig(BaseConfig):
         return None
 
 
-DeviceConfiguration = BtrFSRsyncConfig | ResticConfig
+DeviceConfiguration = t.Annotated[
+    BtrFSRsyncConfig | ResticConfig, Field(discriminator="Backend")
+]
 
 
 class Configuration(BaseModel):

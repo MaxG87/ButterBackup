@@ -120,6 +120,8 @@ Folgende Einschränkungen gelten für die gesamte Liste:
 
 - Die Liste darf **nicht leer** sein.
 - Das Feld `Name` muss innerhalb der Liste **eindeutig** sein.
+- Das Feld `Backend` legt den Typ der Gerätekonfiguration fest und muss
+  entweder `btrfs-rsync` oder `restic` sein.
 
 #### Gemeinsame Felder
 
@@ -127,20 +129,21 @@ Alle Gerätekonfigurationen teilen die folgenden Felder:
 
 | Feld                     | Pflichtfeld | Beschreibung                                                                                                          |
 | ------------------------ | ----------- | --------------------------------------------------------------------------------------------------------------------- |
+| `Backend`                | ja          | Typ der Gerätekonfiguration; erlaubt sind `btrfs-rsync` und `restic`                                                  |
 | `UUID`                   | ja          | UUID des Sicherungsgeräts (bestimmbar mit `sudo blkid -s UUID /dev/<device>`)                                         |
 | `DevicePassCmd`          | ja          | Shell-Befehl, der das Passwort zur Geräteverschlüsselung ausgibt                                                      |
 | `BackupRepositoryFolder` | ja          | Name des Verzeichnisses auf dem Gerät, in das gesichert wird                                                          |
 | `Name`                   | nein        | Anzeigename der Konfiguration; muss ein gültiger Pfadbestandteil sein; wird auf `UUID` gesetzt, falls nicht angegeben |
-| `Compression`            | nein        | Gewünschte BtrFS-Kompression, z.B. `zstd:3` (Standard: keine)                                                         |
 | `ExcludePatternsFile`    | nein        | Pfad zu einer Datei mit Ausschlussmustern (`rsync`-Format)                                                            |
 
 #### BtrFSRsync-spezifische Felder
 
-| Feld        | Pflichtfeld | Beschreibung                                                               |
-| ----------- | ----------- | -------------------------------------------------------------------------- |
-| `Folders`   | ja          | Zuordnung von Quellverzeichnissen zu Zielverzeichnisnamen auf dem Gerät    |
-| `Files`     | ja          | Menge von Quelldateien, die einzeln gesichert werden sollen                |
-| `FilesDest` | ja          | Zielverzeichnisname auf dem Gerät, in den die Einzeldateien kopiert werden |
+| Feld          | Pflichtfeld | Beschreibung                                                               |
+| ------------- | ----------- | -------------------------------------------------------------------------- |
+| `Compression` | nein        | Gewünschte BtrFS-Kompression, z.B. `zstd:3` (Standard: keine)              |
+| `Folders`     | ja          | Zuordnung von Quellverzeichnissen zu Zielverzeichnisnamen auf dem Gerät    |
+| `Files`       | ja          | Menge von Quelldateien, die einzeln gesichert werden sollen                |
+| `FilesDest`   | ja          | Zielverzeichnisname auf dem Gerät, in den die Einzeldateien kopiert werden |
 
 Für das BtrFSRsync-Modul gelten zusätzlich folgende Einschränkungen:
 

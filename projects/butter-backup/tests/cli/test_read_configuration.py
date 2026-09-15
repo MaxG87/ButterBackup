@@ -20,6 +20,7 @@ def test_read_configuration_uses_first_matching_default_file(
     json5_cfg = cp.Configuration(
         DeviceConfigurations=[
             cp.ResticConfig(
+                Backend="restic",
                 Name="restic",
                 UUID=UUID("12345678-1234-5678-1234-567812345678"),
                 DevicePassCmd="echo pw",
@@ -32,6 +33,7 @@ def test_read_configuration_uses_first_matching_default_file(
     toml_cfg = cp.Configuration(
         DeviceConfigurations=[
             cp.ResticConfig(
+                Backend="restic",
                 Name="toml",
                 UUID=UUID("87654321-4321-8765-4321-876543218765"),
                 DevicePassCmd="echo pw",
@@ -47,6 +49,7 @@ def test_read_configuration_uses_first_matching_default_file(
         """
 [butter-backup]
 [[butter-backup.device-configurations]]
+Backend = "restic"
 Name = "toml"
 UUID = "87654321-4321-8765-4321-876543218765"
 DevicePassCmd = "echo pw"
