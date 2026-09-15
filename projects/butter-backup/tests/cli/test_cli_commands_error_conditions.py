@@ -196,21 +196,27 @@ def test_backup_handles_unmount_error_correctly(
     )
 
 
+@pytest.mark.parametrize("subcommand", ["open", "backup"])
 def test_open_handles_pass_cmd_error_with_single_line(
-    runner, mocker, encrypted_btrfs_device, tmp_path: Path
+    subcommand: str, runner, mocker, encrypted_btrfs_device, tmp_path: Path
 ) -> None:
     config_file = prepare_config_file(encrypted_btrfs_device, tmp_path)
     mocker.patch.object(
         sh,
         "refresh_sudo",
-        side_effect=sh.PassCmdError("Shell-Befehl `false` ist fehlgeschlagen."),
+        side_effect=sh.PassCmdError(
+            ["false"], b"Shell-Befehl `false` ist fehlgeschlagen."
+        ),
     )
-    result = runner.invoke(app, ["open", "--config", str(config_file)])
+    result = runner.invoke(app, [subcommand, "--config", str(config_file)])
     assert_is_error_result(result, expected_exit_code=1)
     _assert_output_is_single_line_errmsg(
         result,
         {
-            "Passwort-Kommando in 'open' ist fehlgeschlagen: Shell-Befehl `false` ist fehlgeschlagen."
+            re.compile(
+                "Passwort-Kommando in '.*' ist fehlgeschlagen. Die Fehlermeldung ist:"
+            ),
+            f"in '{subcommand}' ist",
         },
         {"Traceback", "PassCmdError"},
     )
@@ -225,7 +231,9 @@ def test_close_handles_pass_cmd_error_with_single_line(
     mocker.patch.object(
         sh,
         "refresh_sudo",
-        side_effect=sh.PassCmdError("Shell-Befehl `false` ist fehlgeschlagen."),
+        side_effect=sh.PassCmdError(
+            ["false"], b"Shell-Befehl `false` ist fehlgeschlagen."
+        ),
     )
     failing_result = runner.invoke(app, ["close", "--config", str(config_file)])
     mocker.stopall()
@@ -234,28 +242,6 @@ def test_close_handles_pass_cmd_error_with_single_line(
     assert close_result.exit_code == 0
     _assert_output_is_single_line_errmsg(
         failing_result,
-        {
-            "Passwort-Kommando in 'close' ist fehlgeschlagen: Shell-Befehl `false` ist fehlgeschlagen."
-        },
-        {"Traceback", "PassCmdError"},
-    )
-
-
-def test_backup_handles_pass_cmd_error_with_single_line(
-    runner, mocker, encrypted_btrfs_device, tmp_path: Path
-) -> None:
-    config_file = prepare_config_file(encrypted_btrfs_device, tmp_path)
-    mocker.patch.object(
-        sh,
-        "refresh_sudo",
-        side_effect=sh.PassCmdError("Shell-Befehl `false` ist fehlgeschlagen."),
-    )
-    failing_result = runner.invoke(app, ["backup", "--config", str(config_file)])
-    assert_is_error_result(failing_result, expected_exit_code=1)
-    _assert_output_is_single_line_errmsg(
-        failing_result,
-        {
-            "Passwort-Kommando in 'backup' ist fehlgeschlagen: Shell-Befehl `false` ist fehlgeschlagen."
-        },
+        {"Passwort-Kommando in 'close' ist fehlgeschlagen. Die Fehlermeldung ist:"},
         {"Traceback", "PassCmdError"},
     )

@@ -161,10 +161,10 @@ def _open_device(
 
 
 def _pass_cmd_errmsg(subcommand: str, err: sh.PassCmdError) -> str:
-    normalised_errmsg = " ".join(str(err).split())
-    return (
-        f"Passwort-Kommando in '{subcommand}' ist fehlgeschlagen: {normalised_errmsg}"
-    )
+    if err.stderr is None:
+        return f"Passwort-Kommando in '{subcommand}' ist fehlgeschlagen. Es ist keine Fehlermeldung verfügbar."
+    stderr = err.stderr.decode("utf-8", errors="replace").strip()
+    return f"Passwort-Kommando in '{subcommand}' ist fehlgeschlagen. Die Fehlermeldung ist: {stderr}"
 
 
 def _unmount_errmsg(cfg: cp.DeviceConfiguration, e: sdm.UnmountError) -> str:
