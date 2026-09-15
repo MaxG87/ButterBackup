@@ -193,11 +193,14 @@ def _close_single_device(
             device=cfg.Name,
         )
         return False
-    sh.refresh_sudo(sudo_pass_cmd)
     try:
+        sh.refresh_sudo(sudo_pass_cmd)
         sdm.unmount_device(map_name)
     except sdm.UnmountError as e:
         typer.echo(_unmount_errmsg(cfg, e), err=True)
+        return True
+    except sh.PassCmdError as e:
+        typer.echo(_pass_cmd_errmsg("close", e), err=True)
         return True
     sdm.close_decrypted_device(map_name)
     return False
@@ -256,17 +259,13 @@ def close(
     `open`. Weitere Erklärungen finden sich dort.
     """
     setup_logging(verbose)
-    try:
-        parsed_config = _read_configuration(config)
-        mounted_devices = sdm.get_mounted_devices()
-        had_unmount_error = False
-        for cfg in parsed_config.DeviceConfigurations:
-            had_unmount_error |= _close_single_device(
-                cfg, mounted_devices, parsed_config.SudoPassCmd
-            )
-    except sh.PassCmdError as e:
-        typer.echo(_pass_cmd_errmsg("close", e), err=True)
-        raise typer.Exit(1) from None
+    parsed_config = _read_configuration(config)
+    mounted_devices = sdm.get_mounted_devices()
+    had_unmount_error = False
+    for cfg in parsed_config.DeviceConfigurations:
+        had_unmount_error |= _close_single_device(
+            cfg, mounted_devices, parsed_config.SudoPassCmd
+        )
     raise typer.Exit(had_unmount_error)
 
 
