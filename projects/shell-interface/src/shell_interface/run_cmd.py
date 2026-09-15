@@ -7,12 +7,26 @@ from pathlib import Path
 StrPathList = abc.Sequence[str | Path]
 
 
+@dataclass(frozen=False, eq=False)
 class PassCmdError(RuntimeError):
-    pass
+    """Raised when the password command fails."""
+
+    command: StrPathList
+    stderr: bytes | None
+
+    def __hash__(self) -> int:
+        return id(self)
+
+    def __eq__(self, other: object) -> bool:
+        return hash(self) == hash(other)
 
 
 @dataclass(frozen=False, eq=False)
 class ShellInterfaceError(RuntimeError):
+    """
+    Custom exception class for errors encountered when running shell commands.
+    """
+
     # Setting frozen=True would prevent updating `__traceback__` in the except blocks,
     # causing error handling to crash itself. Therefore frozen=False is used, contrary
     # to the usual practice of making dataclasses frozen.
@@ -110,13 +124,9 @@ def pipe_pass_cmd_to_real_cmd(
     ShellInterfaceError
         if the real command returns a non-zero return code
     """
-    try:
-        pwd_proc = subprocess.run(
-            pass_cmd, stdout=subprocess.PIPE, shell=True, check=True
-        )
-    except subprocess.CalledProcessError as e:
-        errmsg = f"Shell-Befehl `{pass_cmd}` ist fehlgeschlagen."
-        raise PassCmdError(errmsg) from e
+    pwd_proc = subprocess.run(pass_cmd, stdout=subprocess.PIPE, shell=True, check=False)
+    if pwd_proc.returncode != 0:
+        raise PassCmdError(pass_cmd, pwd_proc.stderr)
     try:
         completed_process = subprocess.run(
             cmd, input=pwd_proc.stdout, check=True, capture_output=capture_output
