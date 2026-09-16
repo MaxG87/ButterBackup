@@ -96,6 +96,7 @@ def test_restic_config_json_roundtrip(base_config):
 def test_restic_config_rejects_invalid_name(invalid_name: str) -> None:
     with TemporaryDirectory() as source:
         config = {
+            "Backend": "restic",
             "BackupRepositoryFolder": "repo",
             "DevicePassCmd": "echo pass",
             "FilesAndFolders": [source],

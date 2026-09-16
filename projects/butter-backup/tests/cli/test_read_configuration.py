@@ -47,6 +47,7 @@ def test_read_configuration_uses_first_matching_default_file(
         """
 [butter-backup]
 [[butter-backup.device-configurations]]
+Backend = "restic"
 Name = "toml"
 UUID = "87654321-4321-8765-4321-876543218765"
 DevicePassCmd = "echo pw"
