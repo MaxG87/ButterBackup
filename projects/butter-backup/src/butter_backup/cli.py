@@ -9,6 +9,7 @@ from pathlib import Path
 from tempfile import mkdtemp
 from typing import Any
 
+import rich
 import shell_interface as sh
 import storage_device_managers as sdm
 import typer
@@ -39,6 +40,10 @@ class ValidFileSystems(enum.Enum):
     ext4 = "ext4"
 
 
+def _print_error(message: str) -> None:
+    rich.print(f"[bold red]Fehler![/bold red] {message}")
+
+
 def get_default_config_paths() -> list[Path]:
     config_dir = Path(os.getenv("XDG_CONFIG_HOME", DEFAULT_CONFIG_DIR))
     return [
@@ -63,9 +68,8 @@ def _read_configuration(config: Path | None) -> cp.Configuration:
             )
 
     tried = ", ".join(str(path) for path in get_default_config_paths())
-    typer.echo(
-        f"Keine Konfigurationsdatei gefunden. Es wurden folgende Pfade geprüft: {tried}",
-        err=True,
+    _print_error(
+        f"Keine Konfigurationsdatei gefunden. Es wurden folgende Pfade geprüft: {tried}"
     )
     raise typer.Exit(2)
 
@@ -141,7 +145,7 @@ def _open_device(
         decrypted = sdm.open_encrypted_device(cfg.device(), cfg.DevicePassCmd)
         sdm.mount_device(decrypted, mount_dir=mount_dir, compression=cfg.compression())
     except sh.PassCmdError as e:
-        typer.echo(_pass_cmd_errmsg("open", e), err=True)
+        _print_error(_pass_cmd_errmsg("open", e))
         if topmost_created_ancestor is not None:
             sh.rmdir_up_to(start=topmost_created_ancestor, stop=base_dir)
         return True
@@ -149,7 +153,7 @@ def _open_device(
         # In case of **any** error, the mount dir should be removed to prevent littering
         # the file system with empty directories. Hence the pokemon style exception
         # handling.
-        typer.echo(
+        logger.warning(
             f"Speichermedium {cfg.Name} konnte nicht geöffnet werden. Es wird übersprungen."
         )
         if topmost_created_ancestor is not None:
@@ -197,10 +201,10 @@ def _close_single_device(
         sh.refresh_sudo(sudo_pass_cmd)
         sdm.unmount_device(map_name)
     except sdm.UnmountError as e:
-        typer.echo(_unmount_errmsg(cfg, e), err=True)
+        _print_error(_unmount_errmsg(cfg, e))
         return True
     except sh.PassCmdError as e:
-        typer.echo(_pass_cmd_errmsg("close", e), err=True)
+        _print_error(_pass_cmd_errmsg("close", e))
         return True
     sdm.close_decrypted_device(map_name)
     return False
@@ -326,10 +330,10 @@ def backup(
                     # close the device. To prevent this, the sudo session is refreshed.
                     sh.refresh_sudo(parsed_config.SudoPassCmd)
             except sdm.UnmountError as e:
-                typer.echo(_unmount_errmsg(cfg, e), err=True)
+                _print_error(_unmount_errmsg(cfg, e))
                 had_unmount_error = True
     except sh.PassCmdError as e:
-        typer.echo(_pass_cmd_errmsg("backup", e), err=True)
+        _print_error(_pass_cmd_errmsg("backup", e))
         raise typer.Exit(1) from None
     raise typer.Exit(had_unmount_error)
 
@@ -384,12 +388,11 @@ def format_device(
         )
     config_writer: Callable[[str], Any]
     if config_to is None:
-        config_writer = typer.echo
+        config_writer = rich.print_json
     else:
         if config_to.exists():
-            raise ValueError(
-                "Zieldatei für ButterBackup-Konfiguration existiert schon!"
-            )
+            _print_error("Zieldatei für ButterBackup-Konfiguration existiert schon!")
+            raise typer.Exit(1)
         config_writer = config_to.write_text
     config: cp.DeviceConfiguration
     match backend:
@@ -407,7 +410,7 @@ def format_device(
 @app.command()
 def version() -> None:
     """Gibt butter-backups aktuelle Version an"""
-    typer.echo(__version__)
+    rich.print(__version__)
 
 
 def cli() -> None:
