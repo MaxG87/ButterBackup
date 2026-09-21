@@ -51,7 +51,7 @@ def test_open_shows_error_on_failure(runner, encrypted_device, tmp_path: Path) -
     open_result = runner.invoke(app, ["open", "--config", str(config_file)])
     expected_msg = f"Speichermedium {config.Name} konnte nicht geöffnet werden. Es wird übersprungen."
     assert open_result.exit_code == 0
-    assert expected_msg in open_result.stdout
+    assert expected_msg in open_result.stderr
     # The empty mount dir should have been cleaned up after the failure
     assert not (dest_dir / config.Name).exists()
 
