@@ -1,6 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "release-type": "python",
+  "bootstrap-sha": "4a006f9c379c3aeba12b7bf69e71cd7944ca1b37",
   "packages": {
     "projects/butter-backup": {},
     "projects/shell-interface": {},
