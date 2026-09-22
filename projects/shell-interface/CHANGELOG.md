@@ -1,5 +1,35 @@
 # Changelog
 
+## [3.0.0](https://github.com/MaxG87/ButterBackup/compare/v2.0.0...v3.0.0) (2026-09-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* unified major version bump across butter-backup, shell-interface and storage-device-managers as part of workspace restructuring.
+* The libraries storage-device-managers and shell-interface now don't log any output. Code that configured them accordingly, or depended on that, will break.
+
+### Features
+
+* bump all workspace packages to next major version ([ed16e70](https://github.com/MaxG87/ButterBackup/commit/ed16e70613aacf93f29986da747e9714ad37d50f))
+* Improve reporting on unmount errors ([d6a1418](https://github.com/MaxG87/ButterBackup/commit/d6a141873958d40b293bf1ad9dfb65d153b8beee))
+
+
+### Bug Fixes
+
+* Unfreeze ShellInterfaceError exception dataclass ([357cbb6](https://github.com/MaxG87/ButterBackup/commit/357cbb6e9b888a7cf74875f1866a59fdf41e7d05))
+
+
+### Dependencies
+
+* Bump all prod and dev dependencies ([761d3e5](https://github.com/MaxG87/ButterBackup/commit/761d3e5a73ae26eabc04d5b5384726dfa4d72177))
+* **dev:** bump hypothesis in the development-dependencies group ([#128](https://github.com/MaxG87/ButterBackup/issues/128)) ([799133a](https://github.com/MaxG87/ButterBackup/commit/799133ac77ab54e4cd215acc6ce916624f6158ab))
+* **dev:** Bump hypothesis in the development-dependencies group ([#144](https://github.com/MaxG87/ButterBackup/issues/144)) ([c21f937](https://github.com/MaxG87/ButterBackup/commit/c21f937e22fdc4371d179bcb48aaea283a416f2e))
+
+
+### Code Refactoring
+
+* Drop loguru from both libraries ([bdacc96](https://github.com/MaxG87/ButterBackup/commit/bdacc960d1a94b121f8401b1ed57f17ee5a3c241))
+
 ## [2.0.0](https://github.com/MaxG87/shell-interface/compare/v1.0.2...v2.0.0) (2026-04-26)
 
 
