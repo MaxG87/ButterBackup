@@ -1,177 +1,279 @@
 # Changelog
 
-## [3.6.0](https://github.com/MaxG87/ButterBackup/compare/v3.5.5...v3.6.0) (2026-04-15)
+## [4.0.0](https://github.com/MaxG87/ButterBackup/compare/v3.6.0...v4.0.0) (2026-09-28)
 
+### Release Highlights
+
+This is a major release with several exciting new features and quite a few
+breaking changes. I'm quite proud of what came out of it.
+
+The star of the show is `SudoPassCmd`: a command that refreshes the sudo cache,
+so long-running backups no longer get interrupted by sudo timeouts. Almost as
+exciting is the rework of device opening: with the new `OpenDirectory` option,
+devices always open into a predictable subfolder named after the device, so
+canning commands in the shell history actually works.
+
+Configuration handling also got a substantial overhaul. ButterBackup now has
+a proper default config location under `$XDG_CONFIG_HOME`, and supports YAML,
+JSON5, and TOML in addition to plain JSON. I switched my own configs to
+JSON5 because I was tired of JSON not allowing trailing commas.
+
+On the backup side, `format-device` now supports `--file-system` to set up
+devices with Ext4 instead of Btrfs when using the Restic module. I experienced
+corruption of Btrfs on undervolted external hard disks. There are reports that
+Ext4 is more stable in this scenario, so I added the option. I'm not fully
+convinced about this, but now it's your choice to make.
+
+Reporting on several error scenarios has been improved. Now, several errors
+that resulted in stack traces will print a single, concise error message
+instead. This should make it easier to understand what went wrong and how to
+fix it.
+
+Finally, this release includes a lot of under-the-hood test and correctness
+work, fixing several long-standing bugs along the way.
+
+See below for the full list of changes, including breaking changes and a
+migration example for the configuration format.
+
+### Breaking Changes
+
+- The configuration file format has changed: there is now a device-independent
+  top-level section containing global configuration options. What used to be
+  the top-level list of device configs is now nested under the key
+  `DeviceConfigurations` within that section. Additionally,
+  `DeviceConfigurations` must state the backend they target. This enables
+  improved error messages. Existing configuration files need to be migrated to
+  the new structure.
+
+  Before (plain JSON, top-level list of device configs):
+
+```json
+[
+  {
+    "Name": "BtrFS Backup Example",
+    "UUID": "12345678-1234-5678-1234-567812345678",
+    "DevicePassCmd": "echo device-password",
+    "BackupRepositoryFolder": "ButterBackupRepo",
+    "Compression": "zstd:3",
+    "Folders": { "/tmp": "temp-files" },
+    "Files": [],
+    "FilesDest": "single-files"
+  },
+  {
+    "Name": "Restic Backup Example",
+    "UUID": "87654321-4321-8765-4321-876543218765",
+    "DevicePassCmd": "echo device-password",
+    "BackupRepositoryFolder": "ResticRepo",
+    "RepositoryPassCmd": "echo repo-password",
+    "FilesAndFolders": ["/tmp"]
+  }
+]
+```
+
+After (JSON5, global section with `DeviceConfigurations` key):
+
+```json5
+// JSON5 allows comments and trailing commas
+{
+  SudoPassCmd: "gpg --decrypt ~/.local/share/passwords/sudo-password.gpg",
+  // OpenDirectory: "/media/ButterBackup",  // optional: where to open devices
+  DeviceConfigurations: [
+    {
+      Backend: "btrfs-rsync",
+      Name: "BtrFS Backup Example",
+      UUID: "12345678-1234-5678-1234-567812345678",
+      DevicePassCmd: "echo device-password",
+      BackupRepositoryFolder: "ButterBackupRepo",
+      Compression: "zstd:3",
+      Folders: { "/tmp": "temp-files" },
+      Files: [],
+      FilesDest: "single-files",
+    },
+    {
+      Backend: "restic",
+      Name: "Restic Backup Example",
+      UUID: "87654321-4321-8765-4321-876543218765",
+      DevicePassCmd: "echo device-password",
+      BackupRepositoryFolder: "ResticRepo",
+      RepositoryPassCmd: "echo repo-password",
+      FilesAndFolders: ["/tmp"],
+    },
+  ],
+}
+```
+
+- The default configuration file location has moved to a project-specific
+  subfolder under `$XDG_CONFIG_HOME`. Existing configs in the old location
+  will need to be moved manually.
+
+- Device opening paths have changed for the `open` and `backup` subcommands.
+
+- The dependency `rich` is no longer optional. Therefore, demanding it using
+  `-E rich` is no longer supported and will result in an error.
+
+### Added
+
+- `SudoPassCmd`: specify a command that refreshes the sudo cache, preventing
+  long-running backups from being interrupted by sudo timeouts.
+- `OpenDirectory` configuration option: backup devices are now opened in a
+  subfolder (named after the device's `Name`) of a configurable directory,
+  making opening paths predictable and reusable from shell history.
+- Support for additional configuration file formats: YAML, JSON5, and TOML.
+- `format-device` now accepts a `--file-system` option, allowing Ext4 as an
+  alternative to Btrfs when using the Restic backup module. This may help avoid
+  file system corruption issues on external hard disks.
+
+### Improved reliability
+
+- Significant work went into test coverage and correctness this release.
+  Several long-standing bugs were fixed, including an issue where closing
+  devices whose `Name` contains a space did not work correctly.
+
+## [3.6.0](https://github.com/MaxG87/ButterBackup/compare/v3.5.5...v3.6.0) (2026-04-15)
 
 ### Features
 
-* Add name attribute to ButterBackup configuration ([239af34](https://github.com/MaxG87/ButterBackup/commit/239af34d0c1fa94d3fb9a21a01089e6ef11304d7))
-* Log that chown is about to take place ([5d44acc](https://github.com/MaxG87/ButterBackup/commit/5d44acc517e2310acf55332571fcc882efe7d49f))
-
+- Add name attribute to ButterBackup configuration ([239af34](https://github.com/MaxG87/ButterBackup/commit/239af34d0c1fa94d3fb9a21a01089e6ef11304d7))
+- Log that chown is about to take place ([5d44acc](https://github.com/MaxG87/ButterBackup/commit/5d44acc517e2310acf55332571fcc882efe7d49f))
 
 ### Bug Fixes
 
-* Avoid changing ownership recursively in BtrFS backend ([77603df](https://github.com/MaxG87/ButterBackup/commit/77603df8021a3fbbf2d2da31b62ef09dd0ae9d90))
-* **build:** Rebuild lockfile ([daaee11](https://github.com/MaxG87/ButterBackup/commit/daaee1197c578af507639b5d02e0eabea95ec95f))
-* Fix spurious unmount errors by synchronising changes first ([00ac2a3](https://github.com/MaxG87/ButterBackup/commit/00ac2a36762f01c23723c13031f9f0bac3fbc5da))
-
+- Avoid changing ownership recursively in BtrFS backend ([77603df](https://github.com/MaxG87/ButterBackup/commit/77603df8021a3fbbf2d2da31b62ef09dd0ae9d90))
+- **build:** Rebuild lockfile ([daaee11](https://github.com/MaxG87/ButterBackup/commit/daaee1197c578af507639b5d02e0eabea95ec95f))
+- Fix spurious unmount errors by synchronising changes first ([00ac2a3](https://github.com/MaxG87/ButterBackup/commit/00ac2a36762f01c23723c13031f9f0bac3fbc5da))
 
 ### Documentation
 
-* Add name entry to example configuration file ([15f59b2](https://github.com/MaxG87/ButterBackup/commit/15f59b2287e74be6a9aa98822335cb0be8bf8603))
+- Add name entry to example configuration file ([15f59b2](https://github.com/MaxG87/ButterBackup/commit/15f59b2287e74be6a9aa98822335cb0be8bf8603))
 
 ## [3.5.5](https://github.com/MaxG87/ButterBackup/compare/v3.5.4...v3.5.5) (2026-03-24)
 
-
 ### Bug Fixes
 
-* Fix backup deleting bug by bumping storage_device_managers to v1.0.1 ([a46acb4](https://github.com/MaxG87/ButterBackup/commit/a46acb465155b92820af1271822b302fd54a82c0))
-
+- Fix backup deleting bug by bumping storage_device_managers to v1.0.1 ([a46acb4](https://github.com/MaxG87/ButterBackup/commit/a46acb465155b92820af1271822b302fd54a82c0))
 
 ### Dependencies
 
-* **dev:** Add pytest-mock ([d1a4960](https://github.com/MaxG87/ButterBackup/commit/d1a4960b5243ddfd98c3e1ff6977ea7af3d9b207))
-* **dev:** Bump all dev-dependencies ([a74a8d1](https://github.com/MaxG87/ButterBackup/commit/a74a8d165adb7dc492670c471d518f872ae9ab1c))
-
+- **dev:** Add pytest-mock ([d1a4960](https://github.com/MaxG87/ButterBackup/commit/d1a4960b5243ddfd98c3e1ff6977ea7af3d9b207))
+- **dev:** Bump all dev-dependencies ([a74a8d1](https://github.com/MaxG87/ButterBackup/commit/a74a8d165adb7dc492670c471d518f872ae9ab1c))
 
 ### Documentation
 
-* Mention use of 1Password ([062172d](https://github.com/MaxG87/ButterBackup/commit/062172dc024ef5a4de6bd60d6a1151f7f0d28d3b))
+- Mention use of 1Password ([062172d](https://github.com/MaxG87/ButterBackup/commit/062172dc024ef5a4de6bd60d6a1151f7f0d28d3b))
 
 ## [3.5.4](https://github.com/MaxG87/ButterBackup/compare/v3.5.3...v3.5.4) (2026-01-10)
 
-
 ### Bug Fixes
 
-* Change ownership of new snapshot to current user ([7d4e54e](https://github.com/MaxG87/ButterBackup/commit/7d4e54e0b80492e385b27a00051cea8dcaa0fa82))
-* Fix uv.lock ([1fa59e2](https://github.com/MaxG87/ButterBackup/commit/1fa59e2cabe94de6f63401085cabe8c34e056ea7))
-
+- Change ownership of new snapshot to current user ([7d4e54e](https://github.com/MaxG87/ButterBackup/commit/7d4e54e0b80492e385b27a00051cea8dcaa0fa82))
+- Fix uv.lock ([1fa59e2](https://github.com/MaxG87/ButterBackup/commit/1fa59e2cabe94de6f63401085cabe8c34e056ea7))
 
 ### Dependencies
 
-* Bump all dependencies ([8496afc](https://github.com/MaxG87/ButterBackup/commit/8496afc46674231f68e4551a6120177964bbf02c))
-* **dev:** Bump all dev-dependencies ([dfba38a](https://github.com/MaxG87/ButterBackup/commit/dfba38a5f9f3a9afb847896883708dd4ef75242a))
-
+- Bump all dependencies ([8496afc](https://github.com/MaxG87/ButterBackup/commit/8496afc46674231f68e4551a6120177964bbf02c))
+- **dev:** Bump all dev-dependencies ([dfba38a](https://github.com/MaxG87/ButterBackup/commit/dfba38a5f9f3a9afb847896883708dd4ef75242a))
 
 ### Documentation
 
-* Update Python versions in one comment ([f8dcc42](https://github.com/MaxG87/ButterBackup/commit/f8dcc42fdbbae301f0128e0bc8282fbbb6808b46))
+- Update Python versions in one comment ([f8dcc42](https://github.com/MaxG87/ButterBackup/commit/f8dcc42fdbbae301f0128e0bc8282fbbb6808b46))
 
 ## [3.5.3](https://github.com/MaxG87/ButterBackup/compare/v3.5.2...v3.5.3) (2025-09-19)
 
-
 ### Bug Fixes
 
-* Fix behaviour of single files backup ([b8b46af](https://github.com/MaxG87/ButterBackup/commit/b8b46af8b5eea38f0dcda892cc27b65d4e42e5d8))
-* Make collection of single files a set ([af0f3ab](https://github.com/MaxG87/ButterBackup/commit/af0f3ab33c07972aecc9c98dfad6d87a19b92d01))
-* **tests:** Ändere Größe der Einzeldatei-Zufallsdatei ([26aa5c7](https://github.com/MaxG87/ButterBackup/commit/26aa5c736795f720b2b4c971a2adf933a21322f6))
-
+- Fix behaviour of single files backup ([b8b46af](https://github.com/MaxG87/ButterBackup/commit/b8b46af8b5eea38f0dcda892cc27b65d4e42e5d8))
+- Make collection of single files a set ([af0f3ab](https://github.com/MaxG87/ButterBackup/commit/af0f3ab33c07972aecc9c98dfad6d87a19b92d01))
+- **tests:** Ändere Größe der Einzeldatei-Zufallsdatei ([26aa5c7](https://github.com/MaxG87/ButterBackup/commit/26aa5c736795f720b2b4c971a2adf933a21322f6))
 
 ### Documentation
 
-* Add documentation of backup modules ([5f02eb3](https://github.com/MaxG87/ButterBackup/commit/5f02eb33b0fae177a418675757ff4a96d0c67945))
-* Kleinere Verbesserung der Installationsanleitung ([962507a](https://github.com/MaxG87/ButterBackup/commit/962507a1b55cb2bd90812f057290938a8679df88))
+- Add documentation of backup modules ([5f02eb3](https://github.com/MaxG87/ButterBackup/commit/5f02eb33b0fae177a418675757ff4a96d0c67945))
+- Kleinere Verbesserung der Installationsanleitung ([962507a](https://github.com/MaxG87/ButterBackup/commit/962507a1b55cb2bd90812f057290938a8679df88))
 
 ## [3.5.2](https://github.com/MaxG87/ButterBackup/compare/v3.5.1...v3.5.2) (2025-07-03)
 
-
 ### Bug Fixes
 
-* Busy wait to avoid race condition ([9d6dd1b](https://github.com/MaxG87/ButterBackup/commit/9d6dd1ba64775a6ecb785b99b8ab9f7eca6aefe4))
-* Refuse to do backup on opened device ([34caba3](https://github.com/MaxG87/ButterBackup/commit/34caba3b197483992ecb13045d95800f6f3b89c9))
-* Refuse to open already opened device ([7b9acb8](https://github.com/MaxG87/ButterBackup/commit/7b9acb8c3f4acfa56622a7b07efb57c364b24225))
-
+- Busy wait to avoid race condition ([9d6dd1b](https://github.com/MaxG87/ButterBackup/commit/9d6dd1ba64775a6ecb785b99b8ab9f7eca6aefe4))
+- Refuse to do backup on opened device ([34caba3](https://github.com/MaxG87/ButterBackup/commit/34caba3b197483992ecb13045d95800f6f3b89c9))
+- Refuse to open already opened device ([7b9acb8](https://github.com/MaxG87/ButterBackup/commit/7b9acb8c3f4acfa56622a7b07efb57c364b24225))
 
 ### Dependencies
 
-* Bump typer (v0.16.0) and pydantic (v2.11.7) ([aa5ebd3](https://github.com/MaxG87/ButterBackup/commit/aa5ebd38c75d8342649783b402db523de1ab16ec))
-* **dev:** Bump all development dependencies ([0926918](https://github.com/MaxG87/ButterBackup/commit/0926918bf453221f1e32fb65f6ce965aedc0fd5d))
-* **dev:** bump the development-dependencies group with 4 updates ([#79](https://github.com/MaxG87/ButterBackup/issues/79)) ([3e83246](https://github.com/MaxG87/ButterBackup/commit/3e832460e8dfe1fa5321f3fb36316c37674858c5))
-* **dev:** bump the development-dependencies group with 7 updates ([#78](https://github.com/MaxG87/ButterBackup/issues/78)) ([d84b2fe](https://github.com/MaxG87/ButterBackup/commit/d84b2fe8f6c8830b777da75f9a0592271ab1c730))
-* **dev:** Drop pynvim ([bde08cc](https://github.com/MaxG87/ButterBackup/commit/bde08ccc046167a3e6b6d3656a19457d56d43a46))
-
+- Bump typer (v0.16.0) and pydantic (v2.11.7) ([aa5ebd3](https://github.com/MaxG87/ButterBackup/commit/aa5ebd38c75d8342649783b402db523de1ab16ec))
+- **dev:** Bump all development dependencies ([0926918](https://github.com/MaxG87/ButterBackup/commit/0926918bf453221f1e32fb65f6ce965aedc0fd5d))
+- **dev:** bump the development-dependencies group with 4 updates ([#79](https://github.com/MaxG87/ButterBackup/issues/79)) ([3e83246](https://github.com/MaxG87/ButterBackup/commit/3e832460e8dfe1fa5321f3fb36316c37674858c5))
+- **dev:** bump the development-dependencies group with 7 updates ([#78](https://github.com/MaxG87/ButterBackup/issues/78)) ([d84b2fe](https://github.com/MaxG87/ButterBackup/commit/d84b2fe8f6c8830b777da75f9a0592271ab1c730))
+- **dev:** Drop pynvim ([bde08cc](https://github.com/MaxG87/ButterBackup/commit/bde08ccc046167a3e6b6d3656a19457d56d43a46))
 
 ### Documentation
 
-* Add project URLs ([e039cf7](https://github.com/MaxG87/ButterBackup/commit/e039cf7d99148086ebb691d2da988b7f67901778))
-* Replace poetry with uv in README ([d9d17f8](https://github.com/MaxG87/ButterBackup/commit/d9d17f819702fdd6f8222888713d560c9985aba2))
+- Add project URLs ([e039cf7](https://github.com/MaxG87/ButterBackup/commit/e039cf7d99148086ebb691d2da988b7f67901778))
+- Replace poetry with uv in README ([d9d17f8](https://github.com/MaxG87/ButterBackup/commit/d9d17f819702fdd6f8222888713d560c9985aba2))
 
 ## [3.5.1](https://github.com/MaxG87/ButterBackup/compare/v3.5.0...v3.5.1) (2025-02-17)
 
-
 ### Bug Fixes
 
-* **ci:** Use publish pipeline based on uv and PyPI Github Action ([54f7639](https://github.com/MaxG87/ButterBackup/commit/54f763956426ec1ad36ee8c17326e12a48d84b3a))
+- **ci:** Use publish pipeline based on uv and PyPI Github Action ([54f7639](https://github.com/MaxG87/ButterBackup/commit/54f763956426ec1ad36ee8c17326e12a48d84b3a))
 
 ## [3.5.0](https://github.com/MaxG87/ButterBackup/compare/v3.4.0...v3.5.0) (2025-02-17)
 
-
 ### Bug Fixes
 
-* **ci:** Use correct automatic variable in pseudo phony target ([3d414e5](https://github.com/MaxG87/ButterBackup/commit/3d414e51c4db4e553bdc538ec3cd2d876c0e6751))
-* **tests:** Use archlinux image that exists ([8cf8631](https://github.com/MaxG87/ButterBackup/commit/8cf86316e6aec79428df590c0f90c6b882d4eba2))
-* The local dockerised test suite works again.
-
+- **ci:** Use correct automatic variable in pseudo phony target ([3d414e5](https://github.com/MaxG87/ButterBackup/commit/3d414e51c4db4e553bdc538ec3cd2d876c0e6751))
+- **tests:** Use archlinux image that exists ([8cf8631](https://github.com/MaxG87/ButterBackup/commit/8cf86316e6aec79428df590c0f90c6b882d4eba2))
+- The local dockerised test suite works again.
 
 ### Dependencies
 
-* **Added support for Python 3.13!***
-* **Removed upper limit of Python**, which should allow usage on upcomming Python versions. ([0710dee](https://github.com/MaxG87/ButterBackup/commit/0710deeba6bca605347ac4f9699ef21490768de9))
-* Bump shell-interface and storage-device-managers to v1.0.0 ([ec23d13](https://github.com/MaxG87/ButterBackup/commit/ec23d131ba57927a70d2e7e28518e62c7cb7d027))
-* **dev:** Bump pynvim to v0.5.2 ([af799dd](https://github.com/MaxG87/ButterBackup/commit/af799dd11e6d8d85e70d25fcb44d674725e1f040))
-* **dev:** bump ruff in the development-dependencies group ([#76](https://github.com/MaxG87/ButterBackup/issues/76)) ([854abe7](https://github.com/MaxG87/ButterBackup/commit/854abe705cda4d51f6e311107f74fe91800fd658))
-* Drop support for Python 3.8 ([ec53681](https://github.com/MaxG87/ButterBackup/commit/ec53681fcae1be070d9a6a7df7bc0134e0bffac6))
-* Remove upper bound on all project dependencies ([de2e5ab](https://github.com/MaxG87/ButterBackup/commit/de2e5ab35a48d686d9f195383348c96cf3f640f5))
-* Wechsle zu pydantic 2.0 ([b2d2aab](https://github.com/MaxG87/ButterBackup/commit/b2d2aab5ada00e08c4bfa1ac35c8737c1262cad6))
-
+- **Added support for Python 3.13!\***
+- **Removed upper limit of Python**, which should allow usage on upcomming Python versions. ([0710dee](https://github.com/MaxG87/ButterBackup/commit/0710deeba6bca605347ac4f9699ef21490768de9))
+- Bump shell-interface and storage-device-managers to v1.0.0 ([ec23d13](https://github.com/MaxG87/ButterBackup/commit/ec23d131ba57927a70d2e7e28518e62c7cb7d027))
+- **dev:** Bump pynvim to v0.5.2 ([af799dd](https://github.com/MaxG87/ButterBackup/commit/af799dd11e6d8d85e70d25fcb44d674725e1f040))
+- **dev:** bump ruff in the development-dependencies group ([#76](https://github.com/MaxG87/ButterBackup/issues/76)) ([854abe7](https://github.com/MaxG87/ButterBackup/commit/854abe705cda4d51f6e311107f74fe91800fd658))
+- Drop support for Python 3.8 ([ec53681](https://github.com/MaxG87/ButterBackup/commit/ec53681fcae1be070d9a6a7df7bc0134e0bffac6))
+- Remove upper bound on all project dependencies ([de2e5ab](https://github.com/MaxG87/ButterBackup/commit/de2e5ab35a48d686d9f195383348c96cf3f640f5))
+- Wechsle zu pydantic 2.0 ([b2d2aab](https://github.com/MaxG87/ButterBackup/commit/b2d2aab5ada00e08c4bfa1ac35c8737c1262cad6))
 
 ### Miscellaneous Chores
 
-* release 3.5.0 ([9296019](https://github.com/MaxG87/ButterBackup/commit/92960193a649f4f4342c428e7a28ec1425c60f75))
-
+- release 3.5.0 ([9296019](https://github.com/MaxG87/ButterBackup/commit/92960193a649f4f4342c428e7a28ec1425c60f75))
 
 ### Other
 
-* Switched to `uv` for project management.
-* Include README in distribution, improving the representation on PyPI.
-
+- Switched to `uv` for project management.
+- Include README in distribution, improving the representation on PyPI.
 
 ## [3.4.0](https://github.com/MaxG87/ButterBackup/compare/v3.3.2...v3.4.0) (2023-12-22)
 
-
 ### Features
 
-* Erweitere Unterstützung auf Python 3.12 ([26b59c5](https://github.com/MaxG87/ButterBackup/commit/26b59c5156e218f9c8fc492ad402813747b1c2fa))
-
+- Erweitere Unterstützung auf Python 3.12 ([26b59c5](https://github.com/MaxG87/ButterBackup/commit/26b59c5156e218f9c8fc492ad402813747b1c2fa))
 
 ### Dependencies
 
-* Hebe Version zweier Abhängigkeiten ([ef58a1e](https://github.com/MaxG87/ButterBackup/commit/ef58a1ee849694c1fef1f608046589b0453a39ff))
-
+- Hebe Version zweier Abhängigkeiten ([ef58a1e](https://github.com/MaxG87/ButterBackup/commit/ef58a1ee849694c1fef1f608046589b0453a39ff))
 
 ### Documentation
 
-* Behebe kleinen Fehler in CHANGELOG ([31b0f7f](https://github.com/MaxG87/ButterBackup/commit/31b0f7f65fa990412706154bbf69908757c3dd80))
+- Behebe kleinen Fehler in CHANGELOG ([31b0f7f](https://github.com/MaxG87/ButterBackup/commit/31b0f7f65fa990412706154bbf69908757c3dd80))
 
 ## [3.3.2](https://github.com/MaxG87/ButterBackup/compare/v3.3.1...v3.3.2) (2023-12-15)
 
-
 ### Features
 
-* Ermögliche schöne CLI-Darstellung durch Rich mit `butter-backup[all]`
-
+- Ermögliche schöne CLI-Darstellung durch Rich mit `butter-backup[all]`
 
 ### Bug Fixes
 
-* Reduziere Pythonunterstützung zu 3.12 ([6e6db2e](https://github.com/MaxG87/ButterBackup/commit/6e6db2e07062e2ffe1f873366923051f7b93e5e8))
-
+- Reduziere Pythonunterstützung zu 3.12 ([6e6db2e](https://github.com/MaxG87/ButterBackup/commit/6e6db2e07062e2ffe1f873366923051f7b93e5e8))
 
 ### Dependencies
 
-* Füge pytest-xdist als dev-dependency hinzu ([b335a8f](https://github.com/MaxG87/ButterBackup/commit/b335a8f75cbcb06a52304f9ba2d33f29f6242a4f))
-* Relock aller Abhängigkeiten ([9c51437](https://github.com/MaxG87/ButterBackup/commit/9c514375dbb8f242cec07f0329ae38fa0542ccde))
-
+- Füge pytest-xdist als dev-dependency hinzu ([b335a8f](https://github.com/MaxG87/ButterBackup/commit/b335a8f75cbcb06a52304f9ba2d33f29f6242a4f))
+- Relock aller Abhängigkeiten ([9c51437](https://github.com/MaxG87/ButterBackup/commit/9c514375dbb8f242cec07f0329ae38fa0542ccde))
 
 ### Documentation
 
-* Überarbeite Abschnitt zu Testsuite in README ([c7cf981](https://github.com/MaxG87/ButterBackup/commit/c7cf981ddce76154c0d3ed43fbce8a811580aae6))
+- Überarbeite Abschnitt zu Testsuite in README ([c7cf981](https://github.com/MaxG87/ButterBackup/commit/c7cf981ddce76154c0d3ed43fbce8a811580aae6))
