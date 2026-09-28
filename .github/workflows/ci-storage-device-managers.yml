@@ -4,7 +4,7 @@ on:
   push:
 
 jobs:
-  build:
+  quality-assurance:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -33,7 +33,7 @@ jobs:
   check:
     if: always()
     needs:
-      - build
+      - quality-assurance
     runs-on: ubuntu-latest
     steps:
       - name: Decide whether the needed jobs succeeded or failed
