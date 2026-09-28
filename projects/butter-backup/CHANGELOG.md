@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.0.1](https://github.com/MaxG87/ButterBackup/compare/butter-backup-v4.0.0...butter-backup-v4.0.1) (2026-09-28)
+
+
+### Bug Fixes
+
+* Add empty files to force a new release ([8d440f8](https://github.com/MaxG87/ButterBackup/commit/8d440f834cc68c711733700f16ca96d69ee0b64d))
+
+
+### Dependencies
+
+* Bump all dependencies ([46091ad](https://github.com/MaxG87/ButterBackup/commit/46091ada1eeb8d2f15241b249212fcf80ae86800))
+
 ## [4.0.0](https://github.com/MaxG87/ButterBackup/compare/v3.6.0...v4.0.0) (2026-09-28)
 
 ### Release Highlights
