@@ -2,9 +2,11 @@
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "release-type": "python",
   "bootstrap-sha": "4a006f9c379c3aeba12b7bf69e71cd7944ca1b37",
+  "include-component-in-tag": true,
+  "separate-pull-requests": true,
   "packages": {
-    "projects/butter-backup": {},
-    "projects/shell-interface": {},
-    "projects/storage-device-managers": {}
+    "projects/butter-backup": { "component": "butter-backup" },
+    "projects/shell-interface": { "component": "shell-interface" },
+    "projects/storage-device-managers": { "component": "storage-device-managers" }
   }
 }
