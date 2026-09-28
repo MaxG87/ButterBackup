@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.1](https://github.com/MaxG87/ButterBackup/compare/shell-interface-v3.0.0...shell-interface-v3.0.1) (2026-09-28)
+
+
+### Bug Fixes
+
+* Add empty files to force a new release ([8d440f8](https://github.com/MaxG87/ButterBackup/commit/8d440f834cc68c711733700f16ca96d69ee0b64d))
+
 ## [3.0.0](https://github.com/MaxG87/ButterBackup/compare/v2.0.0...v3.0.0) (2026-09-28)
 
 ### ⚠ BREAKING CHANGES
