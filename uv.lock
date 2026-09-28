@@ -74,7 +74,7 @@ wheels = [
 
 [[package]]
 name = "butter-backup"
-version = "3.6.0"
+version = "4.0.0"
 source = { editable = "projects/butter-backup" }
 dependencies = [
     { name = "json5" },
@@ -941,7 +941,7 @@ wheels = [
 
 [[package]]
 name = "shell-interface"
-version = "2.0.0"
+version = "3.0.0"
 source = { editable = "projects/shell-interface" }
 
 [package.dev-dependencies]
@@ -990,7 +990,7 @@ wheels = [
 
 [[package]]
 name = "storage-device-managers"
-version = "2.0.0"
+version = "3.0.0"
 source = { editable = "projects/storage-device-managers" }
 dependencies = [
     { name = "loguru" },
