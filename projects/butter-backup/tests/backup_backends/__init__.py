@@ -93,7 +93,7 @@ def get_result_content_for_btrfs(
 ) -> dict[Path, bytes]:
     folder_dest_by_config = next(iter(config.Folders.values()))
     backup_repository = mounted / config.BackupRepositoryFolder
-    latest_snapshot = sorted(backup_repository.iterdir())[-1]
+    latest_snapshot = max(backup_repository.iterdir())
 
     folder_dest_dir = latest_snapshot / folder_dest_by_config
     folder_content = {

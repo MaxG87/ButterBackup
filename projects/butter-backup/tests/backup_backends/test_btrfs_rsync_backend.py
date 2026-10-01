@@ -59,7 +59,7 @@ def test_btrfs_backend_gracefully_handles_existing_snapshots_owned_by_root(
     assert isinstance(first_config, cp.BtrFSRsyncConfig)  # for mypy
 
     snapshot_root = device / first_config.BackupRepositoryFolder
-    latest_snapshot = sorted(snapshot_root.iterdir())[-1]
+    latest_snapshot = max(snapshot_root.iterdir())
     for cur in itertools.chain(snapshot_root.glob("*"), snapshot_root.glob("*/*")):
         print(f"Changing ownership of {cur} to root:root")
         sh.chown(cur, "root", "root", recursive=False)
@@ -83,7 +83,7 @@ def test_do_backup_for_btrfs_creates_snapshots_with_timestamp_names(
         return
     config = run_backup_cycle(empty_config, FIRST_BACKUP, device)
     backup_repository = device / config.BackupRepositoryFolder
-    latest_folder = sorted(backup_repository.iterdir())[-1]
+    latest_folder = max(backup_repository.iterdir())
     expected_date = dt.date.today().isoformat()
     assert expected_date in str(latest_folder)
 
