@@ -10,15 +10,15 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "hypothesis>=6.168.3",
-    "mypy>=2.3.1",
+    "hypothesis>=6.170.13",
+    "mypy>=2.4.1",
     "pdbpp>=0.12.1",
-    "pydantic>=2.13.5",
-    "pytest>=9.1.1",
+    "pydantic>=2.14.1",
+    "pytest>=9.2.0",
     "pytest-cov>=7.1.0",
-    "pytest-mock>=3.16.0",
+    "pytest-mock>=3.17.0",
     "pytest-xdist>=3.8.0",
-    "ruff>=0.16.9",
+    "ruff>=0.17.3",
     "tomli-w>=1.2.0",
     "types-pyyaml>=6.0.12.20260906",
 ]
